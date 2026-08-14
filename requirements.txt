@@ -1,0 +1,13 @@
+# 3D 點雲處理與視覺化
+open3d>=0.18.0
+numpy>=1.24
+opencv-python>=4.8
+matplotlib>=3.7
+
+# YOLO 樹幹分割模型 (dbh_seg 主要用的第一個模型)
+ultralytics>=8.2
+torch>=2.0
+
+# semantic_seg 套件：SegFormer 語意分割 (第二個模型，用來扣除地板/天空等雜物)
+transformers>=4.40
+pillow>=10.0

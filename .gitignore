@@ -1,0 +1,54 @@
+# --- 本機掃描 / 3D 資料（放在上一層環保局資料夾，不要進 Git）---
+*.ply
+*.bag
+*.splat
+GPUCache/
+
+# --- 管線產出（只忽略倉庫根目錄，不要誤傷 yolo_seg/runs）---
+/inventory_out/
+/inventory_out_*/
+/photo_eval_masks/
+/runs/
+/GPUCache/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# --- 權重與訓練資料（只保留正式用的 best.pt）---
+*.pt
+!yolo_seg/runs/v1/weights/best.pt
+yolo_seg/dataset/images/
+yolo_seg/runs/**/weights/last.pt
+yolo_seg/runs/v1/*.png
+yolo_seg/runs/v1/*.jpg
+yolo_seg/runs/v1/*.csv
+*.cache
+
+# --- 本機測試圖 ---
+*.jpg
+*.jpeg
+*.png
+
+# --- 前端（之後只會出現在 app/）---
+app/node_modules/
+app/dist/
+app/build/
+app/.next/
+app/.output/
+app/.nuxt/
+app/.svelte-kit/
+app/.expo/
+app/.dart_tool/
+app/coverage/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- 編輯器 / 系統 ---
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+.env
+.env.*
