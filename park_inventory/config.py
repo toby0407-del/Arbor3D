@@ -26,6 +26,16 @@ SAMPLE_MIN_DISTANCE_M = 1.5
 # 0.15 會漏掉遠距/側拍樹幹；全公園盤點建議 0.05（單樹量測仍可用較高門檻）
 YOLO_CONF = 0.05
 YOLO_IMGSZ = 960
+YOLO_IOU = 0.45  # 一張裡很多樹靠很近時，0.7 會把旁邊的框壓掉
+
+# 整張魚眼縮成 960 只看得到最大那棵；改切方塊再跑同一個 best.pt
+TILE_ENABLE = True
+TILE_SIZE = 960
+TILE_COLS = 8          # 左 → 右
+TILE_ROWS = 4          # 上 → 下（一張約 32 塊）
+TILE_OVERLAP = 0.30
+TILE_Y0_FRAC = 0.12    # 上緣（避開太多天空）
+TILE_Y1_FRAC = 0.92    # 下緣（避開車頭／黑邊）
 # 測試主掃描（檔名結尾 325）；其他掃描可另指定路徑，但不必同等強度驗證
 PRIMARY_SCAN_ID = "20260812070325"
 
