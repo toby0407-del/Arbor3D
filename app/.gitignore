@@ -1,0 +1,41 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Overpass raw dumps (keep compact catalog only)
+src/data/raw_taichung_parks.json
+src/data/raw_taichung_schools.json
+src/data/taichung_catalog_parks.json
+src/data/raw_taiwan_parks.json
+src/data/raw_taiwan_schools.json
+# Superseded by taiwan_sites.json
+src/data/taichung_sites.json
+
+# Import inbox (uploaded scan folders)
+inbox/**
+!inbox/.gitkeep
+public/scans/**/_inbox_staged/
+public/scans/_bindings.json
+# Scene-wide Gaussian PLY is typically >100MB (GitHub limit)
+public/scans/**/scene_gaussian.ply

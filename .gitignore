@@ -24,10 +24,16 @@ yolo_seg/runs/v1/*.jpg
 yolo_seg/runs/v1/*.csv
 *.cache
 
-# --- 本機測試圖 ---
+# --- 本機測試圖（量測管線用；前端示範掃描媒體除外）---
 *.jpg
 *.jpeg
 *.png
+!app/public/**
+!app/public/**/*.jpg
+!app/public/**/*.jpeg
+!app/public/**/*.png
+!app/public/**/*.svg
+!app/public/**/*.webp
 
 # --- 前端（之後只會出現在 app/）---
 app/node_modules/
@@ -52,3 +58,7 @@ Thumbs.db
 .vscode/
 .env
 .env.*
+
+# Vite cache at repo root (do not commit)
+.vite/
+
