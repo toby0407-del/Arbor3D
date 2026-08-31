@@ -199,7 +199,7 @@ export function OsmSiteMap({
   const haveGoodFixRef = useRef(false);
   const lastAccuracyRef = useRef<number | null>(null);
   const liveFixRef = useRef(false);
-  const [locateNote, setLocateNote] = useState("進入後會先定位，再移到你附近");
+  const [locateNote, setLocateNote] = useState("");
   const [locating, setLocating] = useState(false);
   const [following, setFollowing] = useState(false);
   const [bootLocating, setBootLocating] = useState(() => !readMapView()?.bootDone);
@@ -373,7 +373,7 @@ export function OsmSiteMap({
         ) {
           if (pendingFlyRef.current && !haveGoodFixRef.current) {
             setBootLocating(false);
-            setLocateNote("目前定位不夠精準，未移動地圖。請開系統定位後再按「快速定位」。");
+            setLocateNote("定位不夠精準。");
           }
           return;
         }
@@ -526,7 +526,7 @@ export function OsmSiteMap({
       if (followingRef.current) {
         followingRef.current = false;
         setFollowing(false);
-        setLocateNote("已停止追蹤（你移動了地圖）。再按「快速定位」可重新跟隨。");
+        setLocateNote("已停止追蹤。");
       }
     };
     map.on("dragstart", onDragStart);
@@ -769,9 +769,9 @@ export function OsmSiteMap({
     applyTaiwanLock(map);
     map.flyToBounds(area, padding);
     if (here) {
-      setLocateNote("選定地區已置中。你目前較遠，可再按「快速定位」移到你附近。");
+      setLocateNote("已置中。");
     } else {
-      setLocateNote("選定地區已置中。請按「快速定位」移到你附近。");
+      setLocateNote("已置中。");
     }
   }, [selectedSite, selectedPathId, sites, recording, liveTrack.length]);
 
@@ -804,8 +804,8 @@ export function OsmSiteMap({
       <div ref={hostRef} className="osm-canvas" />
       {bootLocating ? (
         <div className="osm-boot-locate" role="status">
-          <strong>正在定位</strong>
-          <span>請在跳出的視窗按「允許」，定位成功後會移到你附近</span>
+          <strong>定位中</strong>
+          <span>請允許定位</span>
         </div>
       ) : null}
       <div className="osm-basemap-switch" role="group" aria-label="底圖">

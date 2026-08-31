@@ -11,6 +11,14 @@ import {
   isCustomCoeff,
   totalCo2Ton,
 } from "../lib/carbon";
+import {
+  formatScanMonthDay,
+  growthStatusLabel,
+  temporalGrowth,
+  type GrowthPoint,
+  type GrowthStatus,
+  type TemporalGrowth,
+} from "../lib/growth";
 import { downloadInventoryCsv } from "../lib/csv";
 import {
   formatArc,
@@ -27,13 +35,19 @@ import {
   reviewReason,
   trafficLight,
 } from "../lib/status";
-import type { ParkInventoryReport, TrafficLight } from "../types";
+import type { ParkInventoryReport, TrafficLight, TreeRecord } from "../types";
 
 type PreviewTab = "images" | "measure" | "model";
-type Filter = "all" | TrafficLight | "review";
+type Filter = "all" | TrafficLight | "review" | "warning";
 function FormulaPopup({ onClose }: { onClose: () => void }) {
   return (
-    <div className="formula-popup-backdrop" onClick={onClose}>
+    <div
+      className="formula-popup-backdrop"
+      onClick={(event) => {
+        event.stopPropagation();
+        onClose();
+      }}
+    >
       <div
         className="formula-popup"
         onClick={(e) => e.stopPropagation()}
@@ -48,35 +62,212 @@ function FormulaPopup({ onClose }: { onClose: () => void }) {
           <tbody>
             <tr>
               <td><strong>A</strong></td>
-              <td>高度 1.3 m 處圓周（m）</td>
-              <td><code>π × 胸徑(m)</code></td>
+              <td>1.3 m 圓周</td>
+              <td><code>π × DBH</code></td>
             </tr>
             <tr>
               <td><strong>B</strong></td>
-              <td>樹高（m）</td>
-              <td>實測 or 粗估 <code>1.3 + 1.8√DBH</code></td>
+              <td>樹高</td>
+              <td><code>1.3 + 1.8√DBH</code></td>
             </tr>
             <tr>
               <td><strong>C</strong></td>
               <td>係數</td>
-              <td>預設 <code>0.0159</code>（表定）</td>
+              <td><code>0.0159</code></td>
             </tr>
             <tr>
               <td><strong>D</strong></td>
-              <td>樹含碳量</td>
+              <td>含碳</td>
               <td><code>A² × B × C</code></td>
             </tr>
             <tr>
               <td><strong>CO₂</strong></td>
-              <td>吸收 CO₂ 當量（ton）</td>
+              <td>當量 t</td>
               <td><code>D × 3.667</code></td>
             </tr>
           </tbody>
         </table>
-        <p className="formula-note">
-          係數 ( C ) 可選：表定 0.0159 ／闊葉 0.027 ／針葉 0.020 ／自訂。<br />
-          3.667 = CO₂ 與 C 的分子量比（44÷12）。
+      </div>
+    </div>
+  );
+}
+
+function TreeGlyph() {
+  return (
+    <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true">
+      <path
+        d="M10 1.4C6.6 1.4 4.2 4.4 4.8 7.4 2.2 7.8 1.3 10.8 3.6 12.6h12.8c2.3-1.8 1.4-4.8-1.2-5.2C15.8 4.4 13.4 1.4 10 1.4Z"
+        fill="currentColor"
+      />
+      <path d="M8.55 12.4h2.9V18H8.55z" fill="#5a3814" />
+      <path
+        d="M4.4 18.35h11.2"
+        fill="none"
+        stroke="#5a3814"
+        strokeWidth="1.35"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function GrowthIconButton({
+  status,
+  onClick,
+}: {
+  status: GrowthStatus;
+  onClick: () => void;
+}) {
+  const label = growthStatusLabel(status);
+  const fit =
+    status === "abnormal" ? "off" : status === "normal" ? "ok" : "watch";
+  return (
+    <button
+      type="button"
+      className={`growth-icon-btn is-${fit}`}
+      title={label}
+      aria-label={label}
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick();
+      }}
+    >
+      <TreeGlyph />
+      {status === "abnormal" ? (
+        <span className="growth-warn-tag">Warning</span>
+      ) : null}
+    </button>
+  );
+}
+
+function GrowthTrendPopup({
+  treeId,
+  scanCreatedAt,
+  temporal,
+  onClose,
+}: {
+  treeId: string;
+  scanCreatedAt: string;
+  temporal: TemporalGrowth;
+  onClose: () => void;
+}) {
+  const { previous, current, trend, points, status } = temporal;
+  const snaps = [previous, current, trend];
+  const chartW = 420;
+  const chartH = 150;
+  const pad = { l: 36, r: 10, t: 12, b: 26 };
+  const values = points.map((point) => point.dbhCm);
+  const min = Math.min(...values) - 0.6;
+  const max = Math.max(...values) + 0.6;
+  const span = Math.max(0.8, max - min);
+  const xy = (point: GrowthPoint, index: number) => {
+    const x =
+      pad.l + (index / Math.max(1, points.length - 1)) * (chartW - pad.l - pad.r);
+    const y = pad.t + (1 - (point.dbhCm - min) / span) * (chartH - pad.t - pad.b);
+    return { x, y };
+  };
+  const coords = points.map(xy);
+  const line = coords
+    .map((pt, index) => `${index === 0 ? "M" : "L"}${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`)
+    .join(" ");
+  const fitClass =
+    status === "abnormal" ? "off" : status === "normal" ? "ok" : "watch";
+
+  return (
+    <div
+      className="formula-popup-backdrop"
+      onClick={(event) => {
+        event.stopPropagation();
+        onClose();
+      }}
+    >
+      <div
+        className="formula-popup is-growth"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="growth-pop-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <header>
+          <strong id="growth-pop-title">時序成長</strong>
+          <button type="button" className="ghost-btn" onClick={onClose}>
+            關閉
+          </button>
+        </header>
+        <div className="growth-banner">
+          {treeId}　{formatScanMonthDay(scanCreatedAt)}　{current.dbhCm.toFixed(1)} cm
+        </div>
+        <ol className="temporal-pipe">
+          {snaps.map((snap, index) => {
+            const prior = index === 0 ? null : snaps[index - 1].dbhCm;
+            const delta = prior == null ? null : snap.dbhCm - prior;
+            const deltaText =
+              delta == null
+                ? "基準"
+                : Math.abs(delta) < 0.005
+                  ? "Δ 0.00 cm"
+                  : `Δ ${delta > 0 ? "+" : ""}${delta.toFixed(2)} cm`;
+            return (
+              <li key={snap.role} className={`is-${snap.role}`}>
+                <span>{snap.roleLabel}</span>
+                <strong>
+                  {snap.periodLabel}　{snap.dbhCm.toFixed(2)} cm
+                </strong>
+                <em>{deltaText}</em>
+              </li>
+            );
+          })}
+        </ol>
+        <p className={`growth-fit-stamp is-${fitClass}`}>
+          <TreeGlyph />
+          {growthStatusLabel(status)}
         </p>
+        <svg
+          className="growth-chart"
+          viewBox={`0 0 ${chartW} ${chartH}`}
+          role="img"
+          aria-label={`${treeId} 胸徑趨勢`}
+        >
+          {[0, 0.5, 1].map((t) => {
+            const y = pad.t + (1 - t) * (chartH - pad.t - pad.b);
+            const label = min + span * t;
+            return (
+              <g key={t}>
+                <line
+                  x1={pad.l}
+                  x2={chartW - pad.r}
+                  y1={y}
+                  y2={y}
+                  stroke="#d7d2c6"
+                />
+                <text x={4} y={y + 3.5} className="growth-axis">
+                  {label.toFixed(1)}
+                </text>
+              </g>
+            );
+          })}
+          <path d={line} fill="none" stroke="#000095" strokeWidth="2.1" />
+          {coords.map((pt, index) => {
+            const point = points[index];
+            const measured = point.kind === "measured";
+            return (
+              <g key={`${point.year}-${point.month}-${point.label}`}>
+                <circle
+                  cx={pt.x}
+                  cy={pt.y}
+                  r={measured ? 5 : 3.4}
+                  fill={measured ? "#c40000" : "#2f6b3a"}
+                  stroke="#fff8e8"
+                  strokeWidth="1"
+                />
+                <text x={pt.x} y={chartH - 8} textAnchor="middle" className="growth-axis">
+                  {snaps[index].roleLabel}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+        <p className="formula-note">{temporal.carbonNote}</p>
       </div>
     </div>
   );
@@ -94,7 +285,6 @@ type Props = {
 
 function ZoomImage({
   src,
-  title,
   alt,
   onOpen,
 }: {
@@ -108,14 +298,32 @@ function ZoomImage({
     setOk(true);
   }, [src]);
   if (!ok) {
-    return <div className="path-db-empty">尚無{title}</div>;
+    return <div className="path-db-empty">無圖</div>;
   }
   return (
     <button type="button" className="path-db-thumb" onClick={onOpen}>
       <img src={src} alt={alt} onError={() => setOk(false)} />
-      <span>點擊放大</span>
     </button>
   );
+}
+
+function temporalForTree(
+  tree: TreeRecord,
+  field: { dbhCm?: string } | undefined,
+  carbon: { heightM: number | null; heightEstimated: boolean },
+  scanIso: string,
+): TemporalGrowth | null {
+  const dbh =
+    Number(field?.dbhCm) > 0 ? Number(field?.dbhCm) : tree.DBH_cm;
+  if (dbh == null || !(dbh > 0)) return null;
+  return temporalGrowth({
+    dbhCm: dbh,
+    heightM: carbon.heightM,
+    heightEstimated: carbon.heightEstimated,
+    scanIso,
+    note: tree.DBH_note,
+    yoloConfidence: tree.YOLO_confidence,
+  });
 }
 
 export function PathInventoryDialog({
@@ -134,6 +342,7 @@ export function PathInventoryDialog({
     null,
   );
   const [showFormula, setShowFormula] = useState(false);
+  const [growthTreeId, setGrowthTreeId] = useState<string | null>(null);
   const [tab, setTab] = useState<PreviewTab>("images");
   const [filter, setFilter] = useState<Filter>("all");
   const { measures, update } = useFieldMeasures(report.scan_id);
@@ -142,13 +351,45 @@ export function PathInventoryDialog({
     () => totalCo2Ton(report.trees, measures, report.created_at),
     [measures, report.created_at, report.trees],
   );
+  const growthById = useMemo(() => {
+    const map = new Map<string, TemporalGrowth>();
+    for (const tree of report.trees) {
+      const carbon = carbonForTree(tree, measures[tree.Tree_ID], report.created_at);
+      const temporal = temporalForTree(
+        tree,
+        measures[tree.Tree_ID],
+        carbon,
+        report.created_at,
+      );
+      if (temporal) map.set(tree.Tree_ID, temporal);
+    }
+    return map;
+  }, [measures, report.created_at, report.trees]);
+  const growthCounts = useMemo(() => {
+    let normal = 0;
+    let stalled = 0;
+    let watch = 0;
+    let abnormal = 0;
+    for (const temporal of growthById.values()) {
+      if (temporal.status === "normal") normal += 1;
+      else if (temporal.status === "stalled") stalled += 1;
+      else if (temporal.status === "watch") watch += 1;
+      else abnormal += 1;
+    }
+    return { normal, stalled, watch, abnormal };
+  }, [growthById]);
+  const warningTrees = useMemo(
+    () => report.trees.filter((tree) => growthById.get(tree.Tree_ID)?.warning),
+    [growthById, report.trees],
+  );
   const visible = useMemo(() => {
     return report.trees.filter((tree) => {
       if (filter === "all") return true;
       if (filter === "review") return isReviewTree(tree);
+      if (filter === "warning") return growthById.get(tree.Tree_ID)?.warning === true;
       return trafficLight(tree.DBH_note) === filter;
     });
-  }, [filter, report.trees]);
+  }, [filter, growthById, report.trees]);
 
   const preview =
     visible.find((tree) => tree.Tree_ID === previewTreeId) ??
@@ -169,6 +410,14 @@ export function PathInventoryDialog({
           setLightbox(null);
           return;
         }
+        if (growthTreeId) {
+          setGrowthTreeId(null);
+          return;
+        }
+        if (showFormula) {
+          setShowFormula(false);
+          return;
+        }
         onClose();
         return;
       }
@@ -185,7 +434,7 @@ export function PathInventoryDialog({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [lightbox, onClose, onPreviewTree, preview, visible]);
+  }, [growthTreeId, lightbox, onClose, onPreviewTree, preview, showFormula, visible]);
 
   const cacheBust = `?t=${encodeURIComponent(report.created_at)}`;
   const maskUrl = preview
@@ -211,6 +460,8 @@ export function PathInventoryDialog({
   const carbon = preview
     ? carbonForTree(preview, field, report.created_at)
     : null;
+  const growthTree =
+    report.trees.find((tree) => tree.Tree_ID === growthTreeId) ?? null;
 
   return (
     <div className="path-db-backdrop" role="presentation" onClick={onClose}>
@@ -229,14 +480,11 @@ export function PathInventoryDialog({
             <p>{formatScanTime(report.created_at)}</p>
             <div className="inv-summary" aria-label="盤點摘要">
               <span className="pill">{stats.total} 棵</span>
-              <span className="pill is-green">完美 {stats.green}</span>
-              <span className="pill is-yellow">待確認 {stats.yellow}</span>
-              <span className="pill is-red">需複核 {stats.red}</span>
-              <span className="pill">
-                平均信心 {formatConfidence(stats.avgConfidence)}
-              </span>
+              {growthCounts.abnormal > 0 ? (
+                <span className="pill is-red">Warning {growthCounts.abnormal}</span>
+              ) : null}
               <span className="pill is-green">
-                吸收 CO₂ {co2Total.toFixed(2)} ton
+                CO₂ {co2Total.toFixed(2)} t
               </span>
             </div>
           </div>
@@ -277,29 +525,27 @@ export function PathInventoryDialog({
 
         <div className="path-db-body">
           <aside className="path-db-map">
-            <h3>路徑圖</h3>
             <PathTreeMap
               trees={report.trees}
               selectedId={preview?.Tree_ID ?? null}
               onPick={onPreviewTree}
             />
-            {stats.review > 0 ? (
-              <section className="review-mini">
-                <h3>待複核 {stats.review}</h3>
+            {warningTrees.length > 0 ? (
+              <section className="review-mini is-warning">
+                <h3>Warning</h3>
                 <ul>
-                  {report.trees.filter(isReviewTree).map((tree) => (
+                  {warningTrees.map((tree) => (
                     <li key={tree.Tree_ID}>
                       <button
                         type="button"
                         className="text-btn"
                         onClick={() => {
-                          setFilter("review");
+                          setFilter("warning");
                           onPreviewTree(tree.Tree_ID);
                         }}
                       >
                         {tree.Tree_ID}
                       </button>
-                      <span>{reviewReason(tree)}</span>
                     </li>
                   ))}
                 </ul>
@@ -307,19 +553,19 @@ export function PathInventoryDialog({
             ) : null}
           </aside>
 
-          <div
-            className="path-db-table-wrap"
-          >
+          <div className="path-db-table-wrap is-scroll-x">
             <div className="inv-filters" role="tablist" aria-label="篩選">
               {(
                 [
-                  ["all", `全部 ${stats.total}`],
-                  ["green", `完美 ${stats.green}`],
-                  ["yellow", `待確認 ${stats.yellow}`],
-                  ["red", `需複核 ${stats.red}`],
-                  ["review", `待複核 ${stats.review}`],
+                  ["all", `全 ${stats.total}`, true],
+                  ["green", `綠 ${stats.green}`, stats.green > 0 && stats.green < stats.total],
+                  ["yellow", `黃 ${stats.yellow}`, stats.yellow > 0],
+                  ["red", `紅 ${stats.red}`, stats.red > 0],
+                  ["warning", `! ${growthCounts.abnormal}`, growthCounts.abnormal > 0],
                 ] as const
-              ).map(([id, label]) => (
+              )
+                .filter(([, , show]) => show)
+                .map(([id, label]) => (
                 <button
                   key={id}
                   type="button"
@@ -333,33 +579,41 @@ export function PathInventoryDialog({
               ))}
             </div>
             {visible.length === 0 ? (
-              <div className="path-db-empty">這個篩選沒有樹</div>
+              <div className="path-db-empty">無資料</div>
             ) : (
               <table className="compact-tree-table">
+                <colgroup>
+                  <col className="col-id" />
+                  <col className="col-dbh" />
+                  <col className="col-h" />
+                  <col className="col-co2" />
+                  <col className="col-growth" />
+                </colgroup>
                 <thead>
                   <tr>
                     <th>樹號</th>
                     <th>胸徑</th>
                     <th>樹高</th>
-                    <th>碳吸收量 CO₂</th>
+                    <th>CO₂</th>
+                    <th className="growth-col">健康度</th>
                   </tr>
                 </thead>
                 <tbody>
                   {visible.map((tree) => {
-                    const rowLight = trafficLight(tree.DBH_note);
                     const active = tree.Tree_ID === preview?.Tree_ID;
                     const row = carbonForTree(
                       tree,
                       measures[tree.Tree_ID],
                       report.created_at,
                     );
+                    const temporal = growthById.get(tree.Tree_ID);
                     return (
                       <tr
                         key={tree.Tree_ID}
-                        className={`is-${rowLight}${active ? " is-active" : ""}`}
+                        className={active ? "is-active" : undefined}
                         onClick={() => onPreviewTree(tree.Tree_ID)}
                       >
-                        <td className="mono">{tree.Tree_ID.replace("Tree_", "#")}</td>
+                        <td>{tree.Tree_ID.replace("Tree_", "#")}</td>
                         <td>{formatDbh(tree.DBH_cm)}</td>
                         <td>
                           {row.heightM != null
@@ -369,6 +623,19 @@ export function PathInventoryDialog({
                             : "—"}
                         </td>
                         <td>{row.co2Ton != null ? `${row.co2Ton.toFixed(3)} t` : "—"}</td>
+                        <td className="growth-col">
+                          {temporal ? (
+                            <GrowthIconButton
+                              status={temporal.status}
+                              onClick={() => {
+                                onPreviewTree(tree.Tree_ID);
+                                setGrowthTreeId(tree.Tree_ID);
+                              }}
+                            />
+                          ) : (
+                            "—"
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
@@ -391,6 +658,7 @@ export function PathInventoryDialog({
                         t
                       </strong>
                     </td>
+                    <td></td>
                   </tr>
                 </tfoot>
               </table>
@@ -420,12 +688,11 @@ export function PathInventoryDialog({
             </div>
 
             {!preview ? (
-              <div className="path-db-empty">尚無盤點資料</div>
+              <div className="path-db-empty">無資料</div>
             ) : tab === "images" ? (
               <>
                 <h3>
-                  {preview.Tree_ID} · Segmentation · 信心度{" "}
-                  {formatConfidence(preview.YOLO_confidence)}
+                  {preview.Tree_ID}　{formatConfidence(preview.YOLO_confidence)}
                 </h3>
                 {maskUrl ? (
                   <ZoomImage
@@ -435,14 +702,13 @@ export function PathInventoryDialog({
                     onOpen={() =>
                       setLightbox({
                         src: maskUrl,
-                        title: `${preview.Tree_ID} · Segmentation`,
+                        title: `${preview.Tree_ID}`,
                       })
                     }
                   />
                 ) : (
-                  <div className="path-db-empty">尚無 Segmentation 圖</div>
+                  <div className="path-db-empty">無圖</div>
                 )}
-                <h3>橫切面</h3>
                 {sliceUrl ? (
                   <ZoomImage
                     src={sliceUrl}
@@ -451,44 +717,40 @@ export function PathInventoryDialog({
                     onOpen={() =>
                       setLightbox({
                         src: sliceUrl,
-                        title: `${preview.Tree_ID} · 橫切面`,
+                        title: `${preview.Tree_ID}`,
                       })
                     }
                   />
                 ) : (
-                  <div className="path-db-empty">尚無橫切面圖</div>
+                  <div className="path-db-empty">無圖</div>
                 )}
                 {photoUrl ? (
-                  <>
-                    <h3>原圖</h3>
-                    <ZoomImage
-                      src={photoUrl}
-                      title="原圖"
-                      alt={`${preview.Tree_ID} 照片`}
-                      onOpen={() =>
-                        setLightbox({
-                          src: photoUrl,
-                          title: `${preview.Tree_ID} · 原圖`,
-                        })
-                      }
-                    />
-                  </>
+                  <ZoomImage
+                    src={photoUrl}
+                    title="原圖"
+                    alt={`${preview.Tree_ID} 照片`}
+                    onOpen={() =>
+                      setLightbox({
+                        src: photoUrl,
+                        title: `${preview.Tree_ID}`,
+                      })
+                    }
+                  />
                 ) : null}
-                <h3>點雲側視</h3>
                 {cloudPreviewUrl ? (
                   <ZoomImage
                     src={cloudPreviewUrl}
-                    title="點雲側視"
-                    alt={`${preview.Tree_ID} 點雲側視`}
+                    title="點雲"
+                    alt={`${preview.Tree_ID} 點雲`}
                     onOpen={() =>
                       setLightbox({
                         src: cloudPreviewUrl,
-                        title: `${preview.Tree_ID} · 點雲側視`,
+                        title: `${preview.Tree_ID}`,
                       })
                     }
                   />
                 ) : (
-                  <div className="path-db-empty">尚無點雲側視</div>
+                  <div className="path-db-empty">無圖</div>
                 )}
               </>
             ) : tab === "measure" ? (
@@ -497,7 +759,6 @@ export function PathInventoryDialog({
                   <span>{preview.Tree_ID}</span>
                   <strong>
                     {formatDbh(preview.DBH_cm)}
-                    <em> 胸徑</em>
                   </strong>
                 </div>
                 {light === "red" ? (
@@ -505,27 +766,24 @@ export function PathInventoryDialog({
                 ) : null}
                 <dl className="spec-list">
                   <div>
-                    <dt>量測方法</dt>
+                    <dt>方法</dt>
                     <dd>{methodLabel(preview.DBH_method)}</dd>
                   </div>
                   <div>
-                    <dt>弧度覆蓋</dt>
+                    <dt>弧度</dt>
                     <dd>{formatArc(preview.arc_coverage_deg)}</dd>
                   </div>
                   <div>
-                    <dt>偵測次數</dt>
+                    <dt>次數</dt>
                     <dd>{preview.num_detections ?? "—"}</dd>
                   </div>
                   <div>
-                    <dt>相對座標</dt>
+                    <dt>XYZ</dt>
                     <dd className="mono">{formatXyz(preview.Local_XYZ_m)}</dd>
                   </div>
                 </dl>
                 <label className="field-measure">
-                  <span className="field-label">
-                    現場手測胸徑
-                    <em>不覆蓋演算法數字</em>
-                  </span>
+                  <span className="field-label">手測</span>
                   <input
                     inputMode="decimal"
                     value={field?.dbhCm ?? ""}
@@ -539,7 +797,7 @@ export function PathInventoryDialog({
                   <span className="field-label">備註</span>
                   <input
                     value={field?.note ?? ""}
-                    placeholder="現場補充、樹況、特殊狀況…"
+                    placeholder="備註"
                     onChange={(event) =>
                       update(preview.Tree_ID, { note: event.target.value })
                     }
@@ -547,13 +805,10 @@ export function PathInventoryDialog({
                 </label>
                 {carbon ? (
                   <div className="carbon-box">
-                    <h3>碳吸收</h3>
-                    <p className="carbon-formula">
-                      D = A² × B × C　·　CO₂ = D × 3.667
-                    </p>
+                    <h3>碳</h3>
                     <dl className="spec-list is-carbon">
                       <div>
-                        <dt>高度 1.3 m 處圓周 ( A )</dt>
+                        <dt>A 圓周</dt>
                         <dd>
                           {carbon.circumferenceM != null
                             ? `${carbon.circumferenceM.toFixed(3)} m`
@@ -562,10 +817,7 @@ export function PathInventoryDialog({
                       </div>
                     </dl>
                     <label className="field-measure">
-                      <span className="field-label">
-                        樹高 ( B )
-                        <em>公尺</em>
-                      </span>
+                      <span className="field-label">B 樹高</span>
                       <input
                         inputMode="decimal"
                         value={field?.heightM ?? ""}
@@ -582,7 +834,7 @@ export function PathInventoryDialog({
                       />
                     </label>
                     <label className="field-measure">
-                      <span className="field-label">係數 ( C )</span>
+                      <span className="field-label">C 係數</span>
                       <select
                         value={coeffSelectValue(field?.coeff)}
                         onChange={(event) => {
@@ -622,7 +874,7 @@ export function PathInventoryDialog({
                     ) : null}
                     <dl className="spec-list is-carbon">
                       <div>
-                        <dt>樹含碳量 ( D )</dt>
+                        <dt>D 含碳量</dt>
                         <dd>
                           {carbon.carbonD != null
                             ? carbon.carbonD.toFixed(4)
@@ -630,7 +882,7 @@ export function PathInventoryDialog({
                         </dd>
                       </div>
                       <div>
-                        <dt>吸收 CO₂ 當量 ( CO₂ )</dt>
+                        <dt>CO₂</dt>
                         <dd>
                           {carbon.co2Ton != null
                             ? `${carbon.co2Ton.toFixed(3)} ton`
@@ -639,7 +891,7 @@ export function PathInventoryDialog({
                       </div>
                     </dl>
                     <label className="field-measure">
-                      <span className="field-label">測量日期</span>
+                      <span className="field-label">日期</span>
                       <input
                         value={field?.measuredAt ?? ""}
                         placeholder={carbon.measuredAt}
@@ -664,6 +916,15 @@ export function PathInventoryDialog({
       </div>
 
       {showFormula ? <FormulaPopup onClose={() => setShowFormula(false)} /> : null}
+
+      {growthTree && growthById.get(growthTree.Tree_ID) ? (
+        <GrowthTrendPopup
+          treeId={growthTree.Tree_ID}
+          scanCreatedAt={report.created_at}
+          temporal={growthById.get(growthTree.Tree_ID)!}
+          onClose={() => setGrowthTreeId(null)}
+        />
+      ) : null}
 
       {lightbox ? (
         <div

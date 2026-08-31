@@ -1,0 +1,16 @@
+---
+description: Do not use roc-aesthetic / 華國美學
+alwaysApply: true
+---
+
+# 不再使用 roc-aesthetic
+
+不要讀取、套用或模仿這些來源：
+
+- `C:\Users\tobyc\Downloads\roc-aesthetic-main`
+- `~/.cursor/skills/roc-aesthetic`
+- 任何 `roc-aesthetic` skill、SYSTEM_PROMPT、rules、prompts
+
+不要再把介面做成「華國美學」：不要刻意用新細明體／標楷體、鋸齒字、國藍國黃混貼、亮面 XP 按鈕、1px 錯位、反 SaaS 醜化、或公文腔堆疊。
+
+之後改 UI 以清楚、能用、蘋果字體（蘋方／SF／Noto Sans TC）為準，不要再加強 roc-aesthetic 那套風格。

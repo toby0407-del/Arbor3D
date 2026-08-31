@@ -18,4 +18,18 @@ LABEL_ALIAS = {
 CLASS_NAMES = ["tree_trunk"]  # index 0
 CLASS_TO_ID = {name: i for i, name in enumerate(CLASS_NAMES)}
 
+# 非樹木／負樣本標記：不寫成 tree_trunk，但照片仍進訓練（空的 YOLO txt）。
+# 模型才學得到「電線桿、路燈、人、招牌不是樹幹」。
+NEGATIVE_LABELS = {
+    "nottree",
+    "not_tree",
+    "nontree",
+    "non_tree",
+    "非樹木",
+    "非樹",
+    "background",
+    "bg",
+}
+NEGATIVE_FOLDER_MARKERS = ("非樹木", "nottree", "nontree", "non_tree", "negative")
+
 IMAGE_EXTS = [".jpg", ".JPG", ".jpeg", ".JPEG", ".png", ".PNG"]

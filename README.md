@@ -1,6 +1,8 @@
 # Arbor3D
 
-環保局公園樹木盤點系統。用 JMK6 魚眼掃描的**去噪點雲**量胸高直徑（DBH），再用 **3D 高斯**做展示。量測求精準，高斯求好看，兩條線分開、最後接到同一份報告與網頁介面。
+把真實世界的公園樹木做成可持續被 AI 分析的數位表徵（Digital Representation）。現場掃描是 **Physical**；去噪點雲、單木 ID、胸徑、碳匯與 3D 高斯是 **Digital**；YOLO 分割與時序成長判定是 **AI**。量測求精準，高斯求好看，兩條線分開，最後接到同一份長期監測報告與網頁介面。
+
+不是只做「替環保局量一次樹」，而是把每一棵樹從實體資產變成可跨期比對的數位分身：前期盤點 → 本期盤點 → 成長趨勢。
 
 | | |
 |--|--|
@@ -9,19 +11,32 @@
 | 前端獨立鏡像 | https://github.com/toby0407-del/arbor3d-interface |
 | 本機資料夾 | `treee_VScode`（遠端名稱 Arbor3D） |
 | 主掃描（介面示範） | `20260818092855`（逢甲 8/18，16 棵） |
-| 文件日期 | 2026-08-21 |
+| 文件日期 | 2026-09-01 |
 
 ---
 
-## 1. 三層分工
+## 1. Physical → Digital → AI
 
 | 層 | 誰做 | 做什麼 |
 |----|------|--------|
-| 掃描與前處理 | 人 + RayStudio | 拍照、相機校正、去噪點雲、完整 3D 高斯。程式不能代勞 |
-| 自動盤點 | Python（本倉庫根目錄） | 分樹、YOLO 遮罩、胸徑、單棵樹 3D、JSON／CSV／HTML |
-| 展示系統 | 網頁（**`app/`**） | 登入、地圖選點、盤點視窗、碳匯、匯入、CSV；見 [`app/README.md`](app/README.md) |
+| Physical | 人 + JMK6／RayStudio | 現場掃描、相機校正、去噪點雲、完整 3D 高斯。程式不能代勞 |
+| Digital | Python（本倉庫根目錄） | 分樹、遮罩、胸徑、單木 3D、JSON／CSV／HTML；每棵樹一份可重跑的數位表徵 |
+| AI | YOLO 分割 + 介面時序判定 | 樹幹分割、負樣本抑制誤檢；前期／本期／趨勢比對，標正常成長、幾乎停長、健康異常 |
 
 請不要在倉庫根目錄執行 `npm create` 或 `flutter create`。前端只開在 `app/`，才不會跟量測程式混在一起。
+
+研究定位是 **Physical → Digital → AI**：把現場環境資產（樹）做成可持續被 AI 分析的 Digital Representation，而不是一次性量測報告。文獻只收 **2024 年以後的 T1**（Nature 系列、ECCV、SIGGRAPH、ICLR、*Remote Sensing of Environment*）。2023 以前的論文、專案網站、ISPRS Annals、MDPI、*Urban Forestry & Urban Greening* 不列入。以下為對照入口，**不是本系統實作來源**：
+
+| 層 | 文獻 | 場刊 | 本系統怎麼對 |
+|----|------|------|----------------|
+| Physical → 單木監測 | Brandt et al., tree resource monitoring | **Nature Reviews Electrical Engineering 2025** | 監測必須把樹當物件、估結構與碳匯，不能只報覆蓋率 |
+| Digital／可量測 3D | Huang et al., 2D Gaussian Splatting | **SIGGRAPH 2024** | 高斯不只求好看，幾何要能對齊量測；本系統量測線與高斯線分開 |
+| Digital → 碳（點雲） | Oehmcke et al., point-cloud AGB | **Remote Sensing of Environment 2024** | 碳匯從點雲結構來，不能只數棵數 |
+| Digital → 碳（TLS） | Chen et al., leaf–wood / AGB | **Remote Sensing of Environment 2024** | 樹幹幾何決定碳匯可信度；異常株 Warning、不得逕列正式統計 |
+| AI 分割 | Ravi et al., SAM 2 | **ICLR 2025** | 分割必須可重跑、可泛化；本系統用自訓 YOLO 樹幹遮罩 |
+| AI／數位孿生＋成長 | Lee et al., Tree-D Fusion | **ECCV 2024** | 真實樹 → 可模擬成長的 3D 孿生；本系統：前期盤點 → 本期盤點 → 成長趨勢 |
+
+都市林由單次調查走向可重跑的 digital inventory 之後，才能談成長、健康異常與碳匯增量。本系統的時序層就是把這一點接到實務。
 
 ---
 
@@ -45,7 +60,7 @@
     GPUCache/                       3D 檢視器快取，可刪
 ```
 
-Git 只收程式、YOLO 權重 `yolo_seg/runs/v1/weights/best.pt`、前端程式，以及 `app/public/scans/` 示範媒體（不含超大 scene PLY）。
+Git 只收程式、YOLO 權重（`yolo_seg/runs/v1`、`v2`、`v3` 的 `weights/best.pt`；推論優先用最新的 v3）、前端程式，以及 `app/public/scans/` 示範媒體（不含超大 scene PLY）。訓練用照片在本機 `treedata/`，不進 Git。
 
 ---
 
@@ -91,7 +106,24 @@ python run_full_park_pipeline.py --scan_id 20260818092855
 
 ---
 
-## 5. 檔名（請維持一致）
+## 5. 時序成長（Temporal Growth）
+
+盤點窗把單次量測提升為長期環境監測：
+
+**前期盤點 → 本期盤點 → 成長趨勢**
+
+| 判定 | 顏色 | 含義 | 碳匯 |
+|------|------|------|------|
+| 正常成長 | 綠 | 年增量落在都市林常態 | 較前期增量可列管、納入下期比對 |
+| 幾乎停長 | 黃 | 大徑木年增量趨近下限 | 長期吸收量將偏低 |
+| 待觀察 | 黃 | 幼木或 YOLO 信心偏低 | 僅供參考，下期實測再定案 |
+| 異常 Warning | 紅 | 量測不可信或胸徑極端（疑併株） | **不得逕列正式統計**，請現場手測 |
+
+尚無前期實測時，前期／趨勢依本趟胸徑與拍攝期（3／7／9 月）推估；下一趟 JSON 進來後改掛實測比對。App 左側列出 Warning 樹；樹表最後一欄「健康度」用圖示標正常／停長／待觀察／Warning，不再整列上紅底。
+
+---
+
+## 6. 檔名（請維持一致）
 
 | 位置 | 規則 | 例子 |
 |------|------|------|
@@ -106,14 +138,14 @@ python run_full_park_pipeline.py --scan_id 20260818092855
 
 ---
 
-## 6. 自動盤點在做什麼
+## 7. 自動盤點在做什麼
 
 | 步驟 | 說明 |
 |------|------|
 | 素材檢查 | 去噪點雲、calib、照片、完整 3DGS 是否齊 |
 | 分樹 | 多張照片 YOLO 偵測 → 射到地面 → 分群 → Tree_001…（魚眼可切 tile） |
 | 最佳視角 | 每棵樹選一張最適合量的照片（偏好遮罩靠下、距離較近） |
-| YOLO 遮罩 | 只用自訓模型 `best.pt`，類別 `tree_trunk`；信心門檻 0.05。SegFormer 地板／天空排除預設關閉 |
+| YOLO 遮罩 | 只用自訓模型（優先 `yolo_seg/runs/v3/weights/best.pt`），類別 `tree_trunk`；信心門檻 0.05。SegFormer 地板／天空排除預設關閉 |
 | 胸徑 | 見下一節 |
 | 3D 瘦身 | 依同一張遮罩從完整公園高斯切出一棵，並轉 SuperSplat |
 | 報告 | HTML、JSON、CSV、俯視圖 |
@@ -122,7 +154,23 @@ python run_full_park_pipeline.py --scan_id 20260818092855
 
 ---
 
-## 7. 胸徑演算法（從單樹做到全公園）
+## 8. YOLO 樹幹分割（v1 → v3）
+
+訓練與資料轉換在 `yolo_seg/`。新照片放進本機 `treedata/` 後跑 `python prepare_dataset.py`，再改 `train.py` 的 `RESUME_WEIGHTS`／`RUN_NAME` 做微調。推論一律走 `yolo_seg/config.py`：有 v3 用 v3，否則退回 v2、v1。
+
+| 版 | 起點 | 這輪加什麼 | 資料集 | 權重 |
+|----|------|------------|--------|------|
+| v1 | Ultralytics COCO | 既有公園／校園樹幹標記 | 初版 | `runs/v1/weights/best.pt` |
+| v2 | v1 `best.pt` | 100 張非樹木負樣本（空 YOLO 標記，抑制路燈／招牌誤檢） | train 1039／val 115 | `runs/v2/weights/best.pt` |
+| v3 | v2 `best.pt` | 惠來公園 102 年 238 張（LabelMe `trunk+branch1`） | **1123** 組（train 1011／val 112，含約 100 張負樣本） | `runs/v3/weights/best.pt` ← **目前正式用** |
+
+v3 約 21 epoch 提早停止。`公七公園102年labelme` 有標記、沒有對應照片資料夾，這輪沒進訓練。
+
+負樣本規則：資料夾名含「非樹木」或標記類別 `nottree` 等，寫成空 `.txt`，讓模型學「這張沒有樹幹」。惠來 102 照片若多包一層子資料夾，`prepare_dataset` 會遞迴找檔名對應的 JPG。
+
+---
+
+## 9. 胸徑演算法（從單樹做到全公園）
 
 量測走**去噪點雲**，不走高斯球。高斯邊界糊，不適合作為公信力樹圍。
 
@@ -150,7 +198,7 @@ RANSAC 找地面，把樹擺正，切離地 **1.2–1.4 m**。若這段沒點（
 
 ---
 
-## 8. 展示系統（`app/`）— 2026-08-21 進度
+## 10. 展示系統（`app/`）— 2026-09-01 進度
 
 前端已可實測，不是預留草圖。啟動見 [`app/README.md`](app/README.md)；接新掃描見 [`app/NEXT_STEPS.md`](app/NEXT_STEPS.md)。
 
@@ -161,8 +209,8 @@ RANSAC 找地面，把樹擺正，切離地 **1.2–1.4 m**。若這段沒點（
 | P1 | 登入（示範帳號／角色） | ✅ |
 | P2 | 全台公園／學校地圖選點＋搜尋 | ✅ |
 | P3 | 國土測繪底圖（街道／空拍）、GPS、路徑錄製／GPX | ✅ |
-| P4 | 盤點視窗：樹表、燈號篩選、摘要 | ✅ |
-| P5 | 影像：Segmentation、胸高橫切面、點雲側視 | ✅ |
+| P4 | 盤點視窗：樹表、燈號篩選、摘要、最後一欄健康度 | ✅ |
+| P5 | 影像：Segmentation、胸高橫切面、點雲側視（預覽不重複標標題） | ✅ |
 | P6 | 3D 點雲（Three.js，直立＋繞鉛直軸） | ✅ |
 | P7 | 匯入三格（去噪 PLY／高斯 PLY／照片資料夾） | ✅ |
 | P8 | 現場手測＋待複核＋CSV 匯出 | ✅ |
@@ -195,6 +243,8 @@ CO₂ = D × 3.667
 
 現場手測**不覆蓋**演算法 `DBH_cm`（另存 localStorage）。
 
+樹表用卡片底色＋斑馬紋，表頭深藍、最後一欄「健康度」；篩選列精簡（例如 `全 16`、`! 1`）。成長視窗只留管線與趨勢圖，不再重複一張表。選點頁已拿掉 ColorLegend。
+
 ### 示範帳號
 
 | 工作編號 | 密碼 |
@@ -205,7 +255,7 @@ CO₂ = D × 3.667
 
 ---
 
-## 9. 主要套件
+## 11. 主要套件
 
 | 資料夾 | 用途 |
 |--------|------|

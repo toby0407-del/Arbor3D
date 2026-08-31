@@ -14,14 +14,15 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
-# --- 權重與訓練資料（只保留正式用的 best.pt）---
+# --- 權重與訓練資料（只保留各版正式用的 best.pt）---
 *.pt
 !yolo_seg/runs/v1/weights/best.pt
+!yolo_seg/runs/v2/weights/best.pt
+!yolo_seg/runs/v3/weights/best.pt
 yolo_seg/dataset/images/
 yolo_seg/runs/**/weights/last.pt
-yolo_seg/runs/v1/*.png
-yolo_seg/runs/v1/*.jpg
-yolo_seg/runs/v1/*.csv
+yolo_seg/runs/**/*.png
+yolo_seg/runs/**/*.jpg
 *.cache
 
 # --- 本機測試圖（量測管線用；前端示範掃描媒體除外）---

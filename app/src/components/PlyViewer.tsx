@@ -173,9 +173,9 @@ export function PlyViewer({ url, label }: Props) {
             <strong>{label}</strong>
             <p>
               {status === "empty"
-                ? "尚未匯入 3D 模型"
+                ? "無模型"
                 : status === "loading"
-                  ? "載入點雲…"
+                  ? "載入…"
                   : message}
             </p>
           </div>
@@ -185,7 +185,7 @@ export function PlyViewer({ url, label }: Props) {
           <div>
             <div className="splat-kicker">3D</div>
             <div className="splat-title">{label}</div>
-            <p>{message} · 左右拖曳繞樹轉、滾輪縮放</p>
+            <p>{message}</p>
           </div>
           <button
             type="button"

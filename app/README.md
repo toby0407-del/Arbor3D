@@ -15,7 +15,7 @@ npm install
 npm run dev
 ```
 
-瀏覽器開 http://127.0.0.1:5173/  
+瀏覽器開 Vite 印出的位址（預設 http://127.0.0.1:5173/；埠被占用時可 `npx vite --port 5300 --host 0.0.0.0 --strictPort`）。  
 示範帳號見下方；登入後搜尋「逢甲」→ 點 8/18 路徑即可驗證。
 
 | 指令 | 說明 |
@@ -28,15 +28,16 @@ npm run dev
 
 ---
 
-## 目前已完成（2026-08-21）
+## 目前已完成（2026-09-01）
 
 1. 示範帳號登入（工作編號＋密碼／示範登入）
 2. 全台公園／學校地圖選點（OSM 目錄＋國土測繪底圖）
 3. GPS 定位、路徑錄製（≤ 10 m 起測）、GPX 下載
-4. 盤點視窗：樹表、燈號篩選、Segmentation、橫切面、點雲側視、3D
+4. 盤點視窗：樹表（最後一欄健康度）、燈號篩選、Segmentation、橫切面、點雲側視、3D
 5. 匯入三格：去噪 PLY、高斯濺射 PLY、原始照片資料夾
 6. 現場手測（localStorage，不覆蓋演算法 DBH）＋ CSV 匯出
-7. **碳匯工作表**（欄位依公式排序）：
+7. **碳匯工作表**（欄位依公式排序）
+8. **時序成長**：前期盤點 → 本期盤點 → 成長趨勢；左側 Warning 清單，健康度圖示（非整列紅底）
 
 ```
 D  = A² × B × C
@@ -85,5 +86,5 @@ CO₂ = D × 3.667
 ## 技術棧
 
 React 19 + TypeScript + Vite 8 + Leaflet + Three.js  
-燈號／碳匯／CSV：`src/lib/status.ts`、`carbon.ts`、`csv.ts`  
+燈號／碳匯／時序成長／CSV：`src/lib/status.ts`、`carbon.ts`、`growth.ts`、`csv.ts`  
 量測管線對接：`server/importApiPlugin.ts` + `scripts/run-postprocess.mjs`（可設 `ARBOR3D_ROOT` 指向上層本倉庫）

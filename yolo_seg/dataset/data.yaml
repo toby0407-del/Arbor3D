@@ -1,4 +1,4 @@
-path: .
+path: C:/Users/tobyc/OneDrive/桌面/環保局樹木專題/treee_VScode/yolo_seg/dataset
 train: images/train
 val: images/val
 names:

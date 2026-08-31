@@ -8,9 +8,10 @@ YOLOv8 樹幹分割 (segmentation) 模型訓練腳本。
 
 之後有新照片、新標記要加入重新訓練 (微調)：
     1. 把新照片與新的 labelme 標記放進 treedata 底下對應/新增的資料夾
+       （非樹木用「非樹木照片」+「非樹木照片labelme」，標記類別 nottree）
     2. 重新執行一次 prepare_dataset.py
        (會用「舊資料 + 新資料」全部重新產生一份完整的 dataset，
-        而不是只用新資料，避免模型忘記舊資料學過的東西)
+        非樹木照片會寫成空標記，讓模型少把路燈、招牌當成樹幹)
     3. 把下面的 RESUME_WEIGHTS 改成上一輪訓練出來的 best.pt 路徑，
        例如: RESUME_WEIGHTS = "runs/v1/weights/best.pt"
     4. 把 RUN_NAME 改成新的版本名稱，例如 "v2"
@@ -27,17 +28,17 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_YAML = BASE_DIR / "dataset" / "data.yaml"
 
 # 第一次訓練：使用 Ultralytics 官方 COCO 預訓練權重當起點 (會自動下載)。
-# 之後要微調時，改成上一輪的 best.pt，例如 "runs/v1/weights/best.pt"
-RESUME_WEIGHTS = "yolov8s-seg.pt"
+# 之後要微調時，改成上一輪的 best.pt，例如 "runs/v2/weights/best.pt"
+RESUME_WEIGHTS = "runs/v2/weights/best.pt"
 
 # 每一輪訓練都取一個版本名稱，方便追蹤這個模型是用哪一批資料訓練出來的。
 # 訓練結果會存放在 runs/<RUN_NAME>/weights/best.pt
-RUN_NAME = "v1"
+RUN_NAME = "v3"
 
-EPOCHS = 150
+EPOCHS = 80
 IMG_SIZE = 960
 BATCH = -1  # -1 = 讓 ultralytics 依照 RTX 3070 的 VRAM 大小自動決定 batch size
-PATIENCE = 30  # 連續這麼多個 epoch 沒有進步就提早停止，避免浪費時間
+PATIENCE = 20  # 連續這麼多個 epoch 沒有進步就提早停止，避免浪費時間
 
 
 def format_duration(seconds: float) -> str:

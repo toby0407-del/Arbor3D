@@ -8,9 +8,9 @@ export const CO2_FACTOR = 3.667;
 export const DEFAULT_CARBON_COEFF = 0.0159;
 
 export const CARBON_COEFFS = [
-  { id: "worksheet", label: "表定係數 0.0159", value: 0.0159 },
-  { id: "broadleaf", label: "闊葉樹 0.027", value: 0.027 },
-  { id: "conifer", label: "針葉樹 0.020", value: 0.02 },
+  { id: "worksheet", label: "表定 0.0159", value: 0.0159 },
+  { id: "broadleaf", label: "闊葉 0.027", value: 0.027 },
+  { id: "conifer", label: "針葉 0.020", value: 0.02 },
 ] as const;
 
 export function coeffSelectValue(raw: string | undefined): string {

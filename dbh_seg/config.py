@@ -1,6 +1,8 @@
 """dbh_seg 套件的檔案路徑與可調參數，全部集中在這裡方便微調。"""
 from pathlib import Path
 
+from yolo_seg.config import YOLO_WEIGHTS
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- 三大素材檔案路徑（專題根目錄 = treee_VScode 的上一層）
@@ -21,8 +23,8 @@ SOURCE_PHOTO_PATH = (
 MASK_PATH = BASE_DIR / "real_tree_mask.jpg"
 
 # --- 模型來源 (樹 vs 地板/天空 刻意分開) ---
-# 樹幹：只用你自己訓練的 YOLO (yolo_seg/runs/v1/weights/best.pt，類別 tree_trunk)
-YOLO_WEIGHTS_PATH = BASE_DIR / "yolo_seg" / "runs" / "v1" / "weights" / "best.pt"
+# 樹幹：與 yolo_seg/config.py 相同，優先 v3 > v2 > v1（類別 tree_trunk）
+YOLO_WEIGHTS_PATH = YOLO_WEIGHTS
 # 地板/天空排除 (可選)：用公開 SegFormer，見 semantic_seg/config.py；預設關閉。
 # 當雜物 (地板/天空/圍牆/告示牌/藤蔓) 在 3D 空間裡跟樹幹表面完美融合、
 # 中間沒有任何空隙時，純幾何距離的方法 (geo_utils/gap_split.py) 完全切不開。

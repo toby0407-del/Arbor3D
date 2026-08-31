@@ -75,7 +75,7 @@ export function PathTreeMap({ trees, selectedId, onPick }: Props) {
   }, [trees]);
 
   if (!layout) {
-    return <div className="path-db-empty">尚無路徑圖</div>;
+    return <div className="path-db-empty">無路徑</div>;
   }
 
   const path = layout.line

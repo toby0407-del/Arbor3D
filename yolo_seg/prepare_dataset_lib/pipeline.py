@@ -30,12 +30,14 @@ def main():
 
     all_skipped_labels = set()
     written = 0
+    negatives = 0
     for split, split_pairs in (("train", train_pairs), ("val", val_pairs)):
-        split_written, skipped = write_pairs(split, split_pairs)
+        split_written, split_negatives, skipped = write_pairs(split, split_pairs)
         written += split_written
+        negatives += split_negatives
         all_skipped_labels |= skipped
 
-    print(f"\n實際寫入 {written} 組訓練用圖片與標記檔")
+    print(f"\n實際寫入 {written} 組訓練用圖片與標記檔（其中非樹木負樣本 {negatives} 張，空標記）")
     if all_skipped_labels:
         print(
             "[注意] 以下類別名稱不在對照表內，這些標記已被忽略。"

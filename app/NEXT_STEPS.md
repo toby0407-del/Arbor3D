@@ -14,7 +14,7 @@
 4. GPS 快速定位（Wi-Fi → GPS；拖地圖停追蹤）
 5. 現場錄製路徑（≤ 10 m 起測；停止時問保存；保存後畫在地圖上）
 6. 盤點 JSON 綁定地點（`inventories/{scan_id}.json` + `scanBindings.ts`）
-7. 盤點視窗：棵數／燈號摘要、篩選、Segmentation、橫切面、原圖
+7. 盤點視窗：棵數／燈號摘要、篩選、樹表最後一欄健康度、Segmentation、橫切面、原圖
 8. 量測分頁：現場手測（localStorage，不覆蓋演算法）、待複核、匯出 CSV
 9. 碳匯工作表：欄位依公式排 **( A ) → ( B ) → ( C ) → ( D ) → ( CO₂ )**；`D = A² × B × C`，`CO₂ = D × 3.667`
 10. 3D 點雲（Three.js，自動直立，繞鉛直軸轉）

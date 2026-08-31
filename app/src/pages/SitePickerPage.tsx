@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { BrandMark } from "../components/BrandMark";
-import { ColorLegend } from "../components/ColorLegend";
 import { OsmSiteMap } from "../components/OsmSiteMap";
 import {
   SITE_COUNTS,
@@ -14,7 +13,7 @@ import {
   type SiteKind,
 } from "../data/sites";
 import { getReport } from "../data/inventory";
-import { usePathRecorder, START_ACCURACY_M } from "../hooks/usePathRecorder";
+import { usePathRecorder } from "../hooks/usePathRecorder";
 import { downloadGpx, haversineMeters, toLatLngs } from "../lib/gpx";
 import {
   readOverlays,
@@ -253,9 +252,6 @@ export function SitePickerPage({ session, onLogout }: Props) {
             </div>
           </div>
         </div>
-        <p className="picker-hint">
-          公園 {SITE_COUNTS.parks} · 學校 {SITE_COUNTS.schools} · 已盤點路徑可直接查看成果
-        </p>
         <button type="button" className="ghost-btn" onClick={onLogout}>
           登出
         </button>
@@ -263,14 +259,15 @@ export function SitePickerPage({ session, onLogout }: Props) {
 
       <div className="picker-body">
         <aside className="picker-side">
-          <h1>選拍攝地點</h1>
+          <h1>地點</h1>
 
           <label className="search-field">
-            搜尋
+            <span className="sr-only">搜尋</span>
             <input
               type="search"
               value={query}
-              placeholder="縣市＋名稱可連打，例如：台中惠來、逢甲"
+              placeholder="台中惠來、逢甲"
+              aria-label="搜尋"
               onChange={(event) => setQuery(event.target.value)}
             />
           </label>
@@ -298,7 +295,7 @@ export function SitePickerPage({ session, onLogout }: Props) {
 
           <p className="search-meta">{filtered.length} 筆</p>
 
-          <h2>地點</h2>
+          <h2 className="sr-only">地點列表</h2>
           <ul className="picker-list is-scroll">
             {filtered.slice(0, 80).map((item) => (
               <li key={item.id}>
@@ -308,9 +305,6 @@ export function SitePickerPage({ session, onLogout }: Props) {
                   onClick={() => pickPark(item.id)}
                 >
                   <strong>
-                    <span className={`kind-badge is-${item.kind}`}>
-                      {item.kind === "school" ? "學校" : "公園"}
-                    </span>
                     {item.name}
                     {siteHasInventory(item) ? (
                       <span className="ready-badge">已盤點</span>
@@ -334,7 +328,7 @@ export function SitePickerPage({ session, onLogout }: Props) {
             ))}
           </ul>
           {filtered.length > 80 ? (
-            <p className="empty">僅顯示前 80 筆，請用搜尋縮小範圍</p>
+            <p className="empty">前 80 筆</p>
           ) : null}
           {filtered.length === 0 ? (
             <p className="empty">沒有符合的地點</p>
@@ -361,15 +355,8 @@ export function SitePickerPage({ session, onLogout }: Props) {
                           {item.name}
                           {ready ? (
                             <span className="ready-badge">已盤點</span>
-                          ) : (
-                            <span className="pending-badge">尚未匯入</span>
-                          )}
+                          ) : null}
                         </strong>
-                        <span>
-                          {ready
-                            ? `掃描 ${scan} · 點此查看盤點`
-                            : "尚無盤點 · 點此匯入"}
-                        </span>
                       </button>
                       <button
                         type="button"
@@ -404,9 +391,6 @@ export function SitePickerPage({ session, onLogout }: Props) {
                 {recorder.points.length} 點
               </span>
             </summary>
-            <p className="record-help">
-              室外定位，精度 ≤ {START_ACCURACY_M} m 才開始記點。停止時可選擇保存到地圖。
-            </p>
             <div className="record-actions">
               {recorder.recording ? (
                 <button
@@ -462,7 +446,7 @@ export function SitePickerPage({ session, onLogout }: Props) {
 
           {overlays.length > 0 ? (
             <section className="overlay-list">
-              <h2>地圖上路段</h2>
+              <h2>路段</h2>
               <ul className="picker-list">
                 {overlays.map((item) => (
                   <li key={item.id}>
@@ -470,8 +454,7 @@ export function SitePickerPage({ session, onLogout }: Props) {
                       <div>
                         <strong>{item.label}</strong>
                         <span>
-                          {item.year != null ? `${item.year} 年 · ` : ""}
-                          {item.source === "import" ? "匯入" : "錄製"} ·{" "}
+                          {item.year != null ? `${item.year} · ` : ""}
                           {item.polyline.length} 點
                         </span>
                       </div>
@@ -494,8 +477,6 @@ export function SitePickerPage({ session, onLogout }: Props) {
               {notice.text}
             </p>
           ) : null}
-
-          <ColorLegend compact />
         </aside>
 
         <OsmSiteMap
