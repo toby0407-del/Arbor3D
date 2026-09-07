@@ -373,7 +373,7 @@ export function OsmSiteMap({
         ) {
           if (pendingFlyRef.current && !haveGoodFixRef.current) {
             setBootLocating(false);
-            setLocateNote("定位不夠精準。");
+            setLocateNote("目前定位不夠精準，未移動地圖。請開系統定位後再按「快速定位」。");
           }
           return;
         }
@@ -526,7 +526,7 @@ export function OsmSiteMap({
       if (followingRef.current) {
         followingRef.current = false;
         setFollowing(false);
-        setLocateNote("已停止追蹤。");
+        setLocateNote("已停止追蹤（你移動了地圖）。再按「快速定位」可重新跟隨。");
       }
     };
     map.on("dragstart", onDragStart);
@@ -769,9 +769,9 @@ export function OsmSiteMap({
     applyTaiwanLock(map);
     map.flyToBounds(area, padding);
     if (here) {
-      setLocateNote("已置中。");
+      setLocateNote("選定地區已置中。你目前較遠，可再按「快速定位」移到你附近。");
     } else {
-      setLocateNote("已置中。");
+      setLocateNote("選定地區已置中。請按「快速定位」移到你附近。");
     }
   }, [selectedSite, selectedPathId, sites, recording, liveTrack.length]);
 
@@ -804,14 +804,15 @@ export function OsmSiteMap({
       <div ref={hostRef} className="osm-canvas" />
       {bootLocating ? (
         <div className="osm-boot-locate" role="status">
-          <strong>定位中</strong>
-          <span>請允許定位</span>
+          <strong>正在定位</strong>
+          <span>請在跳出的視窗按「允許」，定位成功後會移到你附近</span>
         </div>
       ) : null}
       <div className="osm-basemap-switch" role="group" aria-label="底圖">
         <button
           type="button"
           className={basemapMode === "street" ? "is-on" : undefined}
+          aria-pressed={basemapMode === "street"}
           onClick={() => setBasemapMode("street")}
         >
           街道
@@ -819,6 +820,7 @@ export function OsmSiteMap({
         <button
           type="button"
           className={basemapMode === "photo" ? "is-on" : undefined}
+          aria-pressed={basemapMode === "photo"}
           onClick={() => setBasemapMode("photo")}
         >
           空拍
@@ -829,9 +831,10 @@ export function OsmSiteMap({
           type="button"
           className={`osm-locate-btn ${following ? "is-following" : ""}`}
           disabled={recording}
+          aria-label={locating ? "定位中" : following ? "停止追蹤位置" : "定位到目前位置"}
           onClick={onLocateButton}
         >
-          {locating ? "定位中…" : following ? "追蹤中" : "快速定位"}
+          {locating ? "定位中…" : following ? "追蹤中" : "定位"}
         </button>
         {locateNote ? <div className="osm-locate-note">{locateNote}</div> : null}
       </div>

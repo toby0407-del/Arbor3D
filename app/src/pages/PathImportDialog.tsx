@@ -29,21 +29,25 @@ const SLOTS: {
   key: FolderSlot;
   kind: SlotKind;
   title: string;
+  hint: string;
 }[] = [
   {
     key: "denoised",
     kind: "ply",
     title: "去噪 PLY",
+    hint: "這次解算去噪後的那一個 .ply",
   },
   {
     key: "gaussian",
     kind: "ply",
     title: "高斯濺射 PLY",
+    hint: "訓練完成後匯出的 .ply，不要用 input.ply",
   },
   {
     key: "rawGo",
     kind: "folder",
     title: "原始照片",
+    hint: "這一趟訓練用的那包影像（一個資料夾即可）",
   },
 ];
 
@@ -267,6 +271,16 @@ export function PathImportDialog({
   }, [pathName]);
 
   useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !busy && job?.status !== "running") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [busy, job?.status, onClose]);
+
+  useEffect(() => {
     if (!derivedScanId) return;
     setScanId((prev) =>
       !prev || prev === lastDerived.current ? derivedScanId : prev,
@@ -394,12 +408,15 @@ export function PathImportDialog({
           <div>
             <p className="path-db-kicker">{parkName}</p>
             <h2 id="path-import-title">匯入 · {pathName}</h2>
-            <p>{segmentLabel || "—"}</p>
+            <p>
+              三項即可：去噪 .ply、高斯濺射 .ply、這一趟的照片資料夾。上傳完成後再按「開始計算」才會出樹身分。標記：
+              <strong> {segmentLabel || "—"}</strong>
+            </p>
           </div>
           <div className="path-db-head-actions">
             {hasInventory && onOpenInventory ? (
               <button type="button" className="ghost-btn" onClick={onOpenInventory}>
-                盤點
+                查看已有盤點
               </button>
             ) : null}
             <button type="button" className="ghost-btn" onClick={onClose} disabled={busy || computing}>
@@ -439,13 +456,13 @@ export function PathImportDialog({
                 <input
                   value={scanId}
                   disabled={busy}
-                  placeholder="資料夾名稱"
+                  placeholder="請先選照片資料夾，也可自行修改"
                   title="預設等於照片資料夾名稱，可改"
                   onChange={(e) => setScanId(e.target.value)}
                 />
               </label>
               <label className="login-field">
-                備註
+                備註（可選）
                 <input
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
@@ -472,6 +489,7 @@ export function PathImportDialog({
                     }`}
                   >
                     <span className="import-slot-title">{slot.title}</span>
+                    <span className="import-slot-hint">{slot.hint}</span>
                     {slot.kind === "ply" ? (
                       <input
                         type="file"
@@ -495,16 +513,22 @@ export function PathImportDialog({
                     )}
                     <span className="import-slot-status">
                       {state.formatMsg ||
-                        (slot.kind === "ply" ? "選 .ply" : "選資料夾")}
+                        (slot.kind === "ply" ? "點此選擇 .ply" : "點此選擇資料夾")}
                     </span>
                   </label>
                 );
               })}
             </div>
 
-            {error ? <p className="login-error">{error}</p> : null}
+            {error ? (
+              <p className="login-error" role="alert">
+                {error}
+              </p>
+            ) : null}
             {!error && formatError ? (
-              <p className="login-error">{formatError}</p>
+              <p className="login-error" role="status">
+                {formatError}
+              </p>
             ) : null}
 
             <button

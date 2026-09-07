@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { BrandMark } from "../components/BrandMark";
+import { ColorLegend } from "../components/ColorLegend";
 import { OsmSiteMap } from "../components/OsmSiteMap";
 import {
   SITE_COUNTS,
@@ -13,7 +14,7 @@ import {
   type SiteKind,
 } from "../data/sites";
 import { getReport } from "../data/inventory";
-import { usePathRecorder } from "../hooks/usePathRecorder";
+import { usePathRecorder, START_ACCURACY_M } from "../hooks/usePathRecorder";
 import { downloadGpx, haversineMeters, toLatLngs } from "../lib/gpx";
 import {
   readOverlays,
@@ -69,6 +70,11 @@ export function SitePickerPage({ session, onLogout }: Props) {
   const [overlays, setOverlays] = useState<MapOverlay[]>(() => readOverlays());
   const [liveReports, setLiveReports] = useState<Record<string, ParkInventoryReport>>({});
   const [liveBinds, setLiveBinds] = useState<Record<string, string>>({});
+  const [saveDraft, setSaveDraft] = useState<{
+    label: string;
+    polyline: LatLng[];
+  } | null>(null);
+  const [pendingRemove, setPendingRemove] = useState<string | null>(null);
   const recorder = usePathRecorder();
 
   useEffect(() => {
@@ -81,6 +87,15 @@ export function SitePickerPage({ session, onLogout }: Props) {
         /* 本機尚未計算過 */
       });
   }, []);
+
+  useEffect(() => {
+    if (!saveDraft) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") discardDraft();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [saveDraft]);
 
   const filtered = useMemo(() => {
     const rows = searchSites(query, kind).map((site) =>
@@ -159,12 +174,6 @@ export function SitePickerPage({ session, onLogout }: Props) {
       setNotice({ tone: "err", text: "點數不足，未保存。" });
       return;
     }
-    const wantSave = window.confirm("要保存這次錄製並顯示在地圖上嗎？");
-    if (!wantSave) {
-      recorder.reset();
-      setNotice({ tone: "ok", text: "已停止，未保存。" });
-      return;
-    }
     const stamp = new Date().toLocaleTimeString("zh-TW", {
       hour: "2-digit",
       minute: "2-digit",
@@ -172,20 +181,29 @@ export function SitePickerPage({ session, onLogout }: Props) {
     const suggested = park
       ? `${park.name} 現場錄製 ${stamp}`
       : `現場錄製 ${stamp}`;
-    const label =
-      window.prompt("這段路叫什麼？（會顯示在地圖上）", suggested)?.trim() ||
-      suggested;
-    const polyline = toLatLngs(points);
+    setSaveDraft({ label: suggested, polyline: toLatLngs(points) });
+  };
+
+  const discardDraft = () => {
+    setSaveDraft(null);
+    recorder.reset();
+    setNotice({ tone: "ok", text: "已停止，未保存。" });
+  };
+
+  const keepDraft = () => {
+    if (!saveDraft) return;
+    const label = saveDraft.label.trim() || "現場錄製";
     const overlay: MapOverlay = {
       id: `rec-${Date.now().toString(36)}`,
       parkId: parkId ?? "",
       pathId,
       label,
-      polyline,
+      polyline: saveDraft.polyline,
       source: "record",
       createdAt: new Date().toISOString(),
     };
     setOverlays(upsertOverlay(overlay));
+    setSaveDraft(null);
     recorder.reset();
     setNotice({ tone: "ok", text: `已保存「${label}」並畫在地圖上。` });
   };
@@ -262,12 +280,11 @@ export function SitePickerPage({ session, onLogout }: Props) {
           <h1>地點</h1>
 
           <label className="search-field">
-            <span className="sr-only">搜尋</span>
+            搜尋
             <input
               type="search"
               value={query}
               placeholder="台中惠來、逢甲"
-              aria-label="搜尋"
               onChange={(event) => setQuery(event.target.value)}
             />
           </label>
@@ -305,6 +322,9 @@ export function SitePickerPage({ session, onLogout }: Props) {
                   onClick={() => pickPark(item.id)}
                 >
                   <strong>
+                    <span className={`kind-badge is-${item.kind}`}>
+                      {item.kind === "school" ? "學校" : "公園"}
+                    </span>
                     {item.name}
                     {siteHasInventory(item) ? (
                       <span className="ready-badge">已盤點</span>
@@ -328,7 +348,7 @@ export function SitePickerPage({ session, onLogout }: Props) {
             ))}
           </ul>
           {filtered.length > 80 ? (
-            <p className="empty">前 80 筆</p>
+            <p className="empty">僅顯示前 80 筆，請用搜尋縮小範圍</p>
           ) : null}
           {filtered.length === 0 ? (
             <p className="empty">沒有符合的地點</p>
@@ -355,12 +375,15 @@ export function SitePickerPage({ session, onLogout }: Props) {
                           {item.name}
                           {ready ? (
                             <span className="ready-badge">已盤點</span>
-                          ) : null}
+                          ) : (
+                            <span className="pending-badge">尚未匯入</span>
+                          )}
                         </strong>
                       </button>
                       <button
                         type="button"
                         className="ghost-btn"
+                        aria-label={`匯入 ${item.name}`}
                         onClick={() => {
                           setParkId(park.id);
                           setPathId(item.id);
@@ -391,6 +414,9 @@ export function SitePickerPage({ session, onLogout }: Props) {
                 {recorder.points.length} 點
               </span>
             </summary>
+            <p className="record-help">
+              室外定位，精度 ≤ {START_ACCURACY_M} m 才開始記點。停止時可選擇保存到地圖。
+            </p>
             <div className="record-actions">
               {recorder.recording ? (
                 <button
@@ -446,7 +472,7 @@ export function SitePickerPage({ session, onLogout }: Props) {
 
           {overlays.length > 0 ? (
             <section className="overlay-list">
-              <h2>路段</h2>
+              <h2>地圖上路段</h2>
               <ul className="picker-list">
                 {overlays.map((item) => (
                   <li key={item.id}>
@@ -454,16 +480,38 @@ export function SitePickerPage({ session, onLogout }: Props) {
                       <div>
                         <strong>{item.label}</strong>
                         <span>
-                          {item.year != null ? `${item.year} · ` : ""}
+                          {item.year != null ? `${item.year} 年 · ` : ""}
+                          {item.source === "import" ? "匯入" : "錄製"} ·{" "}
                           {item.polyline.length} 點
                         </span>
                       </div>
                       <button
                         type="button"
-                        className="ghost-btn"
-                        onClick={() => setOverlays(removeOverlay(item.id))}
+                        className={`ghost-btn ${pendingRemove === item.id ? "is-danger" : ""}`}
+                        aria-label={
+                          pendingRemove === item.id
+                            ? `確認移除 ${item.label}`
+                            : `移除 ${item.label}`
+                        }
+                        onClick={() => {
+                          if (pendingRemove === item.id) {
+                            setOverlays(removeOverlay(item.id));
+                            setPendingRemove(null);
+                            setNotice({
+                              tone: "ok",
+                              text: `已從地圖移除「${item.label}」。`,
+                            });
+                            return;
+                          }
+                          setPendingRemove(item.id);
+                          window.setTimeout(() => {
+                            setPendingRemove((cur) =>
+                              cur === item.id ? null : cur,
+                            );
+                          }, 4000);
+                        }}
                       >
-                        移除
+                        {pendingRemove === item.id ? "確認移除" : "移除"}
                       </button>
                     </div>
                   </li>
@@ -473,10 +521,16 @@ export function SitePickerPage({ session, onLogout }: Props) {
           ) : null}
 
           {notice ? (
-            <p className={notice.tone === "ok" ? "picker-notice" : "login-error"}>
+            <p
+              className={notice.tone === "ok" ? "picker-notice" : "login-error"}
+              role="status"
+              aria-live="polite"
+            >
               {notice.text}
             </p>
           ) : null}
+
+          <ColorLegend compact />
         </aside>
 
         <OsmSiteMap
@@ -530,6 +584,47 @@ export function SitePickerPage({ session, onLogout }: Props) {
             setShowImport(true);
           }}
         />
+      ) : null}
+
+      {saveDraft ? (
+        <div
+          className="save-path-backdrop"
+          role="presentation"
+          onClick={discardDraft}
+        >
+          <div
+            className="save-path-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="save-path-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="save-path-title">保存這次錄製？</h2>
+            <p>路段名稱會顯示在地圖上。</p>
+            <label className="login-field">
+              路段名稱
+              <input
+                autoFocus
+                value={saveDraft.label}
+                onChange={(event) =>
+                  setSaveDraft({ ...saveDraft, label: event.target.value })
+                }
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") keepDraft();
+                  if (event.key === "Escape") discardDraft();
+                }}
+              />
+            </label>
+            <div className="save-path-actions">
+              <button type="button" className="ghost-btn" onClick={discardDraft}>
+                不保存
+              </button>
+              <button type="button" className="primary-btn" onClick={keepDraft}>
+                保存到地圖
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   );

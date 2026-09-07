@@ -45,7 +45,8 @@ export function LandscapeGate({ children }: Props) {
             <div className="landscape-gate-icon" aria-hidden="true">
               ↻
             </div>
-            <strong>請改橫向</strong>
+            <strong>請將裝置轉為橫向</strong>
+            <p>此介面固定橫式使用，直向無法操作。</p>
           </div>
         </div>
       ) : null}

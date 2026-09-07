@@ -1,6 +1,5 @@
 import { carbonForTree } from "./carbon";
 import { methodLabel } from "./format";
-import { classifyGrowth, growthStatusLabel } from "./growth";
 import { lightShort, noteLabel, trafficLight } from "./status";
 import type { FieldMeasure } from "../hooks/useFieldMeasures";
 import type { TreeRecord } from "../types";
@@ -24,7 +23,6 @@ export function inventoryToCsv(
     "YOLO信心",
     "燈號",
     "量測說明",
-    "時序成長",
     "標準1.3m",
     "現場手測_cm",
     "備註",
@@ -46,13 +44,6 @@ export function inventoryToCsv(
       tree.YOLO_confidence ?? "",
       lightShort(trafficLight(tree.DBH_note)),
       noteLabel(tree),
-      growthStatusLabel(
-        classifyGrowth({
-          dbhCm: tree.DBH_cm,
-          note: tree.DBH_note,
-          yoloConfidence: tree.YOLO_confidence,
-        }),
-      ),
       tree.dbh_is_strict_breast_height ? "是" : "否",
       field?.dbhCm ?? "",
       field?.note ?? "",

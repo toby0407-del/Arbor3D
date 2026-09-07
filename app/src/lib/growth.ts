@@ -125,34 +125,6 @@ function nextSurveyDate(scan: Date): Date {
   return later ?? midMonth(year, SURVEY_MONTHS[SURVEY_MONTHS.length - 1]);
 }
 
-/**
- * 以本趟胸徑為基準，推估同一年 3／7／9 月三期。
- * 掃描落在該月中旬前後 20 天內才標「本趟實測」，其餘為推估。
- */
-export function growthSeries(opts: {
-  dbhCm: number;
-  heightM: number | null;
-  heightEstimated: boolean;
-  scanIso: string;
-}): GrowthPoint[] {
-  const scan = parseScanDate(opts.scanIso);
-  const year = scan.getFullYear();
-  const baseDbh = Math.max(1, opts.dbhCm);
-  const measuredHeight = opts.heightEstimated ? null : opts.heightM;
-  const increment = annualDbhIncrementCm(baseDbh);
-
-  return SURVEY_MONTHS.map((month) =>
-    pointAt(
-      midMonth(year, month),
-      scan,
-      baseDbh,
-      measuredHeight,
-      increment,
-      `${month}月`,
-    ),
-  );
-}
-
 function toSnap(
   role: TemporalRole,
   roleLabel: string,
@@ -205,26 +177,15 @@ export function growthStatusLabel(status: GrowthStatus): string {
   return "Warning";
 }
 
-export function growthFit(opts: {
-  dbhCm: number | null | undefined;
-  note?: string | null;
-  yoloConfidence?: number | null;
-}): GrowthFit {
-  return growthFitFromStatus(classifyGrowth(opts));
-}
-
-export function growthFitLabel(fit: GrowthFit): string {
-  if (fit === "ok") return "正常成長";
-  if (fit === "watch") return "幾乎停長／待觀察";
-  return "異常 Warning";
-}
-
 function carbonNoteFor(
   status: GrowthStatus,
   carbonDeltaTon: number,
   increment: number,
 ): string {
-  const delta = carbonDeltaTon >= 0 ? `+${carbonDeltaTon.toFixed(3)} t` : `−${Math.abs(carbonDeltaTon).toFixed(3)} t`;
+  const delta =
+    carbonDeltaTon >= 0
+      ? `+${carbonDeltaTon.toFixed(3)} t`
+      : `−${Math.abs(carbonDeltaTon).toFixed(3)} t`;
   if (status === "abnormal") return `碳匯 ${delta}（不計）`;
   if (status === "stalled") return `${increment.toFixed(2)} cm／年　${delta}`;
   if (status === "watch") return `碳匯 ${delta}（參考）`;
@@ -295,12 +256,6 @@ export function temporalGrowth(opts: {
     carbonDeltaTon,
     carbonNote: carbonNoteFor(status, carbonDeltaTon, increment),
   };
-}
-
-export function growthKindLabel(kind: GrowthKind): string {
-  if (kind === "measured") return "本趟實測";
-  if (kind === "forecast") return "趨勢推估";
-  return "前期推估";
 }
 
 export function formatScanMonthDay(iso: string): string {
