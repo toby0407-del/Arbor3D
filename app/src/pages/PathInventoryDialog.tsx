@@ -23,10 +23,18 @@ import {
 } from "../lib/format";
 import { scanAssetUrl } from "../lib/scanMedia";
 import {
+  availableYears,
+  defaultGrowthRange,
+  filterPointsByRange,
+  formatAxisMonthYear,
+  formatRangeTitle,
   formatScanMonthDay,
   growthStatusLabel,
+  shiftGrowthRange,
   temporalGrowth,
   type GrowthPoint,
+  type GrowthRange,
+  type GrowthRangeMode,
   type GrowthStatus,
   type TemporalGrowth,
 } from "../lib/growth";
@@ -82,9 +90,6 @@ function GrowthIconButton({
       }}
     >
       <TreeGlyph />
-      {status === "abnormal" ? (
-        <span className="growth-warn-tag">Warning</span>
-      ) : null}
     </button>
   );
 }
@@ -102,25 +107,50 @@ function GrowthTrendPopup({
 }) {
   const { previous, current, trend, points, status } = temporal;
   const snaps = [previous, current, trend];
-  const chartW = 560;
-  const chartH = 190;
-  const pad = { l: 48, r: 16, t: 16, b: 34 };
-  const values = points.map((point) => point.dbhCm);
-  const min = Math.min(...values) - 0.6;
-  const max = Math.max(...values) + 0.6;
+  const years = availableYears(points);
+  const [mode, setMode] = useState<GrowthRangeMode>("year");
+  const [range, setRange] = useState<GrowthRange>(() =>
+    defaultGrowthRange("year", scanCreatedAt),
+  );
+
+  const setModeAndRange = (next: GrowthRangeMode) => {
+    setMode(next);
+    setRange(defaultGrowthRange(next, scanCreatedAt));
+  };
+
+  const visible = useMemo(
+    () => filterPointsByRange(points, range),
+    [points, range],
+  );
+
+  const chartW = 640;
+  const chartH = 220;
+  const pad = { l: 48, r: 16, t: 16, b: 42 };
+  const values = visible.map((point) => point.dbhCm);
+  const min = (values.length ? Math.min(...values) : 0) - 0.6;
+  const max = (values.length ? Math.max(...values) : 1) + 0.6;
   const span = Math.max(0.8, max - min);
   const xy = (point: GrowthPoint, index: number) => {
     const x =
-      pad.l + (index / Math.max(1, points.length - 1)) * (chartW - pad.l - pad.r);
-    const y = pad.t + (1 - (point.dbhCm - min) / span) * (chartH - pad.t - pad.b);
+      pad.l +
+      (index / Math.max(1, visible.length - 1)) * (chartW - pad.l - pad.r);
+    const y =
+      pad.t + (1 - (point.dbhCm - min) / span) * (chartH - pad.t - pad.b);
     return { x, y };
   };
-  const coords = points.map(xy);
+  const coords = visible.map(xy);
   const line = coords
-    .map((pt, index) => `${index === 0 ? "M" : "L"}${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`)
+    .map(
+      (pt, index) =>
+        `${index === 0 ? "M" : "L"}${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`,
+    )
     .join(" ");
   const baseY = chartH - pad.b;
-  const area = `${line} L${coords[coords.length - 1].x.toFixed(1)} ${baseY} L${coords[0].x.toFixed(1)} ${baseY} Z`;
+  const area =
+    coords.length > 0
+      ? `${line} L${coords[coords.length - 1].x.toFixed(1)} ${baseY} L${coords[0].x.toFixed(1)} ${baseY} Z`
+      : "";
+  const labelStep = Math.max(1, Math.ceil(visible.length / 8));
   const tone =
     status === "abnormal" ? "red" : status === "normal" ? "green" : "yellow";
 
@@ -183,8 +213,105 @@ function GrowthTrendPopup({
             })}
           </ol>
 
+          <div className="growth-range-bar">
+            <div className="growth-range-modes" role="tablist" aria-label="時區">
+              {(
+                [
+                  ["year", "每年"],
+                  ["quarter", "每季"],
+                  ["custom", "自訂"],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={mode === id}
+                  className={`growth-range-mode${mode === id ? " is-on" : ""}`}
+                  onClick={() => setModeAndRange(id)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {mode === "custom" ? (
+              <div className="growth-custom-range">
+                <label>
+                  起
+                  <select
+                    value={`${range.from.year}-${range.from.month}`}
+                    onChange={(event) => {
+                      const [y, m] = event.target.value.split("-").map(Number);
+                      setRange((prev) => ({
+                        ...prev,
+                        mode: "custom",
+                        from: { year: y, month: m },
+                      }));
+                    }}
+                  >
+                    {points.map((p) => (
+                      <option
+                        key={`from-${p.year}-${p.month}`}
+                        value={`${p.year}-${p.month}`}
+                      >
+                        {p.year}/{p.month}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <span aria-hidden="true">→</span>
+                <label>
+                  迄
+                  <select
+                    value={`${range.to.year}-${range.to.month}`}
+                    onChange={(event) => {
+                      const [y, m] = event.target.value.split("-").map(Number);
+                      setRange((prev) => ({
+                        ...prev,
+                        mode: "custom",
+                        to: { year: y, month: m },
+                      }));
+                    }}
+                  >
+                    {points.map((p) => (
+                      <option
+                        key={`to-${p.year}-${p.month}`}
+                        value={`${p.year}-${p.month}`}
+                      >
+                        {p.year}/{p.month}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            ) : (
+              <div className="growth-range-nav">
+                <button
+                  type="button"
+                  className="ghost-btn"
+                  aria-label="上一時區"
+                  onClick={() => setRange((prev) => shiftGrowthRange(prev, -1))}
+                >
+                  ‹
+                </button>
+                <strong>{formatRangeTitle(range)}</strong>
+                <button
+                  type="button"
+                  className="ghost-btn"
+                  aria-label="下一時區"
+                  onClick={() => setRange((prev) => shiftGrowthRange(prev, 1))}
+                >
+                  ›
+                </button>
+              </div>
+            )}
+          </div>
+
           <figure className="growth-chart-wrap">
-            <figcaption>本年度 · 胸徑趨勢</figcaption>
+            <figcaption>
+              {formatRangeTitle(range)} · 胸徑趨勢（橫軸：年／月）
+            </figcaption>
             <svg
               className="growth-chart"
               viewBox={`0 0 ${chartW} ${chartH}`}
@@ -209,34 +336,48 @@ function GrowthTrendPopup({
                   </g>
                 );
               })}
-              <path d={area} className="growth-area" />
-              <path d={line} className="growth-line" />
+              {area ? <path d={area} className="growth-area" /> : null}
+              {line ? <path d={line} className="growth-line is-sim-line" /> : null}
               {coords.map((pt, index) => {
-                const point = points[index];
-                const measured = point.kind === "measured";
+                const point = visible[index];
+                const real = point.source === "real";
+                const showLabel =
+                  real || index % labelStep === 0 || index === visible.length - 1;
                 return (
-                  <g key={`${point.year}-${point.month}-${point.label}`}>
+                  <g key={`${point.year}-${point.month}-${point.source}`}>
                     <circle
                       cx={pt.x}
                       cy={pt.y}
-                      r={measured ? 6 : 4.5}
-                      className={`growth-dot${measured ? " is-measured" : ""}`}
-                    />
-                    <text
-                      x={pt.x}
-                      y={chartH - 10}
-                      textAnchor="middle"
-                      className={`growth-axis${measured ? " is-on" : ""}`}
+                      r={real ? 6 : 3.5}
+                      className={`growth-dot is-${point.source}`}
                     >
-                      {snaps[index].roleLabel}
-                    </text>
+                      <title>
+                        {formatAxisMonthYear(point)} · {point.dbhCm.toFixed(2)}{" "}
+                        cm
+                      </title>
+                    </circle>
+                    {showLabel ? (
+                      <text
+                        x={pt.x}
+                        y={chartH - 12}
+                        textAnchor="middle"
+                        className={`growth-axis${real ? " is-on" : ""}`}
+                      >
+                        {formatAxisMonthYear(point)}
+                      </text>
+                    ) : null}
                   </g>
                 );
               })}
             </svg>
           </figure>
 
-          <p className="growth-foot">{temporal.carbonNote}</p>
+          <p className="growth-foot">
+            {temporal.carbonNote}
+            {years.length > 0
+              ? `　·　序列 ${years[0]}–${years[years.length - 1]}`
+              : null}
+          </p>
         </div>
       </div>
     </div>

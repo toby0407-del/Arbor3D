@@ -16,17 +16,22 @@ export function annualDbhIncrementCm(dbhCm: number): number {
 }
 
 export type GrowthKind = "backcast" | "measured" | "forecast";
+/** real = 實測真值；sim = 模擬／推估值 */
+export type GrowthSource = "real" | "sim";
 export type GrowthFit = "ok" | "watch" | "off";
 export type GrowthStatus = "normal" | "stalled" | "watch" | "abnormal";
 export type TemporalRole = "previous" | "current" | "trend";
+export type GrowthRangeMode = "year" | "quarter" | "custom";
 
 export type GrowthPoint = {
   year: number;
   month: number;
+  day: number;
   label: string;
   dbhCm: number;
   heightM: number;
   kind: GrowthKind;
+  source: GrowthSource;
 };
 
 export type TemporalSnap = {
@@ -36,6 +41,7 @@ export type TemporalSnap = {
   dbhCm: number;
   heightM: number;
   kind: GrowthKind;
+  source: GrowthSource;
   co2Ton: number;
 };
 
@@ -43,6 +49,7 @@ export type TemporalGrowth = {
   previous: TemporalSnap;
   current: TemporalSnap;
   trend: TemporalSnap;
+  /** 完整月序列（含大量模擬點） */
   points: GrowthPoint[];
   status: GrowthStatus;
   fit: GrowthFit;
@@ -53,8 +60,19 @@ export type TemporalGrowth = {
   carbonNote: string;
 };
 
+export type GrowthMonth = { year: number; month: number };
+
+export type GrowthRange = {
+  mode: GrowthRangeMode;
+  from: GrowthMonth;
+  to: GrowthMonth;
+};
+
 const MS_PER_YEAR = 365.25 * 24 * 60 * 60 * 1000;
 const MEASURED_WINDOW_DAYS = 20;
+/** 往前灌幾年、往後灌幾年的月序列（模擬為主；每年都灌滿 1–12 月） */
+const SERIES_YEARS_BACK = 3;
+const SERIES_YEARS_FORWARD = 2;
 
 export function parseScanDate(iso: string): Date {
   const date = new Date(iso);
@@ -63,6 +81,28 @@ export function parseScanDate(iso: string): Date {
 
 function midMonth(year: number, month: number): Date {
   return new Date(year, month - 1, 15);
+}
+
+function clampMonth(year: number, month: number): GrowthMonth {
+  let y = year;
+  let m = month;
+  while (m < 1) {
+    m += 12;
+    y -= 1;
+  }
+  while (m > 12) {
+    m -= 12;
+    y += 1;
+  }
+  return { year: y, month: m };
+}
+
+function monthIndex(m: GrowthMonth): number {
+  return m.year * 12 + (m.month - 1);
+}
+
+function addMonths(m: GrowthMonth, delta: number): GrowthMonth {
+  return clampMonth(m.year, m.month + delta);
 }
 
 function heightAtDbh(
@@ -89,24 +129,10 @@ function kindForSurvey(scan: Date, survey: Date): GrowthKind {
   return survey.getTime() < scan.getTime() ? "backcast" : "forecast";
 }
 
-function pointAt(
-  survey: Date,
-  scan: Date,
-  baseDbh: number,
-  measuredHeight: number | null,
-  increment: number,
-  label: string,
-): GrowthPoint {
-  const yearsDelta = (survey.getTime() - scan.getTime()) / MS_PER_YEAR;
-  const dbh = Math.max(3, baseDbh + increment * yearsDelta);
-  return {
-    year: survey.getFullYear(),
-    month: survey.getMonth() + 1,
-    label,
-    dbhCm: dbh,
-    heightM: heightAtDbh(dbh, measuredHeight, baseDbh),
-    kind: kindForSurvey(scan, survey),
-  };
+/** 穩定雜訊，同一棵樹同一月份結果固定 */
+function simNoise(seed: number, year: number, month: number): number {
+  const x = Math.sin(seed * 12.9898 + year * 78.233 + month * 4.141) * 43758.5453;
+  return (x - Math.floor(x)) * 2 - 1;
 }
 
 function previousSurveyDate(scan: Date): Date {
@@ -114,7 +140,7 @@ function previousSurveyDate(scan: Date): Date {
   const earlier = SURVEY_MONTHS.map((month) => midMonth(year, month)).filter(
     (date) => date.getTime() < scan.getTime(),
   );
-  return earlier.at(-1) ?? midMonth(year, SURVEY_MONTHS[0]);
+  return earlier.at(-1) ?? midMonth(year - 1, SURVEY_MONTHS[SURVEY_MONTHS.length - 1]);
 }
 
 function nextSurveyDate(scan: Date): Date {
@@ -122,7 +148,7 @@ function nextSurveyDate(scan: Date): Date {
   const later = SURVEY_MONTHS.map((month) => midMonth(year, month)).find(
     (date) => date.getTime() > scan.getTime(),
   );
-  return later ?? midMonth(year, SURVEY_MONTHS[SURVEY_MONTHS.length - 1]);
+  return later ?? midMonth(year + 1, SURVEY_MONTHS[0]);
 }
 
 function toSnap(
@@ -133,10 +159,11 @@ function toSnap(
   return {
     role,
     roleLabel,
-    periodLabel: `${point.year}年${point.label}`,
+    periodLabel: `${point.year}年${point.month}月`,
     dbhCm: point.dbhCm,
     heightM: point.heightM,
     kind: point.kind,
+    source: point.source,
     co2Ton: co2At(point.dbhCm, point.heightM),
   };
 }
@@ -174,7 +201,7 @@ export function growthStatusLabel(status: GrowthStatus): string {
   if (status === "normal") return "正常";
   if (status === "stalled") return "停長";
   if (status === "watch") return "觀察";
-  return "Warning";
+  return "異常";
 }
 
 function carbonNoteFor(
@@ -192,7 +219,167 @@ function carbonNoteFor(
   return `碳匯 ${delta}`;
 }
 
-/** Previous Survey → Current Survey → Growth Trend */
+function pointFromDate(
+  date: Date,
+  scan: Date,
+  baseDbh: number,
+  measuredHeight: number | null,
+  increment: number,
+  seed: number,
+  forceReal: boolean,
+): GrowthPoint {
+  const yearsDelta = (date.getTime() - scan.getTime()) / MS_PER_YEAR;
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const kind = forceReal ? "measured" : kindForSurvey(scan, date);
+  const source: GrowthSource = forceReal || kind === "measured" ? "real" : "sim";
+  const noise =
+    source === "sim"
+      ? simNoise(seed, year, month) * Math.min(0.35, increment * 0.22)
+      : 0;
+  const dbh = Math.max(3, baseDbh + increment * yearsDelta + noise);
+  return {
+    year,
+    month,
+    day,
+    label: `${year}/${month}`,
+    dbhCm: dbh,
+    heightM: heightAtDbh(dbh, measuredHeight, baseDbh),
+    kind,
+    source,
+  };
+}
+
+/** 產生多年月序列：僅掃描當下為實測，其餘為模擬；每年都含 1–12 月 */
+function buildSeries(opts: {
+  scan: Date;
+  baseDbh: number;
+  measuredHeight: number | null;
+  increment: number;
+  seed: number;
+}): GrowthPoint[] {
+  const { scan, baseDbh, measuredHeight, increment, seed } = opts;
+  const start: GrowthMonth = {
+    year: scan.getFullYear() - SERIES_YEARS_BACK,
+    month: 1,
+  };
+  // 明確灌到「掃描年 + FORWARD」的 12 月，避免只到年中（例如 2027/7）
+  const end: GrowthMonth = {
+    year: scan.getFullYear() + SERIES_YEARS_FORWARD,
+    month: 12,
+  };
+  const scanMonth = { year: scan.getFullYear(), month: scan.getMonth() + 1 };
+  const points: GrowthPoint[] = [];
+
+  for (
+    let cursor: GrowthMonth = start;
+    monthIndex(cursor) <= monthIndex(end);
+    cursor = addMonths(cursor, 1)
+  ) {
+    const isScanMonth =
+      cursor.year === scanMonth.year && cursor.month === scanMonth.month;
+    const date = isScanMonth ? scan : midMonth(cursor.year, cursor.month);
+    points.push(
+      pointFromDate(
+        date,
+        scan,
+        baseDbh,
+        measuredHeight,
+        increment,
+        seed,
+        isScanMonth,
+      ),
+    );
+  }
+  return points;
+}
+
+export function quarterOfMonth(month: number): 1 | 2 | 3 | 4 {
+  return (Math.floor((month - 1) / 3) + 1) as 1 | 2 | 3 | 4;
+}
+
+export function defaultGrowthRange(
+  mode: GrowthRangeMode,
+  scanIso: string,
+): GrowthRange {
+  const scan = parseScanDate(scanIso);
+  const year = scan.getFullYear();
+  const month = scan.getMonth() + 1;
+  if (mode === "year") {
+    return { mode, from: { year, month: 1 }, to: { year, month: 12 } };
+  }
+  if (mode === "quarter") {
+    const q = quarterOfMonth(month);
+    const startMonth = (q - 1) * 3 + 1;
+    return {
+      mode,
+      from: { year, month: startMonth },
+      to: { year, month: startMonth + 2 },
+    };
+  }
+  return {
+    mode: "custom",
+    from: clampMonth(year - 1, month),
+    to: { year, month },
+  };
+}
+
+export function shiftGrowthRange(range: GrowthRange, delta: number): GrowthRange {
+  if (range.mode === "year") {
+    return {
+      ...range,
+      from: { year: range.from.year + delta, month: 1 },
+      to: { year: range.to.year + delta, month: 12 },
+    };
+  }
+  if (range.mode === "quarter") {
+    const shifted = addMonths(range.from, delta * 3);
+    const qStart = clampMonth(
+      shifted.year,
+      (quarterOfMonth(shifted.month) - 1) * 3 + 1,
+    );
+    return {
+      ...range,
+      from: qStart,
+      to: addMonths(qStart, 2),
+    };
+  }
+  return range;
+}
+
+export function filterPointsByRange(
+  points: GrowthPoint[],
+  range: GrowthRange,
+): GrowthPoint[] {
+  const a = monthIndex(range.from);
+  const b = monthIndex(range.to);
+  const lo = Math.min(a, b);
+  const hi = Math.max(a, b);
+  return points.filter((p) => {
+    const i = monthIndex({ year: p.year, month: p.month });
+    return i >= lo && i <= hi;
+  });
+}
+
+export function formatRangeTitle(range: GrowthRange): string {
+  if (range.mode === "year") return `${range.from.year}年`;
+  if (range.mode === "quarter") {
+    return `${range.from.year}年 Q${quarterOfMonth(range.from.month)}`;
+  }
+  return `${range.from.year}/${range.from.month}–${range.to.year}/${range.to.month}`;
+}
+
+export function formatAxisMonthYear(point: GrowthPoint): string {
+  return `${point.year}/${point.month}`;
+}
+
+export function availableYears(points: GrowthPoint[]): number[] {
+  const years = new Set(points.map((p) => p.year));
+  return [...years].sort((a, b) => a - b);
+}
+
+/** Previous Survey → Current Survey → Growth Trend（另附完整模擬月序列） */
 export function temporalGrowth(opts: {
   dbhCm: number;
   heightM: number | null;
@@ -200,37 +387,43 @@ export function temporalGrowth(opts: {
   scanIso: string;
   note?: string | null;
   yoloConfidence?: number | null;
+  /** 用於穩定模擬雜訊；不傳則用胸徑種子 */
+  seed?: number;
 }): TemporalGrowth {
   const scan = parseScanDate(opts.scanIso);
   const baseDbh = Math.max(1, opts.dbhCm);
   const measuredHeight = opts.heightEstimated ? null : opts.heightM;
   const increment = annualDbhIncrementCm(baseDbh);
+  const seed = opts.seed ?? Math.round(baseDbh * 1000);
   const prevDate = previousSurveyDate(scan);
   const nextDate = nextSurveyDate(scan);
 
-  const previousPoint = pointAt(
+  const previousPoint = pointFromDate(
     prevDate,
     scan,
     baseDbh,
     measuredHeight,
     increment,
-    `${prevDate.getMonth() + 1}月`,
+    seed,
+    false,
   );
-  const currentPoint: GrowthPoint = {
-    year: scan.getFullYear(),
-    month: scan.getMonth() + 1,
-    label: `${scan.getMonth() + 1}月${scan.getDate()}日`,
-    dbhCm: baseDbh,
-    heightM: heightAtDbh(baseDbh, measuredHeight, baseDbh),
-    kind: "measured",
-  };
-  const trendPoint = pointAt(
+  const currentPoint = pointFromDate(
+    scan,
+    scan,
+    baseDbh,
+    measuredHeight,
+    increment,
+    seed,
+    true,
+  );
+  const trendPoint = pointFromDate(
     nextDate,
     scan,
     baseDbh,
     measuredHeight,
     increment,
-    `${nextDate.getMonth() + 1}月`,
+    seed,
+    false,
   );
 
   const previous = toSnap("previous", "前期", previousPoint);
@@ -242,12 +435,19 @@ export function temporalGrowth(opts: {
     yoloConfidence: opts.yoloConfidence,
   });
   const carbonDeltaTon = current.co2Ton - previous.co2Ton;
+  const series = buildSeries({
+    scan,
+    baseDbh,
+    measuredHeight,
+    increment,
+    seed,
+  });
 
   return {
     previous,
     current,
     trend,
-    points: [previousPoint, currentPoint, trendPoint],
+    points: series,
     status,
     fit: growthFitFromStatus(status),
     warning: status === "abnormal",

@@ -2441,19 +2441,9 @@ h1 { margin: 0; font-size: 32px; font-weight: 650; letter-spacing: -0.03em; }
   border-color: #7a1810;
   background: linear-gradient(#ffc8b8, #c43020 54%, #8a1208);
   color: #fff4ee;
-  width: auto;
-  padding: 1px 4px 2px;
 }
 .growth-icon-btn:hover {
   filter: brightness(1.06);
-}
-.growth-warn-tag {
-  display: block;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  line-height: 1.1;
-  color: #fff8e8;
 }
 .growth-backdrop {
   position: fixed;
@@ -2465,7 +2455,7 @@ h1 { margin: 0; font-size: 32px; font-weight: 650; letter-spacing: -0.03em; }
   background: rgba(26, 34, 22, 0.45);
 }
 .growth-panel {
-  width: min(720px, 100%);
+  width: min(820px, 100%);
   max-height: 92svh;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -2573,6 +2563,64 @@ h1 { margin: 0; font-size: 32px; font-weight: 650; letter-spacing: -0.03em; }
   font-family: var(--mono);
   color: var(--moss);
 }
+.growth-range-bar {
+  display: grid;
+  gap: 10px;
+}
+.growth-range-modes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.growth-range-mode {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.growth-range-mode.is-on {
+  border-color: var(--moss);
+  background: var(--green-pale);
+  color: var(--ink);
+}
+.growth-range-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.growth-range-nav strong {
+  min-width: 7.5rem;
+  text-align: center;
+  font-size: 15px;
+}
+.growth-custom-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: center;
+  gap: 10px;
+}
+.growth-custom-range label {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.growth-custom-range select {
+  min-width: 7.5rem;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+}
 .growth-chart-wrap {
   margin: 0;
   border: 1px solid var(--line);
@@ -2607,24 +2655,34 @@ h1 { margin: 0; font-size: 32px; font-weight: 650; letter-spacing: -0.03em; }
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+.growth-line.is-sim-line {
+  stroke-dasharray: 5 4;
+  stroke-opacity: 0.85;
+}
 .growth-dot {
   fill: #fff;
   stroke: var(--moss);
-  stroke-width: 2.2;
+  stroke-width: 2;
 }
-.growth-dot.is-measured {
+.growth-dot.is-sim {
+  fill: #fff;
+  stroke: var(--moss);
+  stroke-width: 1.8;
+}
+.growth-dot.is-real {
   fill: var(--moss-deep);
   stroke: #fff;
   stroke-width: 2.5;
 }
 .growth-axis {
-  font-size: 11px;
+  font-size: 10px;
   fill: var(--ink-soft);
   font-family: var(--sans);
 }
 .growth-axis.is-y {
   text-anchor: end;
   font-family: var(--mono);
+  font-size: 11px;
 }
 .growth-axis.is-on {
   fill: var(--ink);
