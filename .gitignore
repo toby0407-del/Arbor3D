@@ -67,3 +67,4 @@ Thumbs.db
 # Reproducible local analytics outputs
 /outputs/
 .venv/
+.pbi/

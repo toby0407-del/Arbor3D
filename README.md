@@ -276,3 +276,10 @@ CO₂ = D × 3.667
 
 新增離線 DBH 誤差驗證、統一 Analytics CSV／Excel、確認固定樹號後的跨期比較、Power BI 模型草稿、Fabric／Data Agent 設定與預設關閉雲端的 Foundry／本機 RAG。
 完整操作與驗證限制見 [競賽版操作指南](docs/microsoft/README.md)。既有 YOLO／DBH／3DGS 管線維持原樣。
+
+2026-09-21 已合併既有競賽分支至 main，Windows 接續版新增：
+- 四年季度模擬（2022 Q3–2026 Q2，16 季×16 棵=256 筆），來源及身份明確標為模擬，禁止混入真實 snapshot。
+- 五頁 Power BI PBIP/PBIR 產生器，真實／模擬專案分開，真實精度 measures 排除合成資料。
+- Windows Python 路徑／UTF-8 測試修正，以及季度 CSV 範例。
+
+重建指令、Power BI 開啟方法與仍待 Desktop 驗收的項目見 [Windows 與季度模擬指南](docs/microsoft/WINDOWS.md)。

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { BrandMark } from "../components/BrandMark";
 import { ColorLegend } from "../components/ColorLegend";
 import { OsmSiteMap } from "../components/OsmSiteMap";
@@ -76,6 +76,12 @@ export function SitePickerPage({ session, onLogout }: Props) {
   } | null>(null);
   const [pendingRemove, setPendingRemove] = useState<string | null>(null);
   const recorder = usePathRecorder();
+  const resetRecording = recorder.reset;
+  const discardDraft = useCallback(() => {
+    setSaveDraft(null);
+    resetRecording();
+    setNotice({ tone: "ok", text: "已停止，未保存。" });
+  }, [resetRecording]);
 
   useEffect(() => {
     void fetchInventories()
@@ -95,7 +101,7 @@ export function SitePickerPage({ session, onLogout }: Props) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [saveDraft]);
+  }, [saveDraft, discardDraft]);
 
   const filtered = useMemo(() => {
     const rows = searchSites(query, kind).map((site) =>
@@ -182,12 +188,6 @@ export function SitePickerPage({ session, onLogout }: Props) {
       ? `${park.name} 現場錄製 ${stamp}`
       : `現場錄製 ${stamp}`;
     setSaveDraft({ label: suggested, polyline: toLatLngs(points) });
-  };
-
-  const discardDraft = () => {
-    setSaveDraft(null);
-    recorder.reset();
-    setNotice({ tone: "ok", text: "已停止，未保存。" });
   };
 
   const keepDraft = () => {

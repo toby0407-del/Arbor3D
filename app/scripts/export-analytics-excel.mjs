@@ -5,23 +5,24 @@ import { dirname } from 'node:path';
 const [input, output] = process.argv.slice(2);
 if (!input || !output) throw new Error('Usage: node app/scripts/export-analytics-excel.mjs analytics.json analytics.xlsx');
 const data = JSON.parse(await readFile(input, 'utf8'));
-if (data.schema_version !== '1.0') throw new Error('Unsupported analytics schema');
+if (!['1.0', '1.1'].includes(data.schema_version)) throw new Error('Unsupported analytics schema');
+const simulated = data.tables.Summary[0].dataset_kind === 'simulated';
 const book = new ExcelJS.Workbook();
 book.creator = 'Arbor3D';
 const summary = book.addWorksheet('Overview');
 summary.columns = [{width: 30}, {width: 90}];
 summary.addRows([
-  ['Arbor3D Analytics', '資料快照；更新資料後重新執行匯出'],
+  ['Arbor3D Analytics', simulated ? '模擬資料 DEMO ONLY；非人工實測、非真實精度或生長成果' : '資料快照；更新資料後重新執行匯出'],
   ['來源', input],
   ['觀測筆數', data.tables.Summary[0].observations],
-  ['有效實測配對', data.tables.Summary[0].paired_count],
+  [simulated ? '模擬配對（非實测）' : '有效實測配對', data.tables.Summary[0].paired_count],
   ['MAE (cm)', data.tables.Summary[0].mae_cm ?? '無有效配對'],
   ['RMSE (cm)', data.tables.Summary[0].rmse_cm ?? '無有效配對'],
   ['Bias (cm)', data.tables.Summary[0].bias_cm ?? '無有效配對'],
   ['MAPE (%)', data.tables.Summary[0].mape_pct ?? '無有效配對'],
   ['待複核', data.tables.Summary[0].review_count],
-  ['来源定義', 'measured=人工實測；ai=演算法；estimated=公式推估；missing=缺值'],
-  ['跨期規則', '僅人工確認的固定 Tree ID；同來源、同方法、標準 1.3 m。負增量需複核。'],
+  ['来源定義', simulated ? 'simulated_* 全為模擬；誤差為人工設定的噪音，不代表模型精度。' : 'measured=人工實測；ai=演算法；estimated=公式推估；missing=缺值'],
+  ['跨期規則', simulated ? '固定樹號與跨季量測均為合成，僅供展示與程式驗證。' : '僅人工確認的固定 Tree ID；同來源、同方法、標準 1.3 m。負增量需複核。'],
   ['碳量限制', '沿用盤點公式的推估 CO₂ 當量，非經查證減碳量或碳權。'],
 ]);
 for (const [name, rows] of Object.entries(data.tables)) {

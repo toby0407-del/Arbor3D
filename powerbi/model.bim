@@ -38,6 +38,12 @@
             "dataType": "string",
             "sourceColumn": "identity_status",
             "summarizeBy": "none"
+          },
+          {
+            "name": "dataset_kind",
+            "dataType": "string",
+            "sourceColumn": "dataset_kind",
+            "summarizeBy": "none"
           }
         ],
         "partitions": [
@@ -48,10 +54,10 @@
               "type": "m",
               "expression": [
                 "let",
-                "  Raw = Csv.Document(File.Contents(AnalyticsFolder & \"/DimTree.csv\"), [Delimiter=\",\", Columns=4, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "  Raw = Csv.Document(File.Contents(AnalyticsFolder & \"/DimTree.csv\"), [Delimiter=\",\", Columns=5, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
                 "  Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
                 "  Nulls = Table.ReplaceValue(Headers, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
-                "  Typed = Table.TransformColumnTypes(Nulls, {{\"tree_key\", type text}, {\"site_id\", type text}, {\"persistent_tree_id\", type text}, {\"identity_status\", type text}}, \"en-US\")",
+                "  Typed = Table.TransformColumnTypes(Nulls, {{\"tree_key\", type text}, {\"site_id\", type text}, {\"persistent_tree_id\", type text}, {\"identity_status\", type text}, {\"dataset_kind\", type text}}, \"en-US\")",
                 "in Typed"
               ]
             }
@@ -96,6 +102,12 @@
             "dataType": "string",
             "sourceColumn": "source_sha256",
             "summarizeBy": "none"
+          },
+          {
+            "name": "dataset_kind",
+            "dataType": "string",
+            "sourceColumn": "dataset_kind",
+            "summarizeBy": "none"
           }
         ],
         "partitions": [
@@ -106,10 +118,10 @@
               "type": "m",
               "expression": [
                 "let",
-                "  Raw = Csv.Document(File.Contents(AnalyticsFolder & \"/DimScan.csv\"), [Delimiter=\",\", Columns=6, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "  Raw = Csv.Document(File.Contents(AnalyticsFolder & \"/DimScan.csv\"), [Delimiter=\",\", Columns=7, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
                 "  Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
                 "  Nulls = Table.ReplaceValue(Headers, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
-                "  Typed = Table.TransformColumnTypes(Nulls, {{\"scan_key\", type text}, {\"site_id\", type text}, {\"scan_id\", type text}, {\"observed_at\", type date}, {\"source_file\", type text}, {\"source_sha256\", type text}}, \"en-US\")",
+                "  Typed = Table.TransformColumnTypes(Nulls, {{\"scan_key\", type text}, {\"site_id\", type text}, {\"scan_id\", type text}, {\"observed_at\", type date}, {\"source_file\", type text}, {\"source_sha256\", type text}, {\"dataset_kind\", type text}}, \"en-US\")",
                 "in Typed"
               ]
             }
@@ -256,6 +268,12 @@
             "dataType": "string",
             "sourceColumn": "review_reason",
             "summarizeBy": "none"
+          },
+          {
+            "name": "dataset_kind",
+            "dataType": "string",
+            "sourceColumn": "dataset_kind",
+            "summarizeBy": "none"
           }
         ],
         "partitions": [
@@ -266,10 +284,10 @@
               "type": "m",
               "expression": [
                 "let",
-                "  Raw = Csv.Document(File.Contents(AnalyticsFolder & \"/FactObservation.csv\"), [Delimiter=\",\", Columns=23, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "  Raw = Csv.Document(File.Contents(AnalyticsFolder & \"/FactObservation.csv\"), [Delimiter=\",\", Columns=24, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
                 "  Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
                 "  Nulls = Table.ReplaceValue(Headers, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
-                "  Typed = Table.TransformColumnTypes(Nulls, {{\"observation_key\", type text}, {\"tree_key\", type text}, {\"scan_key\", type text}, {\"local_tree_id\", type text}, {\"observed_at\", type date}, {\"auto_dbh_cm\", type number}, {\"auto_source\", type text}, {\"auto_method\", type text}, {\"strict_13m\", type logical}, {\"manual_dbh_cm\", type number}, {\"manual_source\", type text}, {\"manual_measured_at\", type date}, {\"manual_height_m\", type number}, {\"manual_strict_13m\", type logical}, {\"comparison_status\", type text}, {\"error_cm\", type number}, {\"absolute_error_cm\", type number}, {\"squared_error_cm2\", type number}, {\"ape_pct\", type number}, {\"yolo_confidence\", type number}, {\"arc_coverage_deg\", type number}, {\"review_required\", type logical}, {\"review_reason\", type text}}, \"en-US\")",
+                "  Typed = Table.TransformColumnTypes(Nulls, {{\"observation_key\", type text}, {\"tree_key\", type text}, {\"scan_key\", type text}, {\"local_tree_id\", type text}, {\"observed_at\", type date}, {\"auto_dbh_cm\", type number}, {\"auto_source\", type text}, {\"auto_method\", type text}, {\"strict_13m\", type logical}, {\"manual_dbh_cm\", type number}, {\"manual_source\", type text}, {\"manual_measured_at\", type date}, {\"manual_height_m\", type number}, {\"manual_strict_13m\", type logical}, {\"comparison_status\", type text}, {\"error_cm\", type number}, {\"absolute_error_cm\", type number}, {\"squared_error_cm2\", type number}, {\"ape_pct\", type number}, {\"yolo_confidence\", type number}, {\"arc_coverage_deg\", type number}, {\"review_required\", type logical}, {\"review_reason\", type text}, {\"dataset_kind\", type text}}, \"en-US\")",
                 "in Typed"
               ]
             }
@@ -290,31 +308,31 @@
           },
           {
             "name": "Valid Pairs",
-            "expression": "COALESCE(CALCULATE(COUNTROWS(FactObservation), FactObservation[comparison_status] = \"paired\"), 0)",
+            "expression": "CALCULATE((COALESCE(CALCULATE(COUNTROWS(FactObservation), FactObservation[comparison_status] = \"paired\"), 0)), KEEPFILTERS(FactObservation[dataset_kind] = \"observed\"))",
             "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
             "formatString": "0.000"
           },
           {
             "name": "MAE cm",
-            "expression": "AVERAGE(FactObservation[absolute_error_cm])",
+            "expression": "CALCULATE((AVERAGE(FactObservation[absolute_error_cm])), KEEPFILTERS(FactObservation[dataset_kind] = \"observed\"))",
             "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
             "formatString": "0.000"
           },
           {
             "name": "RMSE cm",
-            "expression": "VAR M = AVERAGE(FactObservation[squared_error_cm2]) RETURN IF(ISBLANK(M), BLANK(), SQRT(M))",
+            "expression": "CALCULATE((VAR M = AVERAGE(FactObservation[squared_error_cm2]) RETURN IF(ISBLANK(M), BLANK(), SQRT(M))), KEEPFILTERS(FactObservation[dataset_kind] = \"observed\"))",
             "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
             "formatString": "0.000"
           },
           {
             "name": "Bias cm",
-            "expression": "AVERAGE(FactObservation[error_cm])",
+            "expression": "CALCULATE((AVERAGE(FactObservation[error_cm])), KEEPFILTERS(FactObservation[dataset_kind] = \"observed\"))",
             "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
             "formatString": "0.000"
           },
           {
             "name": "MAPE percent",
-            "expression": "AVERAGE(FactObservation[ape_pct])",
+            "expression": "CALCULATE((AVERAGE(FactObservation[ape_pct])), KEEPFILTERS(FactObservation[dataset_kind] = \"observed\"))",
             "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
             "formatString": "0.000"
           },
@@ -339,6 +357,30 @@
           {
             "name": "Mean Observed Delta cm",
             "expression": "IF(HASONEVALUE(FactGrowth[source]) && HASONEVALUE(FactGrowth[method]), AVERAGE(FactGrowth[delta_dbh_cm]), BLANK())",
+            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
+            "formatString": "0.000"
+          },
+          {
+            "name": "Demo Pairs",
+            "expression": "CALCULATE(COUNTROWS(FactObservation), FactObservation[dataset_kind] = \"simulated\", FactObservation[comparison_status] = \"paired\")",
+            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
+            "formatString": "0.000"
+          },
+          {
+            "name": "Demo MAE cm",
+            "expression": "CALCULATE(AVERAGE(FactObservation[absolute_error_cm]), FactObservation[dataset_kind] = \"simulated\")",
+            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
+            "formatString": "0.000"
+          },
+          {
+            "name": "Growth Records",
+            "expression": "COALESCE(COUNTROWS(FactGrowth), 0)",
+            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
+            "formatString": "0.000"
+          },
+          {
+            "name": "Average DBH cm",
+            "expression": "AVERAGE(FactObservation[auto_dbh_cm])",
             "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
             "formatString": "0.000"
           }
@@ -418,6 +460,12 @@
             "dataType": "string",
             "sourceColumn": "formula_version",
             "summarizeBy": "none"
+          },
+          {
+            "name": "dataset_kind",
+            "dataType": "string",
+            "sourceColumn": "dataset_kind",
+            "summarizeBy": "none"
           }
         ],
         "partitions": [
@@ -428,10 +476,10 @@
               "type": "m",
               "expression": [
                 "let",
-                "  Raw = Csv.Document(File.Contents(AnalyticsFolder & \"/FactEstimate.csv\"), [Delimiter=\",\", Columns=12, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "  Raw = Csv.Document(File.Contents(AnalyticsFolder & \"/FactEstimate.csv\"), [Delimiter=\",\", Columns=13, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
                 "  Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
                 "  Nulls = Table.ReplaceValue(Headers, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
-                "  Typed = Table.TransformColumnTypes(Nulls, {{\"observation_key\", type text}, {\"tree_key\", type text}, {\"scan_key\", type text}, {\"dbh_input_cm\", type number}, {\"dbh_input_source\", type text}, {\"height_m\", type number}, {\"height_source\", type text}, {\"coefficient\", type number}, {\"carbon_d\", type number}, {\"co2_equivalent_ton\", type number}, {\"source\", type text}, {\"formula_version\", type text}}, \"en-US\")",
+                "  Typed = Table.TransformColumnTypes(Nulls, {{\"observation_key\", type text}, {\"tree_key\", type text}, {\"scan_key\", type text}, {\"dbh_input_cm\", type number}, {\"dbh_input_source\", type text}, {\"height_m\", type number}, {\"height_source\", type text}, {\"coefficient\", type number}, {\"carbon_d\", type number}, {\"co2_equivalent_ton\", type number}, {\"source\", type text}, {\"formula_version\", type text}, {\"dataset_kind\", type text}}, \"en-US\")",
                 "in Typed"
               ]
             }
@@ -518,6 +566,12 @@
             "dataType": "boolean",
             "sourceColumn": "negative_change",
             "summarizeBy": "none"
+          },
+          {
+            "name": "dataset_kind",
+            "dataType": "string",
+            "sourceColumn": "dataset_kind",
+            "summarizeBy": "none"
           }
         ],
         "partitions": [
@@ -528,10 +582,10 @@
               "type": "m",
               "expression": [
                 "let",
-                "  Raw = Csv.Document(File.Contents(AnalyticsFolder & \"/FactGrowth.csv\"), [Delimiter=\",\", Columns=13, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "  Raw = Csv.Document(File.Contents(AnalyticsFolder & \"/FactGrowth.csv\"), [Delimiter=\",\", Columns=14, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
                 "  Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
                 "  Nulls = Table.ReplaceValue(Headers, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
-                "  Typed = Table.TransformColumnTypes(Nulls, {{\"tree_key\", type text}, {\"from_scan_key\", type text}, {\"to_scan_key\", type text}, {\"from_observation_key\", type text}, {\"to_observation_key\", type text}, {\"from_date\", type date}, {\"to_date\", type date}, {\"source\", type text}, {\"method\", type text}, {\"days\", type number}, {\"delta_dbh_cm\", type number}, {\"annualized_delta_cm\", type number}, {\"negative_change\", type logical}}, \"en-US\")",
+                "  Typed = Table.TransformColumnTypes(Nulls, {{\"tree_key\", type text}, {\"from_scan_key\", type text}, {\"to_scan_key\", type text}, {\"from_observation_key\", type text}, {\"to_observation_key\", type text}, {\"from_date\", type date}, {\"to_date\", type date}, {\"source\", type text}, {\"method\", type text}, {\"days\", type number}, {\"delta_dbh_cm\", type number}, {\"annualized_delta_cm\", type number}, {\"negative_change\", type logical}, {\"dataset_kind\", type text}}, \"en-US\")",
                 "in Typed"
               ]
             }

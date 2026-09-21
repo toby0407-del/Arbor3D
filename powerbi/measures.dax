@@ -5,19 +5,19 @@ Observed Trees =
 DISTINCTCOUNT(FactObservation[tree_key])
 
 Valid Pairs =
-COALESCE(CALCULATE(COUNTROWS(FactObservation), FactObservation[comparison_status] = "paired"), 0)
+CALCULATE((COALESCE(CALCULATE(COUNTROWS(FactObservation), FactObservation[comparison_status] = "paired"), 0)), KEEPFILTERS(FactObservation[dataset_kind] = "observed"))
 
 MAE cm =
-AVERAGE(FactObservation[absolute_error_cm])
+CALCULATE((AVERAGE(FactObservation[absolute_error_cm])), KEEPFILTERS(FactObservation[dataset_kind] = "observed"))
 
 RMSE cm =
-VAR M = AVERAGE(FactObservation[squared_error_cm2]) RETURN IF(ISBLANK(M), BLANK(), SQRT(M))
+CALCULATE((VAR M = AVERAGE(FactObservation[squared_error_cm2]) RETURN IF(ISBLANK(M), BLANK(), SQRT(M))), KEEPFILTERS(FactObservation[dataset_kind] = "observed"))
 
 Bias cm =
-AVERAGE(FactObservation[error_cm])
+CALCULATE((AVERAGE(FactObservation[error_cm])), KEEPFILTERS(FactObservation[dataset_kind] = "observed"))
 
 MAPE percent =
-AVERAGE(FactObservation[ape_pct])
+CALCULATE((AVERAGE(FactObservation[ape_pct])), KEEPFILTERS(FactObservation[dataset_kind] = "observed"))
 
 Review Observations =
 COALESCE(CALCULATE(COUNTROWS(FactObservation), FactObservation[review_required] = TRUE()), 0)
@@ -30,3 +30,15 @@ IF(HASONEVALUE(DimScan[scan_key]), SUM(FactEstimate[co2_equivalent_ton]), BLANK(
 
 Mean Observed Delta cm =
 IF(HASONEVALUE(FactGrowth[source]) && HASONEVALUE(FactGrowth[method]), AVERAGE(FactGrowth[delta_dbh_cm]), BLANK())
+
+Demo Pairs =
+CALCULATE(COUNTROWS(FactObservation), FactObservation[dataset_kind] = "simulated", FactObservation[comparison_status] = "paired")
+
+Demo MAE cm =
+CALCULATE(AVERAGE(FactObservation[absolute_error_cm]), FactObservation[dataset_kind] = "simulated")
+
+Growth Records =
+COALESCE(COUNTROWS(FactGrowth), 0)
+
+Average DBH cm =
+AVERAGE(FactObservation[auto_dbh_cm])
