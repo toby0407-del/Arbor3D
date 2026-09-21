@@ -5,11 +5,12 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import ExcelJS from 'exceljs';
-test('Excel export preserves every canonical cell, identifier and blank',async()=>{
+for (const simulated of [false, true]) test(`Excel export preserves every canonical cell, identifier and blank (${simulated ? 'simulated' : 'observed'})`,async()=>{
   const dir=await mkdtemp(join(tmpdir(),'arbor-excel-'));
   try {
-    execFileSync('python3',['-m','analytics','--report','app/src/data/inventories/20260818092855.json','--site-id','fengchia','--out',dir],{cwd:'..'});
-    const input=join(dir,'analytics.json');
+    const args = simulated ? ['-m','analytics.simulate','--out',dir] : ['-m','analytics','--report','app/src/data/inventories/20260818092855.json','--site-id','fengchia','--out',dir];
+    execFileSync(process.env.ARBOR_PYTHON || (process.platform === 'win32' ? 'python' : 'python3'),['-X','utf8',...args],{cwd:'..'});
+    const input=join(dir,simulated ? 'analytics/analytics.json' : 'analytics.json');
     const data=JSON.parse(await readFile(input,'utf8'));
     // A literal formula-like source must remain text, never become an Excel formula.
     data.tables.DimScan[0].source_file='=1+1';
@@ -28,5 +29,7 @@ test('Excel export preserves every canonical cell, identifier and blank',async()
     }
     assert.equal(wb.getWorksheet('DimScan')!.getCell('C2').type,ExcelJS.ValueType.String);
     assert.equal(wb.getWorksheet('DimScan')!.getCell('E2').value,'=1+1');
+    assert.equal(wb.getWorksheet('Overview')!.getCell('B3').value,simulated ? 256 : 16);
+    assert.equal(String(wb.getWorksheet('Overview')!.getCell('B1').value).includes('DEMO ONLY'),simulated);
   } finally { await rm(dir,{recursive:true,force:true}); }
 });

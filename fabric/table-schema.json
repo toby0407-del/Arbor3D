@@ -3,7 +3,8 @@
     "tree_key": "string",
     "site_id": "string",
     "persistent_tree_id": "string",
-    "identity_status": "string"
+    "identity_status": "string",
+    "dataset_kind": "string"
   },
   "DimScan": {
     "scan_key": "string",
@@ -11,7 +12,8 @@
     "scan_id": "string",
     "observed_at": "date",
     "source_file": "string",
-    "source_sha256": "string"
+    "source_sha256": "string",
+    "dataset_kind": "string"
   },
   "FactObservation": {
     "observation_key": "string",
@@ -36,7 +38,8 @@
     "yolo_confidence": "double",
     "arc_coverage_deg": "double",
     "review_required": "boolean",
-    "review_reason": "string"
+    "review_reason": "string",
+    "dataset_kind": "string"
   },
   "FactEstimate": {
     "observation_key": "string",
@@ -50,7 +53,8 @@
     "carbon_d": "double",
     "co2_equivalent_ton": "double",
     "source": "string",
-    "formula_version": "string"
+    "formula_version": "string",
+    "dataset_kind": "string"
   },
   "FactGrowth": {
     "tree_key": "string",
@@ -65,6 +69,7 @@
     "days": "double",
     "delta_dbh_cm": "double",
     "annualized_delta_cm": "double",
-    "negative_change": "boolean"
+    "negative_change": "boolean",
+    "dataset_kind": "string"
   }
 }

@@ -9,7 +9,7 @@ from agents.foundry import run
 class AgentTests(unittest.TestCase):
     def test_cited_retrieval_and_unknown(self):
         with tempfile.TemporaryDirectory() as d:
-            Path(d,'policy.md').write_text('胸徑誤差分析 DBH MAE needs manual measurements.')
+            Path(d,'policy.md').write_text('胸徑誤差分析 DBH MAE needs manual measurements.', encoding='utf-8')
             result=answer('DBH 誤差',d)
             self.assertEqual(result['citations'][0]['source'],'policy.md')
             self.assertEqual(answer('zzzzzz',d)['citations'],[])

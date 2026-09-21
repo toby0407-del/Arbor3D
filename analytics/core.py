@@ -8,7 +8,7 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-VERSION = "1.0"
+VERSION = "1.1"
 FIELDS = {
     "DimTree": ["tree_key", "site_id", "persistent_tree_id", "identity_status"],
     "DimScan": ["scan_key", "site_id", "scan_id", "observed_at", "source_file", "source_sha256"],
@@ -17,6 +17,8 @@ FIELDS = {
     "FactGrowth": ["tree_key", "from_scan_key", "to_scan_key", "from_observation_key", "to_observation_key", "from_date", "to_date", "source", "method", "days", "delta_dbh_cm", "annualized_delta_cm", "negative_change"],
     "Summary": ["scope", "observations", "paired_count", "mae_cm", "rmse_cm", "bias_cm", "mape_pct", "review_count"],
 }
+for _fields in FIELDS.values():
+    _fields.append("dataset_kind")
 
 def key(*parts):
     return json.dumps(parts, ensure_ascii=False, separators=(",", ":"))
@@ -67,10 +69,17 @@ def index_rows(rows, label):
         result[k] = row
     return result
 
-def build(reports, manual_rows=(), identity_rows=(), max_pair_days=0):
+def build(reports, manual_rows=(), identity_rows=(), max_pair_days=0, *, allow_simulated=False):
     """reports: [(site_id, source_path, report_dict)]. Default pairs only same-day strict DBH."""
     if max_pair_days < 0:
         raise ValueError("max_pair_days must be nonnegative")
+    reports = list(reports)
+    kinds = {r.get("dataset_kind", "observed") for _, _, r in reports}
+    if not kinds or not kinds <= {"observed", "simulated"} or len(kinds) != 1:
+        raise ValueError("Use one dataset kind per snapshot; never mix observed and simulated reports")
+    dataset_kind = kinds.pop()
+    if dataset_kind == "simulated" and not allow_simulated:
+        raise ValueError("Simulated reports require explicit allow_simulated; not field evidence")
     manual = index_rows(manual_rows, "manual observation")
     identities = index_rows(identity_rows, "identity mapping")
     tables = {name: [] for name in FIELDS}
@@ -166,6 +175,15 @@ def build(reports, manual_rows=(), identity_rows=(), max_pair_days=0):
         n = len(pairs)
         avg = lambda field: sum(r[field] for r in pairs)/n if n else None
         tables["Summary"].append(dict(zip(FIELDS["Summary"], [scope, len(rows), n, avg("absolute_error_cm"), math.sqrt(avg("squared_error_cm2")) if n else None, avg("error_cm"), avg("ape_pct"), sum(r["review_required"] for r in rows)])))
+    for rows in tables.values():
+        for row in rows:
+            row["dataset_kind"] = dataset_kind
+            if dataset_kind == "simulated":
+                for field in ("auto_source", "manual_source", "dbh_input_source", "height_source", "source"):
+                    if row.get(field) in ("ai", "measured", "estimated"):
+                        row[field] = "simulated_" + row[field]
+                if row.get("identity_status") == "confirmed":
+                    row["identity_status"] = "simulated"
     return tables
 
 def csv_safe(value):
@@ -185,4 +203,7 @@ def export(tables, out, max_pair_days=0):
             writer.writerows({k: csv_safe(v) for k, v in row.items()} for row in tables[name])
     (out / "analytics.json").write_text(json.dumps({"schema_version": VERSION, "tables": tables}, ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8")
     manifest = {"schema_version": VERSION, "pair_max_days": max_pair_days, "counts": {k: len(v) for k, v in tables.items()}, "files": {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(out.glob("*.csv"))}, "notes": ["No manual values are fabricated.", "No inferred identity or simulated growth enters FactGrowth.", "CSV formula-like text escaped with apostrophe; JSON retains original identifiers."]}
+    manifest["dataset_kind"] = tables["Summary"][0]["dataset_kind"]
+    if manifest["dataset_kind"] == "simulated":
+        manifest["notes"] = ["SIMULATED DEMO ONLY: all dates, identities, measurements and growth are synthetic.", "Error metrics measure injected simulation noise, not real model accuracy.", "Do not combine with observed snapshots or claim field validation."]
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")

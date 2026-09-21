@@ -1,5 +1,29 @@
 # 本機驗證紀錄
 
+## Windows 接續驗證（2026-09-21）
+
+基準：PR #1 合併後 `1624ee9`。以下取代原 Mac 階段對本機環境的描述。
+
+- Python unittest：23 項通過，不需以 UTF-8 啟動才能通過中文 fixture。
+- App／Excel：8 項通過，真實和模擬兩份快照皆逐格核對，包含 ID、數字、null、公式注入字串與 DEMO 標示。
+- Lint：通過且無原 SitePickerPage hook 依賴警告；production build 通過。約 2.83 MB 的既有 bundle 警告仍在。
+- 真實 snapshot：16 observations、0 valid pairs、16 review、0 growth；精度保持 null。
+- 模擬 snapshot：2022 Q3–2026 Q2，16 季×16 棵=256 筆、16 個模擬固定身份、480 筆跨期（兩來源）。
+- 模擬隔離：禁止混合真實與模擬報告；一般分析入口拒絕模擬；每表附 dataset_kind；每項合成來源有 simulated_ 前綴。
+- PBIP：已實際產生真實和模擬兩份五頁專案，各 50 個 JSON／PBIP／PBIR／PBISM 定義檔通過 Microsoft 官方 JSON schema。
+  測試同時檢查視覺欄位／measure 引用，CSV 雜湊、型別欄名契約與非空專案目錄防覆寫。
+- Excel：既有匯出器成功輸出兩份 XLSX；模擬 Overview 已用 Artifact Tool 讀取及渲染檢視，DEMO 標示清楚。
+- OneLake ZIP：真實包 10 個檔案、模擬包 25 個檔案；雜湊驗證通過，未上傳。
+- Foundry 與 Fabric：本機 dry-run 成功，cloud_called/cloud_write 均 false。
+- compileall 與 git diff --check 通過。
+
+**未執行：** Windows 未偵測到 Power BI Desktop 或 Docker。PBIP 是待 Desktop 驗收的草稿；未執行 DAX、
+Power Query 刷新、Desktop 視覺驗收或容器 build。沒有建立 Fabric／Foundry 雲端資源。
+未取得新的人工實測或第二期真實掃描；模擬資料不代表補齊真實驗證。
+季度合成資料交付於 CSV／Excel／Power BI，尚未接入 App 原有月曲線。操作見 [Windows 指南](WINDOWS.md)。
+
+## 原 Mac 階段紀錄
+
 日期：2026-09-21。基準版本：d398b69；工作分支：feat/microsoft-ai-data。
 
 - Python unittest：18 項通過（精度算式、缺值、非法數值、日期／高度排除、固定身份、負增量、方法隔離、重複／孤立紀錄、CSV 注入防護、CLI bundle、OneLake 雜湊、離線 Agent 與雲端鎖）。

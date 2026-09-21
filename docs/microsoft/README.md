@@ -3,6 +3,10 @@
 本版本在既有 YOLO → DBH → 3DGS → App 之後加入離線分析層，不修改核心量測演算法。
 所有指令預設只讀寫本機。沒有建立雲端資源、開啟試用、升級訂閱或呼叫付費模型。
 
+**Windows 接續更新：** 既有功能分支已合併 main；新增四年季度模擬及五頁 PBIP/PBIR 產生器，詳見 [Windows 指南](WINDOWS.md)。
+分析契約 1.1 為所有表新增 `dataset_kind`，真實和合成資料必須分開輸出。App 輸入 bundle 仍維持 1.0。
+以下原先 Mac 上的驗證限制屬歷史紀錄，最新執行結果以 [驗證紀錄](VALIDATION.md) 的 Windows 章節為準。
+
 ## 已有資料與限制
 
 檢查基準：Git `d398b69`。正式示範資料在 `app/src/data/inventories/20260818092855.json`，16 棵樹，掃描日期 2026-08-18。
@@ -81,10 +85,10 @@ AI 依方法分組、人工獨立分組；只比較標準高度，同組同日�
 D=(π×DBH_cm/100)²×Height_m×係數，CO₂ 當量=D×3.667。公式適用性、係數及單位需專業驗證。
 不把此估算宣称为認證碳權、年度吸收量或已驗證減碳。跨掃描的碳存量不能直接相加。
 
-## Power BI 本機模型（草稿）
+## Power BI 本機模型（草稿；已有專案產生器）
 
 `powerbi/model.bim` 是 Tabular 模型草稿；`queries.pq`、`measures.dax` 供 Desktop 手動建立；`dashboard.md` 是頁面設計。
-這台 Mac 沒有 Power BI Desktop／PowerShell，未執行 Windows 模型精靈或 Desktop 引擎驗證；已檢查 JSON 結構、欄位、關係端點及本機資料指標。
+前次 Mac 環境未執行 Desktop 引擎驗證。本次 Windows 接續已可用 `python -m powerbi.build_project` 產生 PBIP/PBIR 專案；目前仍未偵測到 Desktop，不能宣稱 DAX 引擎或版面驗收成功。
 
 在 Windows Power BI Desktop：
 1. 新建空白報表，Power Query 建立文字參數 AnalyticsFolder，填 analytics 輸出絕對路徑。
