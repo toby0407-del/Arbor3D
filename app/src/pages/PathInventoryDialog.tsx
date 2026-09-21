@@ -711,28 +711,6 @@ export function PathInventoryDialog({
               selectedId={preview?.Tree_ID ?? null}
               onPick={onPreviewTree}
             />
-            {stats.review > 0 ? (
-              <section className="review-mini">
-                <h3>待複核 {stats.review}</h3>
-                <ul>
-                  {report.trees.filter(isReviewTree).map((tree) => (
-                    <li key={tree.Tree_ID}>
-                      <button
-                        type="button"
-                        className="text-btn"
-                        onClick={() => {
-                          setFilter("review");
-                          onPreviewTree(tree.Tree_ID);
-                        }}
-                      >
-                        {tree.Tree_ID}
-                      </button>
-                      <span>{reviewReason(tree)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
           </aside>
 
           <div

@@ -10,7 +10,7 @@
 - Python compileall、git diff --check：通過。
 - JSON Schema Draft 2020-12：示範 analytics.json 通過；Power BI 模型欄位／關係端點檢查通過。
 - Excel：獨立 openpyxl 只讀核對全部資料儲存格與 canonical JSON 一致；scan_id 保留文字。以工作表渲染查看 7 張表並修正欄寬、換行、係數精度；渲染器對長數字字串可能顯示科學記號，但 XLSX 實際型別與完整值已核對。
-- App 瀏覽器：示範登入 → 逢甲大學 → 既有掃描正常；分析匯出入口、日期欄與預設未勾選標準高度確認欄可見。修正後為 8 待確認 + 8 需複核，待複核合計 16。
+- App 瀏覽器：示範登入 → 逢甲大學 → 既有掃描正常；分析匯出入口、日期欄與預設未勾選標準高度確認欄可見。修正後為 8 待確認 + 8 需複核，待複核合計 16。路徑圖下方的逐棵待複核清單已依介面需求移除，樹表篩選與個別複核原因保留。
 - 既有示範資料實際輸出：16 observations、0 valid pairs、MAE/RMSE/Bias/MAPE=null、0 growth rows，沒有填造人工測量。
 - 本機 RAG、Foundry dry-run、Fabric dry-run、含 10 個檔案的 OneLake 匯入 ZIP 已生成，沒有雲端呼叫或上傳。
 

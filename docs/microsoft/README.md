@@ -40,6 +40,7 @@ node app/scripts/export-analytics-excel.mjs outputs/field-review/analytics.json 
 人工資料仍存於該瀏覽器 localStorage；下載 JSON 才會交給分析程式。新增的標準高度確認預設 false，舊人工紀錄不自動視為已確認。
 日期為必要欄位。原有「匯出 CSV」保留，增加來源欄位；Microsoft 匯入使用新分析輸出。
 單次掃描的生長曲線現在標示人工、AI 或推估；所有非基準月份均為模擬，不再因接近掃描日期而被視為實測。
+盤點視窗不再於路徑圖下方逐棵展開待複核清單；請使用樹表上方的「待確認」、「需複核」或「待複核」篩選查看相同資料，個別樹木詳情仍會顯示複核原因。
 
 ## 資料契約與誤差定義
 
