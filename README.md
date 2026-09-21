@@ -268,3 +268,8 @@ CO₂ = D × 3.667
 | `app/` | 前端（React 19 + Vite 8 + Leaflet + Three.js） |
 
 依賴見 `requirements.txt`（Python）與 `app/package.json`（前端）。
+
+## Microsoft AI/Data 競賽分析層
+
+新增離線 DBH 誤差驗證、統一 Analytics CSV／Excel、確認固定樹號後的跨期比較、Power BI 模型草稿、Fabric／Data Agent 設定與預設關閉雲端的 Foundry／本機 RAG。
+完整操作與驗證限制見 [競賽版操作指南](docs/microsoft/README.md)。既有 YOLO／DBH／3DGS 管線維持原樣。

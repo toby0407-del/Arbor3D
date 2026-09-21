@@ -1,3 +1,4 @@
+import { downloadAnalyticsInput, sourceLabel } from "../lib/analytics";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PathTreeMap } from "../components/PathTreeMap";
 import { PlyViewer } from "../components/PlyViewer";
@@ -206,7 +207,7 @@ function GrowthTrendPopup({
                     {snap.dbhCm.toFixed(2)}
                     <em>cm</em>
                   </strong>
-                  <span className="growth-snap-period">{snap.periodLabel}</span>
+                  <span className="growth-snap-period">{snap.periodLabel} · {sourceLabel(snap.source)}</span>
                   <span className="growth-snap-delta">{deltaText}</span>
                 </li>
               );
@@ -340,7 +341,7 @@ function GrowthTrendPopup({
               {line ? <path d={line} className="growth-line is-sim-line" /> : null}
               {coords.map((pt, index) => {
                 const point = visible[index];
-                const real = point.source === "real";
+                const real = point.source !== "sim";
                 const showLabel =
                   real || index % labelStep === 0 || index === visible.length - 1;
                 return (
@@ -349,11 +350,11 @@ function GrowthTrendPopup({
                       cx={pt.x}
                       cy={pt.y}
                       r={real ? 6 : 3.5}
-                      className={`growth-dot is-${point.source}`}
+                      className={`growth-dot is-${point.source === "sim" ? "sim" : "real"}`}
                     >
                       <title>
                         {formatAxisMonthYear(point)} · {point.dbhCm.toFixed(2)}{" "}
-                        cm
+                        cm · {sourceLabel(point.source)}
                       </title>
                     </circle>
                     {showLabel ? (
@@ -373,7 +374,7 @@ function GrowthTrendPopup({
           </figure>
 
           <p className="growth-foot">
-            {temporal.carbonNote}
+            推估情境，非跨期實測趨勢。{temporal.carbonNote}
             {years.length > 0
               ? `　·　序列 ${years[0]}–${years[years.length - 1]}`
               : null}
@@ -386,7 +387,7 @@ function GrowthTrendPopup({
 
 function temporalForTree(
   tree: TreeRecord,
-  field: { dbhCm?: string } | undefined,
+  field: { dbhCm?: string; measuredAt?: string } | undefined,
   carbon: { heightM: number | null; heightEstimated: boolean },
   scanIso: string,
 ): TemporalGrowth | null {
@@ -397,7 +398,8 @@ function temporalForTree(
     dbhCm: dbh,
     heightM: carbon.heightM,
     heightEstimated: carbon.heightEstimated,
-    scanIso,
+    scanIso: Number(field?.dbhCm) > 0 && field?.measuredAt ? field.measuredAt : scanIso,
+    baseSource: Number(field?.dbhCm) > 0 ? "measured" : "ai",
     note: tree.DBH_note,
     yoloConfidence: tree.YOLO_confidence,
   });
@@ -414,7 +416,7 @@ function FormulaPopup({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
       >
         <header>
-          <strong id="formula-title">碳吸收公式</strong>
+          <strong id="formula-title">碳量估算公式</strong>
           <button type="button" className="ghost-btn" onClick={onClose}>
             關閉
           </button>
@@ -443,7 +445,7 @@ function FormulaPopup({ onClose }: { onClose: () => void }) {
             </tr>
             <tr>
               <td><strong>CO₂</strong></td>
-              <td>吸收 CO₂ 當量（ton）</td>
+              <td>估算 CO₂ 當量（ton）</td>
               <td><code>D × 3.667</code></td>
             </tr>
           </tbody>
@@ -522,7 +524,7 @@ export function PathInventoryDialog({
     return report.trees.filter((tree) => {
       if (filter === "all") return true;
       if (filter === "review") return isReviewTree(tree);
-      return trafficLight(tree.DBH_note) === filter;
+      return trafficLight(tree) === filter;
     });
   }, [filter, report.trees]);
 
@@ -626,7 +628,7 @@ export function PathInventoryDialog({
     if (tab === "model" && !hasModel) setTab("images");
   }, [hasModel, tab]);
   const field = preview ? measures[preview.Tree_ID] : undefined;
-  const light = preview ? trafficLight(preview.DBH_note) : "red";
+  const light = preview ? trafficLight(preview) : "red";
   const carbon = preview
     ? carbonForTree(preview, field, report.created_at)
     : null;
@@ -649,7 +651,7 @@ export function PathInventoryDialog({
             <div className="inv-summary" aria-label="盤點摘要">
               <span className="pill">{stats.total} 棵</span>
               {stats.green > 0 ? (
-                <span className="pill is-green">完美 {stats.green}</span>
+                <span className="pill is-green">較可信 {stats.green}</span>
               ) : null}
               {stats.yellow > 0 ? (
                 <span className="pill is-yellow">待確認 {stats.yellow}</span>
@@ -661,7 +663,7 @@ export function PathInventoryDialog({
                 平均信心 {formatConfidence(stats.avgConfidence)}
               </span>
               <span className="pill is-green">
-                吸收 CO₂ {co2Total.toFixed(2)} ton
+                估算 CO₂ 當量 {co2Total.toFixed(2)} ton
               </span>
             </div>
           </div>
@@ -669,8 +671,8 @@ export function PathInventoryDialog({
             <button
               type="button"
               className="formula-btn"
-              title="碳吸收公式說明"
-              aria-label="碳吸收公式說明"
+              title="碳量估算公式說明"
+              aria-label="碳量估算公式說明"
               onClick={() => setShowFormula(true)}
             >
               ?
@@ -689,6 +691,7 @@ export function PathInventoryDialog({
             >
               匯出 CSV
             </button>
+            <button type="button" className="ghost-btn" onClick={() => downloadAnalyticsInput(report, measures)}>匯出分析資料</button>
             {onImport ? (
               <button type="button" className="ghost-btn" onClick={onImport}>
                 再匯入
@@ -739,7 +742,7 @@ export function PathInventoryDialog({
               {(
                 [
                   ["all", `全部 ${stats.total}`, stats.total],
-                  ["green", `完美 ${stats.green}`, stats.green],
+                  ["green", `較可信 ${stats.green}`, stats.green],
                   ["yellow", `待確認 ${stats.yellow}`, stats.yellow],
                   ["red", `需複核 ${stats.red}`, stats.red],
                   ["review", `待複核 ${stats.review}`, stats.review],
@@ -766,15 +769,15 @@ export function PathInventoryDialog({
                 <thead>
                   <tr>
                     <th>樹號</th>
-                    <th>胸徑</th>
+                    <th>AI 胸徑</th>
                     <th>樹高</th>
-                    <th>碳吸收量 CO₂</th>
+                    <th>估算 CO₂ 當量</th>
                     <th className="growth-col">健康度</th>
                   </tr>
                 </thead>
                 <tbody>
                   {visible.map((tree) => {
-                    const rowLight = trafficLight(tree.DBH_note);
+                    const rowLight = trafficLight(tree);
                     const active = tree.Tree_ID === preview?.Tree_ID;
                     const row = carbonForTree(
                       tree,
@@ -1003,13 +1006,13 @@ export function PathInventoryDialog({
                 </label>
                 {carbon ? (
                   <div className="carbon-box">
-                    <h3>碳吸收</h3>
+                    <h3>碳量估算</h3>
                     <p className="carbon-formula">
                       D = A² × B × C　·　CO₂ = D × 3.667
                     </p>
                     <dl className="spec-list is-carbon">
                       <div>
-                        <dt>高度 1.3 m 處圓周 A</dt>
+                        <dt>胸徑換算圓周 A</dt>
                         <dd>
                           {carbon.circumferenceM != null
                             ? `${carbon.circumferenceM.toFixed(3)} m`
@@ -1025,7 +1028,7 @@ export function PathInventoryDialog({
                         </dd>
                       </div>
                       <div>
-                        <dt>吸收 CO₂ 當量</dt>
+                        <dt>估算 CO₂ 當量</dt>
                         <dd>
                           {carbon.co2Ton != null
                             ? `${carbon.co2Ton.toFixed(3)} ton`
@@ -1099,6 +1102,7 @@ export function PathInventoryDialog({
                     <label className="field-measure">
                       <span className="field-label">測量日期</span>
                       <input
+                        type="date"
                         value={field?.measuredAt ?? ""}
                         placeholder={carbon.measuredAt}
                         onChange={(event) =>
@@ -1108,6 +1112,9 @@ export function PathInventoryDialog({
                         }
                       />
                     </label>
+                    <label><input type="checkbox" checked={field?.strict13m === true}
+                      onChange={(event) => update(preview.Tree_ID, { strict13m: event.target.checked })} />
+                      確認人工胸徑量於標準 1.3 m（未確認不納入誤差指標）</label>
                   </div>
                 ) : null}
               </div>

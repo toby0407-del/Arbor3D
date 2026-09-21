@@ -5,8 +5,9 @@ import type { FieldMeasure } from "../hooks/useFieldMeasures";
 import type { TreeRecord } from "../types";
 
 function cell(value: string | number | null | undefined): string {
-  const text = value == null ? "" : String(value);
-  if (/[",\n]/.test(text)) return `"${text.replaceAll('"', '""')}"`;
+  let text = value == null ? "" : String(value);
+  if (typeof value === "string" && /^[\s]*[=+@-]/.test(text)) text = "'" + text;
+  if (/[",\r\n]/.test(text)) return `"${text.replaceAll('"', '""')}"`;
   return text;
 }
 
@@ -32,6 +33,7 @@ export function inventoryToCsv(
     "樹含碳量_D",
     "吸收CO2當量_ton",
     "測量日期",
+    "胸徑來源", "人工實測來源", "樹高來源", "碳量來源",
   ];
   const rows = trees.map((tree) => {
     const field = measures[tree.Tree_ID];
@@ -42,7 +44,7 @@ export function inventoryToCsv(
       methodLabel(tree.DBH_method),
       tree.arc_coverage_deg ?? "",
       tree.YOLO_confidence ?? "",
-      lightShort(trafficLight(tree.DBH_note)),
+      lightShort(trafficLight(tree)),
       noteLabel(tree),
       tree.dbh_is_strict_breast_height ? "是" : "否",
       field?.dbhCm ?? "",
@@ -53,6 +55,9 @@ export function inventoryToCsv(
       carbon.carbonD?.toFixed(4) ?? "",
       carbon.co2Ton?.toFixed(3) ?? "",
       carbon.measuredAt,
+      "AI／演算法結果", field?.dbhCm ? "人工實測" : "缺少實測",
+      carbon.heightEstimated ? "推估" : field?.heightM ? "人工實測" : "AI／演算法結果",
+      "公式推估（非碳權或經查證減碳量）",
     ]
       .map(cell)
       .join(",");

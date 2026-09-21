@@ -1,0 +1,14 @@
+{
+  "status": "local-configuration-template-not-deployed",
+  "name": "Arbor3D Evidence Assistant",
+  "source_kind": "PowerBI semantic model",
+  "semantic_model_id": "REPLACE_AFTER_AUTHORIZED_DEPLOYMENT",
+  "tables": ["DimTree", "DimScan", "FactObservation", "FactEstimate", "FactGrowth"],
+  "instructions": "回答時列出場址、掃描日期、樣本數、資料來源及缺值。使用既有 measures。AI、人工、推估不可混為真值。誤差只用 comparison_status=paired。跨期只用 FactGrowth，不採用 App 模擬曲線。固定樹號 unresolved 不得視為已確認的實體樹數。碳量限單一扫描，禁止把不同時間的存量加總成吸收量。沒有資料就明確回答不足。",
+  "semantic_model_prep_for_ai": {
+    "include_measures": ["Observations", "Valid Pairs", "MAE cm", "RMSE cm", "Bias cm", "MAPE percent", "Review Observations", "Review Rate", "Estimated CO2 Snapshot ton", "Mean Observed Delta cm"],
+    "include_dependencies": true,
+    "verified_answers": "Use evaluation-questions.json as a manual validation checklist; configure verified answers in the model UI where supported."
+  },
+  "note": "This is an application configuration template, not an official Fabric import API payload. Example query pairs are not supported for semantic-model sources; use model Prep for AI and manual validation."
+}

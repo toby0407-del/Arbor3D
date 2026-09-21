@@ -68,7 +68,7 @@ export function PathTreeMap({ trees, selectedId, onPick }: Props) {
       distanceM,
       pts: trees.map((tree) => ({
         id: tree.Tree_ID,
-        light: trafficLight(tree.DBH_note),
+        light: trafficLight(tree),
         ...toSvg(tree.Local_XYZ_m[0], tree.Local_XYZ_m[1]),
       })),
     };

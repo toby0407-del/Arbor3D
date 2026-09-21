@@ -1,0 +1,605 @@
+{
+  "name": "Arbor3DAnalytics",
+  "compatibilityLevel": 1600,
+  "model": {
+    "culture": "en-US",
+    "defaultPowerBIDataSourceVersion": "powerBI_V3",
+    "expressions": [
+      {
+        "name": "AnalyticsFolder",
+        "kind": "m",
+        "expression": "\"REPLACE_WITH_ABSOLUTE_OUTPUT_FOLDER\" meta [IsParameterQuery=true, Type=\"Text\", IsParameterQueryRequired=true]"
+      }
+    ],
+    "tables": [
+      {
+        "name": "DimTree",
+        "columns": [
+          {
+            "name": "tree_key",
+            "dataType": "string",
+            "sourceColumn": "tree_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "site_id",
+            "dataType": "string",
+            "sourceColumn": "site_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "persistent_tree_id",
+            "dataType": "string",
+            "sourceColumn": "persistent_tree_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "identity_status",
+            "dataType": "string",
+            "sourceColumn": "identity_status",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "DimTree",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "  Raw = Csv.Document(File.Contents(AnalyticsFolder & \"/DimTree.csv\"), [Delimiter=\",\", Columns=4, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "  Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "  Nulls = Table.ReplaceValue(Headers, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "  Typed = Table.TransformColumnTypes(Nulls, {{\"tree_key\", type text}, {\"site_id\", type text}, {\"persistent_tree_id\", type text}, {\"identity_status\", type text}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "DimScan",
+        "columns": [
+          {
+            "name": "scan_key",
+            "dataType": "string",
+            "sourceColumn": "scan_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "site_id",
+            "dataType": "string",
+            "sourceColumn": "site_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "scan_id",
+            "dataType": "string",
+            "sourceColumn": "scan_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "observed_at",
+            "dataType": "dateTime",
+            "sourceColumn": "observed_at",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "source_file",
+            "dataType": "string",
+            "sourceColumn": "source_file",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "source_sha256",
+            "dataType": "string",
+            "sourceColumn": "source_sha256",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "DimScan",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "  Raw = Csv.Document(File.Contents(AnalyticsFolder & \"/DimScan.csv\"), [Delimiter=\",\", Columns=6, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "  Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "  Nulls = Table.ReplaceValue(Headers, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "  Typed = Table.TransformColumnTypes(Nulls, {{\"scan_key\", type text}, {\"site_id\", type text}, {\"scan_id\", type text}, {\"observed_at\", type date}, {\"source_file\", type text}, {\"source_sha256\", type text}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "FactObservation",
+        "columns": [
+          {
+            "name": "observation_key",
+            "dataType": "string",
+            "sourceColumn": "observation_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "tree_key",
+            "dataType": "string",
+            "sourceColumn": "tree_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "scan_key",
+            "dataType": "string",
+            "sourceColumn": "scan_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "local_tree_id",
+            "dataType": "string",
+            "sourceColumn": "local_tree_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "observed_at",
+            "dataType": "dateTime",
+            "sourceColumn": "observed_at",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "auto_dbh_cm",
+            "dataType": "double",
+            "sourceColumn": "auto_dbh_cm",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "auto_source",
+            "dataType": "string",
+            "sourceColumn": "auto_source",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "auto_method",
+            "dataType": "string",
+            "sourceColumn": "auto_method",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "strict_13m",
+            "dataType": "boolean",
+            "sourceColumn": "strict_13m",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "manual_dbh_cm",
+            "dataType": "double",
+            "sourceColumn": "manual_dbh_cm",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "manual_source",
+            "dataType": "string",
+            "sourceColumn": "manual_source",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "manual_measured_at",
+            "dataType": "dateTime",
+            "sourceColumn": "manual_measured_at",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "manual_height_m",
+            "dataType": "double",
+            "sourceColumn": "manual_height_m",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "manual_strict_13m",
+            "dataType": "boolean",
+            "sourceColumn": "manual_strict_13m",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "comparison_status",
+            "dataType": "string",
+            "sourceColumn": "comparison_status",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "error_cm",
+            "dataType": "double",
+            "sourceColumn": "error_cm",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "absolute_error_cm",
+            "dataType": "double",
+            "sourceColumn": "absolute_error_cm",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "squared_error_cm2",
+            "dataType": "double",
+            "sourceColumn": "squared_error_cm2",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "ape_pct",
+            "dataType": "double",
+            "sourceColumn": "ape_pct",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "yolo_confidence",
+            "dataType": "double",
+            "sourceColumn": "yolo_confidence",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "arc_coverage_deg",
+            "dataType": "double",
+            "sourceColumn": "arc_coverage_deg",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "review_required",
+            "dataType": "boolean",
+            "sourceColumn": "review_required",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "review_reason",
+            "dataType": "string",
+            "sourceColumn": "review_reason",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "FactObservation",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "  Raw = Csv.Document(File.Contents(AnalyticsFolder & \"/FactObservation.csv\"), [Delimiter=\",\", Columns=23, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "  Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "  Nulls = Table.ReplaceValue(Headers, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "  Typed = Table.TransformColumnTypes(Nulls, {{\"observation_key\", type text}, {\"tree_key\", type text}, {\"scan_key\", type text}, {\"local_tree_id\", type text}, {\"observed_at\", type date}, {\"auto_dbh_cm\", type number}, {\"auto_source\", type text}, {\"auto_method\", type text}, {\"strict_13m\", type logical}, {\"manual_dbh_cm\", type number}, {\"manual_source\", type text}, {\"manual_measured_at\", type date}, {\"manual_height_m\", type number}, {\"manual_strict_13m\", type logical}, {\"comparison_status\", type text}, {\"error_cm\", type number}, {\"absolute_error_cm\", type number}, {\"squared_error_cm2\", type number}, {\"ape_pct\", type number}, {\"yolo_confidence\", type number}, {\"arc_coverage_deg\", type number}, {\"review_required\", type logical}, {\"review_reason\", type text}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Observations",
+            "expression": "COUNTROWS(FactObservation)",
+            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
+            "formatString": "0.000"
+          },
+          {
+            "name": "Observed Trees",
+            "expression": "DISTINCTCOUNT(FactObservation[tree_key])",
+            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
+            "formatString": "0.000"
+          },
+          {
+            "name": "Valid Pairs",
+            "expression": "COALESCE(CALCULATE(COUNTROWS(FactObservation), FactObservation[comparison_status] = \"paired\"), 0)",
+            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
+            "formatString": "0.000"
+          },
+          {
+            "name": "MAE cm",
+            "expression": "AVERAGE(FactObservation[absolute_error_cm])",
+            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
+            "formatString": "0.000"
+          },
+          {
+            "name": "RMSE cm",
+            "expression": "VAR M = AVERAGE(FactObservation[squared_error_cm2]) RETURN IF(ISBLANK(M), BLANK(), SQRT(M))",
+            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
+            "formatString": "0.000"
+          },
+          {
+            "name": "Bias cm",
+            "expression": "AVERAGE(FactObservation[error_cm])",
+            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
+            "formatString": "0.000"
+          },
+          {
+            "name": "MAPE percent",
+            "expression": "AVERAGE(FactObservation[ape_pct])",
+            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
+            "formatString": "0.000"
+          },
+          {
+            "name": "Review Observations",
+            "expression": "COALESCE(CALCULATE(COUNTROWS(FactObservation), FactObservation[review_required] = TRUE()), 0)",
+            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
+            "formatString": "0.000"
+          },
+          {
+            "name": "Review Rate",
+            "expression": "DIVIDE([Review Observations], [Observations])",
+            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
+            "formatString": "0.00%;-0.00%;0.00%"
+          },
+          {
+            "name": "Estimated CO2 Snapshot ton",
+            "expression": "IF(HASONEVALUE(DimScan[scan_key]), SUM(FactEstimate[co2_equivalent_ton]), BLANK())",
+            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
+            "formatString": "0.000"
+          },
+          {
+            "name": "Mean Observed Delta cm",
+            "expression": "IF(HASONEVALUE(FactGrowth[source]) && HASONEVALUE(FactGrowth[method]), AVERAGE(FactGrowth[delta_dbh_cm]), BLANK())",
+            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
+            "formatString": "0.000"
+          }
+        ]
+      },
+      {
+        "name": "FactEstimate",
+        "columns": [
+          {
+            "name": "observation_key",
+            "dataType": "string",
+            "sourceColumn": "observation_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "tree_key",
+            "dataType": "string",
+            "sourceColumn": "tree_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "scan_key",
+            "dataType": "string",
+            "sourceColumn": "scan_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "dbh_input_cm",
+            "dataType": "double",
+            "sourceColumn": "dbh_input_cm",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "dbh_input_source",
+            "dataType": "string",
+            "sourceColumn": "dbh_input_source",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "height_m",
+            "dataType": "double",
+            "sourceColumn": "height_m",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "height_source",
+            "dataType": "string",
+            "sourceColumn": "height_source",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "coefficient",
+            "dataType": "double",
+            "sourceColumn": "coefficient",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "carbon_d",
+            "dataType": "double",
+            "sourceColumn": "carbon_d",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "co2_equivalent_ton",
+            "dataType": "double",
+            "sourceColumn": "co2_equivalent_ton",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "source",
+            "dataType": "string",
+            "sourceColumn": "source",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "formula_version",
+            "dataType": "string",
+            "sourceColumn": "formula_version",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "FactEstimate",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "  Raw = Csv.Document(File.Contents(AnalyticsFolder & \"/FactEstimate.csv\"), [Delimiter=\",\", Columns=12, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "  Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "  Nulls = Table.ReplaceValue(Headers, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "  Typed = Table.TransformColumnTypes(Nulls, {{\"observation_key\", type text}, {\"tree_key\", type text}, {\"scan_key\", type text}, {\"dbh_input_cm\", type number}, {\"dbh_input_source\", type text}, {\"height_m\", type number}, {\"height_source\", type text}, {\"coefficient\", type number}, {\"carbon_d\", type number}, {\"co2_equivalent_ton\", type number}, {\"source\", type text}, {\"formula_version\", type text}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "FactGrowth",
+        "columns": [
+          {
+            "name": "tree_key",
+            "dataType": "string",
+            "sourceColumn": "tree_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "from_scan_key",
+            "dataType": "string",
+            "sourceColumn": "from_scan_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "to_scan_key",
+            "dataType": "string",
+            "sourceColumn": "to_scan_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "from_observation_key",
+            "dataType": "string",
+            "sourceColumn": "from_observation_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "to_observation_key",
+            "dataType": "string",
+            "sourceColumn": "to_observation_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "from_date",
+            "dataType": "dateTime",
+            "sourceColumn": "from_date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "to_date",
+            "dataType": "dateTime",
+            "sourceColumn": "to_date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "source",
+            "dataType": "string",
+            "sourceColumn": "source",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "method",
+            "dataType": "string",
+            "sourceColumn": "method",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "days",
+            "dataType": "double",
+            "sourceColumn": "days",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "delta_dbh_cm",
+            "dataType": "double",
+            "sourceColumn": "delta_dbh_cm",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "annualized_delta_cm",
+            "dataType": "double",
+            "sourceColumn": "annualized_delta_cm",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "negative_change",
+            "dataType": "boolean",
+            "sourceColumn": "negative_change",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "FactGrowth",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "  Raw = Csv.Document(File.Contents(AnalyticsFolder & \"/FactGrowth.csv\"), [Delimiter=\",\", Columns=13, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                "  Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),",
+                "  Nulls = Table.ReplaceValue(Headers, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),",
+                "  Typed = Table.TransformColumnTypes(Nulls, {{\"tree_key\", type text}, {\"from_scan_key\", type text}, {\"to_scan_key\", type text}, {\"from_observation_key\", type text}, {\"to_observation_key\", type text}, {\"from_date\", type date}, {\"to_date\", type date}, {\"source\", type text}, {\"method\", type text}, {\"days\", type number}, {\"delta_dbh_cm\", type number}, {\"annualized_delta_cm\", type number}, {\"negative_change\", type logical}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "FactObservation_DimTree",
+        "fromTable": "FactObservation",
+        "fromColumn": "tree_key",
+        "toTable": "DimTree",
+        "toColumn": "tree_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one"
+      },
+      {
+        "name": "FactObservation_DimScan",
+        "fromTable": "FactObservation",
+        "fromColumn": "scan_key",
+        "toTable": "DimScan",
+        "toColumn": "scan_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one"
+      },
+      {
+        "name": "FactEstimate_DimTree",
+        "fromTable": "FactEstimate",
+        "fromColumn": "tree_key",
+        "toTable": "DimTree",
+        "toColumn": "tree_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one"
+      },
+      {
+        "name": "FactEstimate_DimScan",
+        "fromTable": "FactEstimate",
+        "fromColumn": "scan_key",
+        "toTable": "DimScan",
+        "toColumn": "scan_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one"
+      },
+      {
+        "name": "FactGrowth_DimTree",
+        "fromTable": "FactGrowth",
+        "fromColumn": "tree_key",
+        "toTable": "DimTree",
+        "toColumn": "tree_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one"
+      },
+      {
+        "name": "FactGrowth_DimScan",
+        "fromTable": "FactGrowth",
+        "fromColumn": "to_scan_key",
+        "toTable": "DimScan",
+        "toColumn": "scan_key",
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "toCardinality": "one"
+      }
+    ]
+  }
+}

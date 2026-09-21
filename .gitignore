@@ -63,3 +63,7 @@ Thumbs.db
 # Vite cache at repo root (do not commit)
 .vite/
 
+
+# Reproducible local analytics outputs
+/outputs/
+.venv/

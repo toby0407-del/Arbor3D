@@ -3,7 +3,7 @@ import type { TrafficLight } from "../types";
 const ITEMS: { light: TrafficLight; title: string; detail: string }[] = [
   {
     light: "green",
-    title: "完美",
+    title: "較可信",
     detail: "可信，可作盤點參考。",
   },
   {

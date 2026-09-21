@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 
 export type FieldMeasure = {
+  strict13m?: boolean;
   dbhCm: string;
   note: string;
   heightM: string;
@@ -38,6 +39,7 @@ export function useFieldMeasures(scanId: string) {
         const next = {
           ...prev,
           [treeId]: {
+            strict13m: prev[treeId]?.strict13m ?? false,
             dbhCm: prev[treeId]?.dbhCm ?? "",
             note: prev[treeId]?.note ?? "",
             heightM: prev[treeId]?.heightM ?? "",

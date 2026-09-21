@@ -1,0 +1,506 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Arbor3D Analytics v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "tables"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "tables": {
+      "type": "object",
+      "required": [
+        "DimTree",
+        "DimScan",
+        "FactObservation",
+        "FactEstimate",
+        "FactGrowth",
+        "Summary"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "DimTree": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "tree_key",
+              "site_id",
+              "persistent_tree_id",
+              "identity_status"
+            ],
+            "properties": {
+              "tree_key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "site_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "persistent_tree_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "identity_status": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "DimScan": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "scan_key",
+              "site_id",
+              "scan_id",
+              "observed_at",
+              "source_file",
+              "source_sha256"
+            ],
+            "properties": {
+              "scan_key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "site_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "scan_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "observed_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source_file": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source_sha256": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "FactObservation": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "observation_key",
+              "tree_key",
+              "scan_key",
+              "local_tree_id",
+              "observed_at",
+              "auto_dbh_cm",
+              "auto_source",
+              "auto_method",
+              "strict_13m",
+              "manual_dbh_cm",
+              "manual_source",
+              "manual_measured_at",
+              "manual_height_m",
+              "manual_strict_13m",
+              "comparison_status",
+              "error_cm",
+              "absolute_error_cm",
+              "squared_error_cm2",
+              "ape_pct",
+              "yolo_confidence",
+              "arc_coverage_deg",
+              "review_required",
+              "review_reason"
+            ],
+            "properties": {
+              "observation_key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "tree_key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "scan_key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "local_tree_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "observed_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "auto_dbh_cm": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "auto_source": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "auto_method": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "strict_13m": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "manual_dbh_cm": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "manual_source": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "manual_measured_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "manual_height_m": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "manual_strict_13m": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "comparison_status": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "error_cm": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "absolute_error_cm": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "squared_error_cm2": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "ape_pct": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "yolo_confidence": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "arc_coverage_deg": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "review_required": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "review_reason": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "FactEstimate": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "observation_key",
+              "tree_key",
+              "scan_key",
+              "dbh_input_cm",
+              "dbh_input_source",
+              "height_m",
+              "height_source",
+              "coefficient",
+              "carbon_d",
+              "co2_equivalent_ton",
+              "source",
+              "formula_version"
+            ],
+            "properties": {
+              "observation_key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "tree_key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "scan_key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "dbh_input_cm": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "dbh_input_source": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "height_m": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "height_source": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "coefficient": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "carbon_d": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "co2_equivalent_ton": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "source": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "formula_version": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "FactGrowth": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "tree_key",
+              "from_scan_key",
+              "to_scan_key",
+              "from_observation_key",
+              "to_observation_key",
+              "from_date",
+              "to_date",
+              "source",
+              "method",
+              "days",
+              "delta_dbh_cm",
+              "annualized_delta_cm",
+              "negative_change"
+            ],
+            "properties": {
+              "tree_key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "from_scan_key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "to_scan_key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "from_observation_key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "to_observation_key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "from_date": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "to_date": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "method": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "days": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "delta_dbh_cm": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "annualized_delta_cm": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "negative_change": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "Summary": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "scope",
+              "observations",
+              "paired_count",
+              "mae_cm",
+              "rmse_cm",
+              "bias_cm",
+              "mape_pct",
+              "review_count"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

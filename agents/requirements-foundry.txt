@@ -1,0 +1,3 @@
+# Optional only. Never installed or invoked by the offline demo.
+azure-ai-projects>=2.3.0,<3
+azure-identity>=1.25.0,<2
