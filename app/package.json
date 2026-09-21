@@ -8,10 +8,13 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "postprocess": "node scripts/run-postprocess.mjs"
+    "postprocess": "node scripts/run-postprocess.mjs",
+    "test": "tsx --test tests/*.test.ts",
+    "analytics:excel": "node scripts/export-analytics-excel.mjs"
   },
   "dependencies": {
     "busboy": "^1.6.0",
+    "exceljs": "^4.4.0",
     "leaflet": "^1.9.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
@@ -26,7 +29,13 @@
     "@types/three": "^0.185.4",
     "@vitejs/plugin-react": "^6.0.4",
     "oxlint": "^1.75.0",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.2",
     "vite": "^8.2.0"
+  },
+  "overrides": {
+    "exceljs": {
+      "uuid": "^11.1.1"
+    }
   }
 }

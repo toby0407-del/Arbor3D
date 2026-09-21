@@ -9,8 +9,11 @@ export type InventoryStats = {
   avgConfidence: number | null;
 };
 
-export function trafficLight(note: string | null | undefined): TrafficLight {
-  const value = note ?? "";
+export function trafficLight(input: TreeRecord | string | null | undefined): TrafficLight {
+  const tree = typeof input === "object" && input !== null ? input : null;
+  const value = tree ? tree.DBH_note ?? "" : typeof input === "string" ? input : "";
+  if (tree && (tree.DBH_cm == null || !Number.isFinite(tree.DBH_cm) || tree.DBH_cm <= 0 ||
+    (tree.DBH_method === "caliper" && tree.DBH_cm >= 45))) return "red";
   if (
     value === "no_measurement" ||
     value.includes("wide_caliper") ||
@@ -18,6 +21,7 @@ export function trafficLight(note: string | null | undefined): TrafficLight {
   ) {
     return "red";
   }
+  if ((tree && tree.dbh_is_strict_breast_height !== true) || (value && value !== "ok")) return "yellow";
   return "green";
 }
 
@@ -36,9 +40,10 @@ export function lightShort(light: TrafficLight): string {
 export function reviewReason(tree: TreeRecord): string {
   const notes = (tree.DBH_note || "").split(",").filter(Boolean);
   const parts: string[] = [];
-  if (notes.includes("wide_caliper")) parts.push("卡尺偏寬");
+  if (!tree.dbh_is_strict_breast_height) parts.push("非標準 1.3 m，需現場確認");
+  if (notes.includes("wide_caliper") || (tree.DBH_method === "caliper" && (tree.DBH_cm ?? 0) >= 45)) parts.push("卡尺偏寬");
   if (notes.includes("gap")) parts.push("切片有缺口");
-  if (notes.includes("no_measurement")) parts.push("量不到");
+  if (notes.includes("no_measurement") || tree.DBH_cm == null || !(tree.DBH_cm > 0)) parts.push("量不到");
   if (tree.arc_coverage_deg != null && tree.arc_coverage_deg < 120) {
     parts.push(`弧度僅 ${tree.arc_coverage_deg.toFixed(1)}°`);
   }
@@ -46,12 +51,12 @@ export function reviewReason(tree: TreeRecord): string {
 }
 
 export function isReviewTree(tree: TreeRecord): boolean {
-  return trafficLight(tree.DBH_note) === "red";
+  return trafficLight(tree) !== "green";
 }
 
 export function noteLabel(tree: TreeRecord): string {
   const reason = reviewReason(tree);
-  if (trafficLight(tree.DBH_note) === "green") return "通過";
+  if (trafficLight(tree) === "green") return "通過";
   return reason;
 }
 
@@ -62,7 +67,7 @@ export function inventoryStats(trees: TreeRecord[]): InventoryStats {
   let confSum = 0;
   let confN = 0;
   for (const tree of trees) {
-    const light = trafficLight(tree.DBH_note);
+    const light = trafficLight(tree);
     if (light === "green") green += 1;
     else if (light === "yellow") yellow += 1;
     else red += 1;

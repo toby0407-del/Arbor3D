@@ -1,0 +1,70 @@
+{
+  "DimTree": {
+    "tree_key": "string",
+    "site_id": "string",
+    "persistent_tree_id": "string",
+    "identity_status": "string"
+  },
+  "DimScan": {
+    "scan_key": "string",
+    "site_id": "string",
+    "scan_id": "string",
+    "observed_at": "date",
+    "source_file": "string",
+    "source_sha256": "string"
+  },
+  "FactObservation": {
+    "observation_key": "string",
+    "tree_key": "string",
+    "scan_key": "string",
+    "local_tree_id": "string",
+    "observed_at": "date",
+    "auto_dbh_cm": "double",
+    "auto_source": "string",
+    "auto_method": "string",
+    "strict_13m": "boolean",
+    "manual_dbh_cm": "double",
+    "manual_source": "string",
+    "manual_measured_at": "date",
+    "manual_height_m": "double",
+    "manual_strict_13m": "boolean",
+    "comparison_status": "string",
+    "error_cm": "double",
+    "absolute_error_cm": "double",
+    "squared_error_cm2": "double",
+    "ape_pct": "double",
+    "yolo_confidence": "double",
+    "arc_coverage_deg": "double",
+    "review_required": "boolean",
+    "review_reason": "string"
+  },
+  "FactEstimate": {
+    "observation_key": "string",
+    "tree_key": "string",
+    "scan_key": "string",
+    "dbh_input_cm": "double",
+    "dbh_input_source": "string",
+    "height_m": "double",
+    "height_source": "string",
+    "coefficient": "double",
+    "carbon_d": "double",
+    "co2_equivalent_ton": "double",
+    "source": "string",
+    "formula_version": "string"
+  },
+  "FactGrowth": {
+    "tree_key": "string",
+    "from_scan_key": "string",
+    "to_scan_key": "string",
+    "from_observation_key": "string",
+    "to_observation_key": "string",
+    "from_date": "date",
+    "to_date": "date",
+    "source": "string",
+    "method": "string",
+    "days": "double",
+    "delta_dbh_cm": "double",
+    "annualized_delta_cm": "double",
+    "negative_change": "boolean"
+  }
+}

@@ -74,7 +74,7 @@ export function treesAlongPolyline(
     return withGps.map((tree) => ({
       id: tree.Tree_ID,
       latlng: tree.GPS_Location as LatLng,
-      light: trafficLight(tree.DBH_note),
+      light: trafficLight(tree),
     }));
   }
 
@@ -95,7 +95,7 @@ export function treesAlongPolyline(
     return trees.map((tree) => ({
       id: tree.Tree_ID,
       latlng: polyline[0],
-      light: trafficLight(tree.DBH_note),
+      light: trafficLight(tree),
     }));
   }
 
@@ -109,7 +109,7 @@ export function treesAlongPolyline(
     return {
       id: tree.Tree_ID,
       latlng: offsetFromPath(polyline, cum, total, t, tree.Local_XYZ_m[0]),
-      light: trafficLight(tree.DBH_note),
+      light: trafficLight(tree),
     };
   });
 }

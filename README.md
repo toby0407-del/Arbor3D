@@ -213,8 +213,11 @@ RANSAC 找地面，把樹擺正，切離地 **1.2–1.4 m**。若這段沒點（
 | P5 | 影像：Segmentation、胸高橫切面、點雲側視（預覽不重複標標題） | ✅ |
 | P6 | 3D 點雲（Three.js，直立＋繞鉛直軸） | ✅ |
 | P7 | 匯入三格（去噪 PLY／高斯 PLY／照片資料夾） | ✅ |
-| P8 | 現場手測＋待複核＋CSV 匯出 | ✅ |
+| P8 | 現場手測＋待複核篩選＋CSV 匯出 | ✅ |
 | P9 | 碳匯工作表 | ✅ |
+| P10 | Microsoft AI/Data 分析層：DBH 誤差、Analytics CSV/Excel、Power BI/Fabric/Agent 樣板 | ✅ |
+
+盤點視窗左側只保留路徑圖；原本會逐棵列出的待複核清單已移除，避免在 16 棵以上資料時占滿畫面。待確認、需複核與全部待複核仍可由樹表上方的篩選頁籤查看。
 
 ### 碳匯公式（介面欄位順序）
 
@@ -268,3 +271,8 @@ CO₂ = D × 3.667
 | `app/` | 前端（React 19 + Vite 8 + Leaflet + Three.js） |
 
 依賴見 `requirements.txt`（Python）與 `app/package.json`（前端）。
+
+## Microsoft AI/Data 競賽分析層
+
+新增離線 DBH 誤差驗證、統一 Analytics CSV／Excel、確認固定樹號後的跨期比較、Power BI 模型草稿、Fabric／Data Agent 設定與預設關閉雲端的 Foundry／本機 RAG。
+完整操作與驗證限制見 [競賽版操作指南](docs/microsoft/README.md)。既有 YOLO／DBH／3DGS 管線維持原樣。

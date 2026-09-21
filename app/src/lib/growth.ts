@@ -16,8 +16,8 @@ export function annualDbhIncrementCm(dbhCm: number): number {
 }
 
 export type GrowthKind = "backcast" | "measured" | "forecast";
-/** real = 實測真值；sim = 模擬／推估值 */
-export type GrowthSource = "real" | "sim";
+/** measured = 人工量測；ai = 掃描演算法；sim = 模擬／推估 */
+export type GrowthSource = "measured" | "ai" | "sim";
 export type GrowthFit = "ok" | "watch" | "off";
 export type GrowthStatus = "normal" | "stalled" | "watch" | "abnormal";
 export type TemporalRole = "previous" | "current" | "trend";
@@ -69,7 +69,6 @@ export type GrowthRange = {
 };
 
 const MS_PER_YEAR = 365.25 * 24 * 60 * 60 * 1000;
-const MEASURED_WINDOW_DAYS = 20;
 /** 往前灌幾年、往後灌幾年的月序列（模擬為主；每年都灌滿 1–12 月） */
 const SERIES_YEARS_BACK = 3;
 const SERIES_YEARS_FORWARD = 2;
@@ -123,9 +122,6 @@ function co2At(dbhCm: number, heightM: number): number {
 }
 
 function kindForSurvey(scan: Date, survey: Date): GrowthKind {
-  const days =
-    Math.abs(survey.getTime() - scan.getTime()) / (24 * 60 * 60 * 1000);
-  if (days <= MEASURED_WINDOW_DAYS) return "measured";
   return survey.getTime() < scan.getTime() ? "backcast" : "forecast";
 }
 
@@ -227,13 +223,14 @@ function pointFromDate(
   increment: number,
   seed: number,
   forceReal: boolean,
+  baseSource: GrowthSource = "ai",
 ): GrowthPoint {
   const yearsDelta = (date.getTime() - scan.getTime()) / MS_PER_YEAR;
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();
   const kind = forceReal ? "measured" : kindForSurvey(scan, date);
-  const source: GrowthSource = forceReal || kind === "measured" ? "real" : "sim";
+  const source: GrowthSource = forceReal ? baseSource : "sim";
   const noise =
     source === "sim"
       ? simNoise(seed, year, month) * Math.min(0.35, increment * 0.22)
@@ -251,13 +248,14 @@ function pointFromDate(
   };
 }
 
-/** 產生多年月序列：僅掃描當下為實測，其餘為模擬；每年都含 1–12 月 */
+/** 產生多年月序列：僅掃描當下保留量測或 AI 來源，其餘為模擬；每年都含 1–12 月 */
 function buildSeries(opts: {
   scan: Date;
   baseDbh: number;
   measuredHeight: number | null;
   increment: number;
   seed: number;
+  baseSource: GrowthSource;
 }): GrowthPoint[] {
   const { scan, baseDbh, measuredHeight, increment, seed } = opts;
   const start: GrowthMonth = {
@@ -289,6 +287,7 @@ function buildSeries(opts: {
         increment,
         seed,
         isScanMonth,
+        opts.baseSource,
       ),
     );
   }
@@ -381,6 +380,7 @@ export function availableYears(points: GrowthPoint[]): number[] {
 
 /** Previous Survey → Current Survey → Growth Trend（另附完整模擬月序列） */
 export function temporalGrowth(opts: {
+  baseSource?: GrowthSource;
   dbhCm: number;
   heightM: number | null;
   heightEstimated: boolean;
@@ -415,6 +415,7 @@ export function temporalGrowth(opts: {
     increment,
     seed,
     true,
+    opts.baseSource ?? "ai",
   );
   const trendPoint = pointFromDate(
     nextDate,
@@ -441,6 +442,7 @@ export function temporalGrowth(opts: {
     measuredHeight,
     increment,
     seed,
+    baseSource: opts.baseSource ?? "ai",
   });
 
   return {
