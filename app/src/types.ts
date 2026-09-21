@@ -3,6 +3,7 @@ export type DbhMethod = "circle" | "caliper" | string;
 export type TreeRecord = {
   Tree_ID: string;
   DBH_cm: number | null;
+  previous_DBH_cm?: number | null;
   DBH_method: DbhMethod;
   DBH_note: string;
   arc_coverage_deg: number | null;

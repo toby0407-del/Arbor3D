@@ -17,3 +17,6 @@ YOLO_WEIGHTS = next((p for p in (_V3, _V2, _V1) if p.exists()), _V1)
 YOLO_CLASS_NAME = "tree_trunk"
 YOLO_IMGSZ = 960          # 跟 train.py / args.yaml 一致
 YOLO_CONF_DEFAULT = 0.1   # predict_mask 預設門檻
+
+# 分割疊圖／遮罩輸出（與原始照片同層的 treedata）
+PROCESSED_DIR = BASE_DIR.parent.parent / "treedata" / "處理後圖片"

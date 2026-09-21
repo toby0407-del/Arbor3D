@@ -16,9 +16,10 @@ from ultralytics import YOLO
 
 BASE_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE_DIR))
-from predict_mask import DEFAULT_WEIGHTS, load_image_bgr  # noqa: E402
+from predict_mask import DEFAULT_WEIGHTS, load_image_bgr, plot_best_detection  # noqa: E402
+from config import PROCESSED_DIR  # noqa: E402
 
-OUT_DIR = BASE_DIR.parent / "runs" / "segment" / "preview"
+OUT_DIR = PROCESSED_DIR
 
 
 def main():
@@ -43,14 +44,15 @@ def main():
 
     result = model.predict(source=image, conf=conf, imgsz=960, verbose=False)[0]
     boxes = result.boxes
-    print(f"偵測到 {len(boxes)} 個 tree_trunk：")
+    print(f"偵測到 {len(boxes)} 個 tree_trunk（預覽只畫信心最高的一個）：")
     for i in range(len(boxes)):
         c = float(boxes.conf[i])
         x1, y1, x2, y2 = boxes.xyxy[i].cpu().numpy().tolist()
         print(f"  [{i+1}] 信心值={c:.3f}  框=({x1:.0f},{y1:.0f})-({x2:.0f},{y2:.0f})")
 
-    # Ultralytics 內建繪製：遮罩 + 方框 + 標籤
-    plotted = result.plot()
+    plotted, _, best_conf, _ = plot_best_detection(image, result)
+    if len(boxes):
+        print(f"預覽框信心值: {best_conf:.3f}")
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     out_path = OUT_DIR / f"{image_path.stem}_preview.jpg"
     cv2.imencode(".jpg", plotted)[1].tofile(str(out_path))

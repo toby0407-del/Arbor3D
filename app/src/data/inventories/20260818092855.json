@@ -7,6 +7,7 @@
     {
       "Tree_ID": "Tree_001",
       "DBH_cm": 69.1,
+      "previous_DBH_cm": 68.7,
       "DBH_method": "caliper",
       "DBH_note": "",
       "arc_coverage_deg": 215.7,
@@ -46,7 +47,8 @@
       "Single_Tree_Ply": null,
       "YOLO_confidence": 0.474,
       "num_detections": 1,
-      "PointCloud_Preview": "previews/Tree_002.png"
+      "PointCloud_Preview": "previews/Tree_002.png",
+      "previous_DBH_cm": 64.4
     },
     {
       "Tree_ID": "Tree_003",
@@ -68,7 +70,8 @@
       "Single_Tree_Ply": null,
       "YOLO_confidence": 0.4872,
       "num_detections": 1,
-      "PointCloud_Preview": "previews/Tree_003.png"
+      "PointCloud_Preview": "previews/Tree_003.png",
+      "previous_DBH_cm": 14.3
     },
     {
       "Tree_ID": "Tree_004",
@@ -90,7 +93,8 @@
       "Single_Tree_Ply": null,
       "YOLO_confidence": 0.5512,
       "num_detections": 1,
-      "PointCloud_Preview": "previews/Tree_004.png"
+      "PointCloud_Preview": "previews/Tree_004.png",
+      "previous_DBH_cm": 50.9
     },
     {
       "Tree_ID": "Tree_005",
@@ -112,7 +116,8 @@
       "Single_Tree_Ply": null,
       "YOLO_confidence": 0.5042,
       "num_detections": 1,
-      "PointCloud_Preview": "previews/Tree_005.png"
+      "PointCloud_Preview": "previews/Tree_005.png",
+      "previous_DBH_cm": 16.5
     },
     {
       "Tree_ID": "Tree_006",
@@ -134,7 +139,8 @@
       "Single_Tree_Ply": null,
       "YOLO_confidence": 0.5307,
       "num_detections": 1,
-      "PointCloud_Preview": "previews/Tree_006.png"
+      "PointCloud_Preview": "previews/Tree_006.png",
+      "previous_DBH_cm": 35.4
     },
     {
       "Tree_ID": "Tree_007",
@@ -156,7 +162,8 @@
       "Single_Tree_Ply": null,
       "YOLO_confidence": 0.4949,
       "num_detections": 1,
-      "PointCloud_Preview": "previews/Tree_007.png"
+      "PointCloud_Preview": "previews/Tree_007.png",
+      "previous_DBH_cm": 17.3
     },
     {
       "Tree_ID": "Tree_008",
@@ -178,7 +185,8 @@
       "Single_Tree_Ply": null,
       "YOLO_confidence": 0.4931,
       "num_detections": 1,
-      "PointCloud_Preview": "previews/Tree_008.png"
+      "PointCloud_Preview": "previews/Tree_008.png",
+      "previous_DBH_cm": 19.5
     },
     {
       "Tree_ID": "Tree_009",
@@ -200,7 +208,8 @@
       "Single_Tree_Ply": null,
       "YOLO_confidence": 0.4943,
       "num_detections": 1,
-      "PointCloud_Preview": "previews/Tree_009.png"
+      "PointCloud_Preview": "previews/Tree_009.png",
+      "previous_DBH_cm": 16
     },
     {
       "Tree_ID": "Tree_010",
@@ -222,11 +231,13 @@
       "Single_Tree_Ply": null,
       "YOLO_confidence": 0.5234,
       "num_detections": 1,
-      "PointCloud_Preview": "previews/Tree_010.png"
+      "PointCloud_Preview": "previews/Tree_010.png",
+      "previous_DBH_cm": 33.6
     },
     {
       "Tree_ID": "Tree_011",
       "DBH_cm": 97.6,
+      "previous_DBH_cm": 97.9,
       "DBH_method": "caliper",
       "DBH_note": "",
       "arc_coverage_deg": 315,
@@ -249,6 +260,7 @@
     {
       "Tree_ID": "Tree_012",
       "DBH_cm": 140,
+      "previous_DBH_cm": 138.5,
       "DBH_method": "caliper",
       "DBH_note": "",
       "arc_coverage_deg": 336.8,
@@ -271,6 +283,7 @@
     {
       "Tree_ID": "Tree_013",
       "DBH_cm": 104.4,
+      "previous_DBH_cm": 104.3,
       "DBH_method": "caliper",
       "DBH_note": "",
       "arc_coverage_deg": 233,
@@ -293,6 +306,7 @@
     {
       "Tree_ID": "Tree_014",
       "DBH_cm": 99.2,
+      "previous_DBH_cm": 99.1,
       "DBH_method": "caliper",
       "DBH_note": "",
       "arc_coverage_deg": 219.3,
@@ -332,7 +346,8 @@
       "Single_Tree_Ply": null,
       "YOLO_confidence": 0.4309,
       "num_detections": 1,
-      "PointCloud_Preview": "previews/Tree_015.png"
+      "PointCloud_Preview": "previews/Tree_015.png",
+      "previous_DBH_cm": 65.2
     },
     {
       "Tree_ID": "Tree_016",
@@ -354,7 +369,8 @@
       "Single_Tree_Ply": null,
       "YOLO_confidence": 0.4398,
       "num_detections": 1,
-      "PointCloud_Preview": "previews/Tree_016.png"
+      "PointCloud_Preview": "previews/Tree_016.png",
+      "previous_DBH_cm": 60.1
     }
   ]
 }

@@ -79,6 +79,30 @@ def predict_binary_mask(image_path, weights_path=DEFAULT_WEIGHTS, conf=YOLO_CONF
     return mask, len(result.masks.data)
 
 
+def best_detection_index(result):
+    """同一張圖只取信心最高的一個 tree_trunk，避免一棵樹疊多個框。"""
+    if result.boxes is None or len(result.boxes) == 0:
+        return None
+    return int(result.boxes.conf.argmax())
+
+
+def plot_best_detection(image_bgr, result):
+    """回傳 (疊圖, 單實例遮罩, 信心值, 原始偵測數)。沒抓到時疊圖為原圖。"""
+    n = 0 if result.boxes is None else len(result.boxes)
+    idx = best_detection_index(result)
+    if idx is None:
+        return image_bgr.copy(), None, 0.0, n
+    plotted = result[idx].plot()
+    orig_h, orig_w = result.orig_shape
+    mask = np.zeros((orig_h, orig_w), dtype=np.uint8)
+    if result.masks is not None and len(result.masks.data) > idx:
+        inst = result.masks.data[idx].cpu().numpy()
+        resized = cv2.resize(inst, (orig_w, orig_h), interpolation=cv2.INTER_NEAREST)
+        mask[resized > 0.5] = 255
+    conf = float(result.boxes.conf[idx])
+    return plotted, mask, conf, n
+
+
 def main():
     print("=== predict_mask.py 版本標記: DEBUG_V5_REGION_CHECK (如果沒看到這行，代表你跑到舊版本) ===")
     if len(sys.argv) != 3:
