@@ -140,7 +140,7 @@ export ARBOR3D_ROOT=/path/to/Arbor3D
 | 優先 | 項目 | 說明 |
 |------|------|------|
 | P0 | 接上 Arbor3D 量測管線 | 未設 `ARBOR3D_CMD`／`ARBOR3D_ROOT` 時匯入只收檔 |
-| P0 | 實際步道路線 | 示範 polyline 仍是示意；應用現場 GPX／錄製軌跡取代 |
+| P0 | 實際步道路線 | 逢甲示範已貼合 OSM 校內 pedestrian 通道並避開學思湖；仍應用現場 GPX／錄製軌跡取代 |
 | P1 | 多掃描同一路徑 | 綁定已支援多 `scanId`，需多份 JSON 再測 |
 | P1 | 正式帳號 API | 現在是寫死示範帳號 |
 | P2 | 手機版 UX | 戶外單手：大按鈕、地圖全螢幕 |
