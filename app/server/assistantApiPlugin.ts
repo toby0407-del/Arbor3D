@@ -63,15 +63,27 @@ async function askAzure(
     env.FOUNDRY_MODEL_DEPLOYMENT?.trim();
   const allowed =
     env.ARBOR_ALLOW_BILLABLE_CLOUD === "YES_I_ACCEPT_COSTS";
-  if (!endpoint || !apiKey || !model || !allowed) return null;
+  if (!endpoint || !model || !allowed) return null;
   if (!/^https:\/\//i.test(endpoint)) throw new Error("Azure endpoint 必須使用 HTTPS");
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (apiKey) {
+    headers["api-key"] = apiKey;
+  } else {
+    const { DefaultAzureCredential } = await import("@azure/identity");
+    const credential = new DefaultAzureCredential();
+    const token = await credential.getToken(
+      "https://ai.azure.com/.default",
+    );
+    if (!token?.token) throw new Error("無法取得 Azure 身分權杖");
+    headers.Authorization = `Bearer ${token.token}`;
+  }
 
   const response = await fetch(azureUrl(endpoint), {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "api-key": apiKey,
-    },
+    headers,
     body: JSON.stringify({
       model,
       temperature: 0.2,
@@ -129,13 +141,9 @@ export function assistantApiPlugin(
             reply =
               (await askAzure(question, context, env)) ??
               localAssistantReply(question, context);
-          } catch (error) {
+          } catch {
             reply = localAssistantReply(question, context);
             reply.answer += "\n\n（Azure AI 暫時無法使用，已切換成本機證據回答。）";
-            res.setHeader(
-              "X-Arbor3D-Azure-Error",
-              error instanceof Error ? error.message.slice(0, 160) : "unknown",
-            );
           }
           sendJson(res, 200, reply);
         } catch (error) {

@@ -5,6 +5,7 @@
 
 **Windows 接續更新：** 既有功能分支已合併 main；新增四年季度模擬及五頁 PBIP/PBIR 產生器，詳見 [Windows 指南](WINDOWS.md)。
 macOS 的 Azure CLI、Python 3.11、Foundry SDK 與磁碟需求見 [macOS 建置指南](MACOS_SETUP.md)。
+Azure for Students 的實際 Foundry 資源、模型與安全設定見 [Azure 部署紀錄](AZURE_DEPLOYMENT.md)。
 分析契約 1.1 為所有表新增 `dataset_kind`，真實和合成資料必須分開輸出。App 輸入 bundle 仍維持 1.0。
 以下原先 Mac 上的驗證限制屬歷史紀錄，最新執行結果以 [驗證紀錄](VALIDATION.md) 的 Windows 章節為準。
 

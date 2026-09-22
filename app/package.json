@@ -13,6 +13,7 @@
     "analytics:excel": "node scripts/export-analytics-excel.mjs"
   },
   "dependencies": {
+    "@azure/identity": "^4.13.3",
     "busboy": "^1.6.0",
     "exceljs": "^4.4.0",
     "leaflet": "^1.9.4",

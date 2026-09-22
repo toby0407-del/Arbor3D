@@ -243,7 +243,7 @@ npm run dev
 cp .env.example .env.local
 ```
 
-在 `.env.local` 填入 `AZURE_AI_ENDPOINT`、`AZURE_AI_API_KEY`、`AZURE_AI_MODEL`，並把 `ARBOR_ALLOW_BILLABLE_CLOUD` 設為 `YES_I_ACCEPT_COSTS` 後重啟。金鑰只在伺服器端使用；不要改成 `VITE_` 前綴，也不要提交 `.env.local`。
+在 `.env.local` 填入 `AZURE_AI_ENDPOINT`、`AZURE_AI_MODEL`，並把 `ARBOR_ALLOW_BILLABLE_CLOUD` 設為 `YES_I_ACCEPT_COSTS` 後重啟。本機預設沿用 `az login` 的 Microsoft Entra 身分；部署環境建議 Managed Identity。只有無法使用身分驗證時才填 `AZURE_AI_API_KEY`。不要改成 `VITE_` 前綴，也不要提交 `.env.local`。
 
 支援 `https://<resource>.openai.azure.com` 或 `https://<resource>.services.ai.azure.com` 資源端點，App 會呼叫 OpenAI v1 chat completions 路徑。雲端失敗時自動退回本機證據模式。
 

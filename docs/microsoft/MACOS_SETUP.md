@@ -44,7 +44,7 @@ az login
 az account show
 ```
 
-確認 Azure for Students 訂閱後，再於 Foundry 建立或選擇模型 deployment。App 設定依 `app/.env.example`；金鑰不得使用 `VITE_` 前綴或提交到 Git。
+確認 Azure for Students 訂閱後，再於 Foundry 建立或選擇模型 deployment。App 設定依 `app/.env.example`；本機優先沿用 `az login`，不需把 API key 寫到磁碟。若因部署環境限制而使用金鑰，也不得使用 `VITE_` 前綴或提交到 Git。
 
 ## 尚未安裝的重型管線
 

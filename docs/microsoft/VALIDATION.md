@@ -1,5 +1,14 @@
 # 本機驗證紀錄
 
+## Azure for Students 雲端驗證（2026-09-22）
+
+- 登入與訂閱：Azure CLI 登入成功，預設訂閱為 Azure for Students。
+- Japan East Foundry resource／project 與 `gpt-4.1-mini` deployment 均為 Succeeded。
+- 直接推論最小測試 HTTP 200；App `/api/assistant` 端到端回傳 `provider=azure`。
+- 測試問題只含兩筆去識別化樹木盤點證據；沒有上傳人員資料、原始照片、點雲或 Azure key。
+- App 新增 Microsoft Entra `DefaultAzureCredential`；API key 僅用於單次記憶體內驗證，沒有寫入檔案或 Git。
+- 訂閱／帳號 ID 與 API key 不記錄在專案文件。
+
 ## App 盤點 AI 助理（2026-09-22）
 
 - App 測試：11 項通過，其中 3 項驗證待複核樹號、無人工配對時拒絕捏造準確率，以及碳匯必須標為估算。
