@@ -59,6 +59,7 @@ Thumbs.db
 .vscode/
 .env
 .env.*
+!app/.env.example
 
 # Vite cache at repo root (do not commit)
 .vite/

@@ -13,6 +13,7 @@
 2. 上傳去噪 PLY、高斯濺射 PLY、原始照片 → 系統收檔並可接量測管線
 3. 查看盤點結果：樹表、胸徑燈號、Segmentation、橫切面、3D 點雲
 4. 填寫現場手測、碳匯計算、匯出 CSV
+5. 在盤點視窗詢問 AI 助理，取得待複核、精度、碳匯與下一步建議
 
 **技術棧**：React 19 + TypeScript + Vite 8 + Leaflet（國土測繪底圖）+ Three.js（3D 點雲）
 
@@ -233,6 +234,18 @@ npm run dev
 ```
 
 瀏覽器開 http://127.0.0.1:5173/，登入後搜尋「逢甲」即可驗證。
+
+### 盤點 AI 助理（選用 Azure）
+
+未設定 Azure 時，助理會使用本機證據規則回答，不產生雲端費用。要接既有 Foundry／Azure OpenAI 模型部署：
+
+```bash
+cp .env.example .env.local
+```
+
+在 `.env.local` 填入 `AZURE_AI_ENDPOINT`、`AZURE_AI_API_KEY`、`AZURE_AI_MODEL`，並把 `ARBOR_ALLOW_BILLABLE_CLOUD` 設為 `YES_I_ACCEPT_COSTS` 後重啟。金鑰只在伺服器端使用；不要改成 `VITE_` 前綴，也不要提交 `.env.local`。
+
+支援 `https://<resource>.openai.azure.com` 或 `https://<resource>.services.ai.azure.com` 資源端點，App 會呼叫 OpenAI v1 chat completions 路徑。雲端失敗時自動退回本機證據模式。
 
 ### 接量測管線（可選）
 

@@ -2,6 +2,7 @@ import { downloadAnalyticsInput, sourceLabel } from "../lib/analytics";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PathTreeMap } from "../components/PathTreeMap";
 import { PlyViewer } from "../components/PlyViewer";
+import { InventoryAssistant } from "../components/InventoryAssistant";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import { useModalTouchScrollLock } from "../hooks/useModalTouchScrollLock";
 import { useFieldMeasures } from "../hooks/useFieldMeasures";
@@ -511,6 +512,7 @@ export function PathInventoryDialog({
     null,
   );
   const [showFormula, setShowFormula] = useState(false);
+  const [showAssistant, setShowAssistant] = useState(false);
   const [growthTreeId, setGrowthTreeId] = useState<string | null>(null);
   const [tab, setTab] = useState<PreviewTab>("images");
   const [filter, setFilter] = useState<Filter>("all");
@@ -579,6 +581,10 @@ export function PathInventoryDialog({
           setGrowthTreeId(null);
           return;
         }
+        if (showAssistant) {
+          setShowAssistant(false);
+          return;
+        }
         if (showFormula) {
           setShowFormula(false);
           return;
@@ -603,7 +609,7 @@ export function PathInventoryDialog({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [growthTreeId, lightbox, onClose, onPreviewTree, preview, showFormula, visible]);
+  }, [growthTreeId, lightbox, onClose, onPreviewTree, preview, showAssistant, showFormula, visible]);
 
   const cacheBust = `?t=${encodeURIComponent(report.created_at)}`;
   const maskUrl = preview
@@ -668,6 +674,13 @@ export function PathInventoryDialog({
             </div>
           </div>
           <div className="path-db-head-actions">
+            <button
+              type="button"
+              className="primary-btn"
+              onClick={() => setShowAssistant(true)}
+            >
+              詢問 AI 助理
+            </button>
             <button
               type="button"
               className="formula-btn"
@@ -1106,6 +1119,16 @@ export function PathInventoryDialog({
       </div>
 
       {showFormula ? <FormulaPopup onClose={() => setShowFormula(false)} /> : null}
+
+      {showAssistant ? (
+        <InventoryAssistant
+          parkName={parkName}
+          pathName={pathName}
+          report={report}
+          measures={measures}
+          onClose={() => setShowAssistant(false)}
+        />
+      ) : null}
 
       {growthTree && growthTemporal ? (
         <GrowthTrendPopup
