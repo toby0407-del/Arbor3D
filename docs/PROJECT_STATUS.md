@@ -15,7 +15,7 @@ Arbor3D 已具備可展示的 **Physical → Digital → AI** 主流程、真實
 | 實體與數位盤點 | YOLO 樹幹分割、單木 ID、DBH、3DGS／PLY、JSON／CSV／HTML | 已有逢甲 2026-08-18 真實示範資料，16 棵 |
 | Web App | 示範登入、地圖搜尋、可靠性標示路線、盤點表、燈號、影像、3D、手測、CSV、碳匯；大型盤點工具延遲載入 | App 15 項測試、lint、production build 通過 |
 | 正式匯入閉環 | App 接收 PLY、照片、`calib.json`、`cameras.json`；adapter 自動整理既有資料目錄、執行 Python、發佈附件並綁定路徑 | adapter 3 項測試通過；尚待下一趟真實掃描與完整 GPU 環境驗收 |
-| DEMO 完整度 | 24 組模擬盤點補齊合成照片、分割圖、胸高橫切面、點雲預覽與 900 點 PLY；匯入視窗可一鍵產生完整模擬素材 | 模擬資料與媒體均有醒目警告且不冒充現場證據；App 自動檢查涵蓋全部 24 組 |
+| DEMO 完整度 | 24 組模擬盤點的四格影像改用逢甲實拍照片與真實掃描 `20260818092855` 的分割圖、胸高橫切面、點雲側視；另附 900 點示意 PLY；匯入視窗可一鍵產生完整模擬素材 | 模擬資料會標明「借用逢甲來源、非目前地點現場證據」；App 自動檢查涵蓋全部 24 組 |
 | 分析資料層 | Analytics JSON／CSV／Excel、資料契約、誤差與跨期規則 | Python 23 項測試通過；真實／模擬資料分離 |
 | Power BI／Fabric | PBIP/PBIR 產生器、Power Query、DAX、Spark 與 Data Agent 樣板 | 官方 JSON schema 通過；仍待 Windows Desktop 畫面驗收 |
 | App AI 助理 | 以盤點證據回答待複核、精度、碳匯限制與行動建議 | 本機模式與 Azure 失敗退回機制皆已實作 |

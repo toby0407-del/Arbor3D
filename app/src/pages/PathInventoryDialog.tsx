@@ -877,7 +877,7 @@ export function PathInventoryDialog({
             ) : tab === "images" ? (
               <>
                 <h3>
-                  {preview.Tree_ID} · Segmentation · 信心度{" "}
+                  {preview.Tree_ID} · Segmentation{isSimulated ? "（借用逢甲實測）" : ""} · 信心度{" "}
                   {formatConfidence(preview.YOLO_confidence)}
                 </h3>
                 {maskUrl ? (
@@ -895,7 +895,7 @@ export function PathInventoryDialog({
                 ) : (
                   <div className="path-db-empty">尚無 Segmentation 圖</div>
                 )}
-                <h3>橫切面</h3>
+                <h3>{isSimulated ? "橫切面（借用逢甲實測）" : "橫切面"}</h3>
                 {sliceUrl ? (
                   <ZoomImage
                     src={sliceUrl}
@@ -913,21 +913,23 @@ export function PathInventoryDialog({
                 )}
                 {photoUrl ? (
                   <>
-                    <h3>原圖</h3>
+                    <h3>{isSimulated ? "逢甲實拍參考圖" : "原圖"}</h3>
                     <ZoomImage
                       src={photoUrl}
-                      title="原圖"
-                      alt={`${preview.Tree_ID} 照片`}
+                      title={isSimulated ? "逢甲實拍參考圖" : "原圖"}
+                      alt={isSimulated ? "逢甲大學實拍參考" : `${preview.Tree_ID} 照片`}
                       onOpen={() =>
                         setLightbox({
                           src: photoUrl,
-                          title: `${preview.Tree_ID} · 原圖`,
+                          title: isSimulated
+                            ? `${preview.Tree_ID} · 逢甲實拍參考（非目前地點）`
+                            : `${preview.Tree_ID} · 原圖`,
                         })
                       }
                     />
                   </>
                 ) : null}
-                <h3>點雲側視</h3>
+                <h3>{isSimulated ? "點雲側視（借用逢甲實測）" : "點雲側視"}</h3>
                 {cloudPreviewUrl ? (
                   <ZoomImage
                     src={cloudPreviewUrl}

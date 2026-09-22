@@ -26,6 +26,7 @@ export type ParkInventoryReport = {
   scan_id: string;
   dataset_kind?: "observed" | "simulated";
   simulation_notice?: string;
+  simulation_media_source?: string;
   gps_available: boolean;
   num_trees: number;
   trees: TreeRecord[];
