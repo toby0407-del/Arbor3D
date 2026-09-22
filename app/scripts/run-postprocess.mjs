@@ -2,10 +2,10 @@
  * 後續量測處理：去噪 + 高斯濺射就緒後執行。
  *
  * 環境變數（擇一）：
- *   ARBOR3D_CMD  — 完整指令，會代入 {jobDir} {scanId}
+ *   ARBOR3D_CMD  — 完整指令，會代入 {jobDir} {scanId} {pathId}
  *   ARBOR3D_ROOT — Arbor3D 倉庫路徑，嘗試呼叫其中的 postprocess 腳本
  *
- * 用法：node scripts/run-postprocess.mjs <jobDir> <scanId>
+ * 用法：node scripts/run-postprocess.mjs <jobDir> <scanId> [pathId]
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
@@ -17,9 +17,10 @@ const root = path.resolve(__dirname, "..");
 
 const jobDir = process.argv[2];
 const scanId = process.argv[3];
+const pathId = process.argv[4] || "";
 
 if (!jobDir || !scanId) {
-  console.error("用法: node scripts/run-postprocess.mjs <jobDir> <scanId>");
+  console.error("用法: node scripts/run-postprocess.mjs <jobDir> <scanId> [pathId]");
   process.exit(1);
 }
 
@@ -36,11 +37,11 @@ async function dirHasFiles(dir) {
   }
 }
 
-async function runCmd(command, args, cwd) {
+async function runCmd(command, args, cwd, shell = false) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd,
-      shell: true,
+      shell,
       env: process.env,
       stdio: ["ignore", "pipe", "pipe"],
     });
@@ -77,11 +78,12 @@ async function main() {
     const expanded = cmd
       .replaceAll("{jobDir}", jobDir)
       .replaceAll("{scanId}", scanId)
+      .replaceAll("{pathId}", pathId)
       .replaceAll("{raw}", raw)
       .replaceAll("{denoised}", denoised)
       .replaceAll("{gaussian}", gaussian);
     log(`執行 ARBOR3D_CMD: ${expanded}`);
-    await runCmd(expanded, [], root);
+    await runCmd(expanded, [], root, true);
     log("ARBOR3D_CMD 完成");
     return;
   }
@@ -109,7 +111,9 @@ async function main() {
       );
     }
     log(`執行 ${script}`);
-    await runCmd("python3", [script, "--job-dir", jobDir, "--scan-id", scanId], arborRoot);
+    const args = [script, "--job-dir", jobDir, "--scan-id", scanId];
+    if (pathId) args.push("--path-id", pathId);
+    await runCmd("python3", args, arborRoot);
     log("Arbor3D 腳本完成");
     return;
   }

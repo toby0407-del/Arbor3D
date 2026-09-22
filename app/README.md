@@ -24,7 +24,7 @@
 ```
 ┌──────────┐     ┌────────────┐     ┌──────────────┐     ┌───────────────┐
 │  1. 登入  │ ──→ │ 2. 地圖選點 │ ──→ │ 3. 點路徑     │ ──→ │ 4. 盤點／匯入  │
-│  帳密驗證  │     │ 搜尋＋GPS   │     │ 已盤點→樹表   │     │ 三格上傳       │
+│  帳密驗證  │     │ 搜尋＋GPS   │     │ 已盤點→樹表   │     │ 正式素材上傳   │
 └──────────┘     └────────────┘     │ 未盤點→匯入   │     │ 碳匯＋CSV      │
                                     └──────────────┘     └───────────────┘
 ```
@@ -36,18 +36,19 @@
 | **1. 登入** | 選工作編號 → 輸密碼 → 進入；或按「示範登入」 | 帳號在 `src/data/staff.ts`，上線前換 API |
 | **2. 地圖選點** | 搜尋欄打「台中逢甲」、或直接點地圖上的點 | 支援台／臺互轉、縣市＋名稱連打 |
 | **3a. 已盤點路徑** | 點路徑 → 直接開盤點視窗（樹表、影像、3D、碳匯） | 旁邊有「匯入」按鈕可再上傳新一組 |
-| **3b. 尚未盤點** | 點路徑 → 開匯入對話框 | 三格上傳（見下方） |
+| **3b. 尚未盤點** | 點路徑 → 開匯入對話框 | 快速預覽三項；正式盤點再加校正／姿態（見下方） |
 | **4. 錄製路徑**（可選） | 側欄展開 → 開始記錄 → 停止時問是否保存 | 精度 ≤ 10 m 才記點；可下載 GPX |
-| **5. 匯入** | 去噪 PLY、高斯濺射 PLY、原始照片資料夾 | 編號自動跟資料夾名；可選年度與去回程 |
+| **5. 匯入** | 去噪 PLY、高斯濺射 PLY、原始照片；正式模式另加 `calib.json`、`cameras.json` | 編號自動跟資料夾名；可選年度 |
 | **6. 盤點視窗** | 樹表（燈號篩選）、影像分頁、量測分頁、3D 分頁、碳匯工作表 | 手測存 localStorage、匯出 CSV |
 
-### 匯入三格
+### 匯入素材
 
 | 格位 | 類型 | 內容 |
 |------|------|------|
 | 去噪 PLY | 選 `.ply` 檔 | RayStudio 解算去噪後的 PLY |
 | 高斯濺射 PLY | 選 `.ply` 檔 | 訓練完成後**匯出**的 PLY（不要用 `ray_gaussian/input.ply`） |
 | 原始照片 | 選**資料夾** | 這一趟訓練用的影像資料夾 |
+| 相機校正／姿態 | 選**資料夾** | 正式管線必須同時包含 `calib.json`、`cameras.json`；快速預覽可不選 |
 
 上傳前會驗證副檔名和 PLY 檔頭（ASCII `ply` magic）。編號 ID 自動等於原始照片資料夾名。
 
@@ -93,7 +94,7 @@ arbor3d-interface/
     │   ├── LoginPage.tsx           # 登入畫面（帳密 + 示範登入）
     │   ├── SitePickerPage.tsx      # 地圖選點＋側欄（錄製、路徑列表、overlays）
     │   ├── PathInventoryDialog.tsx  # 盤點視窗（樹表、影像、量測、3D、碳匯）
-    │   └── PathImportDialog.tsx    # 匯入對話框（三格 + 年度 + 進度）
+    │   └── PathImportDialog.tsx    # 匯入對話框（正式素材 + 年度 + 進度）
     │
     ├── components/
     │   ├── OsmSiteMap.tsx          # Leaflet 地圖（定位、底圖切換、overlays）
@@ -143,13 +144,15 @@ arbor3d-interface/
    │
    ▼
 RayStudio 去噪 → 去噪 .ply ─┐
-RayStudio 高斯濺射 → 濺射 .ply ─┤──→ 介面「匯入三格」
-原始照片資料夾 ──────────────────┘        │
+RayStudio 高斯濺射 → 濺射 .ply ─┤──→ 介面「匯入素材」
+原始照片資料夾 ──────────────────┤        │
+calib.json + cameras.json ───────┘        │
                                          ▼
                                   inbox/{jobId}/
                                   ├── denoised/
                                   ├── gaussian/
-                                  └── raw/
+                                  ├── raw/
+                                  └── metadata/
                                          │
                          ┌───────────────┤
                          │ 有設正式管線？ │
@@ -161,7 +164,7 @@ RayStudio 高斯濺射 → 濺射 .ply ─┤──→ 介面「匯入三格」
                          │
                          ▼
               src/data/inventories/{scanId}.json  ← 盤點報告
-              src/data/scanBindings.ts            ← 綁到公園路徑
+              public/scans/_bindings.json          ← 動態綁到公園路徑
               public/scans/{scanId}/              ← 照片/遮罩/剖面/PLY
                          │
                          ▼
@@ -252,8 +255,8 @@ cp .env.example .env.local
 未設定下列變數時，「開始計算」仍會產生點雲快速預覽盤點，但不得當作正式 YOLO／標準 1.3 m DBH 成果。設定後會切換到正式 adapter：
 
 ```bash
-# 方法 A：完整指令（{jobDir}、{scanId} 會被代入）
-export ARBOR3D_CMD='python3 /path/to/Arbor3D/scripts/postprocess_from_inbox.py --job-dir {jobDir} --scan-id {scanId}'
+# 方法 A：完整指令（{jobDir}、{scanId}、{pathId} 會被代入）
+export ARBOR3D_CMD='python3 /path/to/Arbor3D/scripts/postprocess_from_inbox.py --job-dir {jobDir} --scan-id {scanId} --path-id {pathId}'
 
 # 方法 B：指定 Arbor3D 倉庫路徑
 export ARBOR3D_ROOT=/path/to/Arbor3D
@@ -270,7 +273,7 @@ $env:ARBOR3D_CMD='python3 ...'
 | `npm run build` | TypeScript 檢查 + 打包 |
 | `npm run lint` | oxlint 檢查 |
 | `npm run preview` | 預覽 build 產物 |
-| `npm run postprocess` | 手動跑後續量測 `node scripts/run-postprocess.mjs <jobDir> <scanId>` |
+| `npm run postprocess` | 手動跑後續量測 `node scripts/run-postprocess.mjs <jobDir> <scanId> [pathId]` |
 
 ---
 
@@ -287,7 +290,7 @@ $env:ARBOR3D_CMD='python3 ...'
 | `src/App.tsx` | 根元件（login ↔ sites 兩畫面） |
 | `src/pages/SitePickerPage.tsx` | 地圖選點主頁 |
 | `src/pages/PathInventoryDialog.tsx` | 盤點視窗（樹表＋影像＋量測＋3D＋碳匯） |
-| `src/pages/PathImportDialog.tsx` | 匯入三格對話框 |
+| `src/pages/PathImportDialog.tsx` | PLY、照片、校正／姿態匯入對話框 |
 | `src/components/OsmSiteMap.tsx` | Leaflet 地圖 |
 | `src/components/PlyViewer.tsx` | Three.js 3D 點雲 |
 | `src/data/taiwan_sites.json` | 全台公園／學校 OSM 目錄 |
@@ -300,3 +303,4 @@ $env:ARBOR3D_CMD='python3 ...'
 | `src/lib/csv.ts` | CSV 匯出 |
 | `server/importApiPlugin.ts` | `/api/import` 後端 |
 | `scripts/run-postprocess.mjs` | 管線呼叫腳本 |
+| `../scripts/postprocess_from_inbox.py` | 正式輸入整理、前置檢查、Python 管線與 App 發佈 adapter |

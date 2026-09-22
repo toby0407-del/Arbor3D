@@ -34,6 +34,7 @@ export type ImportJob = {
     gaussian: number;
     rawGo: number;
     rawReturn: number;
+    metadata: number;
   };
 };
 
@@ -51,7 +52,7 @@ export function selectPipeline(
     ? {
         mode: "arbor3d" as const,
         script: path.join(projectRoot, "scripts", "run-postprocess.mjs"),
-        args: [dir, scanId],
+        args: [dir, scanId, pathId].filter(Boolean),
       }
     : {
         mode: "preview" as const,
@@ -65,6 +66,7 @@ const SLOT_LABELS = {
   gaussian: "高斯濺射 PLY",
   rawGo: "原始照片",
   rawReturn: "回程照片",
+  metadata: "相機校正／姿態",
 } as const;
 
 type Slot = keyof typeof SLOT_LABELS;
@@ -88,6 +90,7 @@ function defaultStages(): JobStage[] {
     { id: "denoised", label: "確認去噪 PLY", status: "pending" },
     { id: "gaussian", label: "確認高斯濺射 PLY", status: "pending" },
     { id: "raw", label: "確認原始照片", status: "pending" },
+    { id: "metadata", label: "確認校正／姿態", status: "pending" },
     { id: "measure", label: "計算樹身分", status: "pending" },
     { id: "publish", label: "整理輸出", status: "pending" },
   ];
@@ -252,8 +255,14 @@ export function importApiPlugin(projectRoot: string): Plugin {
             pushLog(job, job.message);
           } else {
             setStage(job, "measure", "error");
+            if (
+              pipeline.mode === "arbor3d" &&
+              /calib\.json|cameras\.json|校正|姿態/i.test(statusMessage)
+            ) {
+              setStage(job, "metadata", "error");
+            }
             job.status = "error";
-            job.message = `處理失敗（結束碼 ${code}）`;
+            job.message = statusMessage || `處理失敗（結束碼 ${code}）`;
             pushLog(job, job.message);
           }
           await persistJob(job);
@@ -290,7 +299,13 @@ export function importApiPlugin(projectRoot: string): Plugin {
       treeCount: null,
       report: null,
       pipelineMode: "preview",
-      fileCounts: { rawGo: 0, rawReturn: 0, denoised: 0, gaussian: 0 },
+      fileCounts: {
+        rawGo: 0,
+        rawReturn: 0,
+        denoised: 0,
+        gaussian: 0,
+        metadata: 0,
+      },
     };
     jobs.set(id, job);
     setStage(job, "receive", "running");
@@ -301,6 +316,7 @@ export function importApiPlugin(projectRoot: string): Plugin {
     await fsp.mkdir(path.join(dir, "raw", "return"), { recursive: true });
     await fsp.mkdir(path.join(dir, "denoised"), { recursive: true });
     await fsp.mkdir(path.join(dir, "gaussian"), { recursive: true });
+    await fsp.mkdir(path.join(dir, "metadata"), { recursive: true });
 
     const contentType = req.headers["content-type"];
     if (!contentType?.includes("multipart/form-data")) {
@@ -378,6 +394,14 @@ export function importApiPlugin(projectRoot: string): Plugin {
       rawOk
         ? `原始照片 ${job.fileCounts.rawGo} 檔`
         : "原始照片資料夾未上傳",
+    );
+    const metadataOk = job.fileCounts.metadata > 0;
+    setStage(job, "metadata", metadataOk ? "done" : "skipped");
+    pushLog(
+      job,
+      metadataOk
+        ? `相機校正／姿態 ${job.fileCounts.metadata} 檔；正式管線將檢查 calib.json 與 cameras.json`
+        : "未上傳校正／姿態；快速預覽可執行，正式管線需要 calib.json 與 cameras.json",
     );
 
     const missingLabels: string[] = [];

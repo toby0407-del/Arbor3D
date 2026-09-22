@@ -19,7 +19,7 @@
 9. 碳匯工作表：圓周 × 高 × 係數 → CO₂ 當量
 10. 3D 點雲（Three.js，自動直立，繞鉛直軸轉）
 11. 地圖沿路徑標樹（無 GPS 時用 Local_XYZ_m 插值）
-12. 匯入三格：去噪 PLY、高斯濺射 PLY、單趟照片；格式預驗、進度中文
+12. 匯入正式素材：去噪 PLY、高斯濺射 PLY、單趟照片，以及正式模式用的 `calib.json`／`cameras.json`；格式預驗、進度中文
 13. 地圖視野持久化（除非登出）
 14. 國土測繪底圖（街道 / 空拍 切換）
 15. 盤點 AI 助理（Azure AI 可選；未設定或失敗時本機證據模式）
@@ -36,7 +36,7 @@
                                   ┌────────────┤
                                   │            │
                             匯入上傳       或手動放檔
-                           （App 三格）    （下方步驟 A–D）
+                           （App 匯入）    （下方步驟 A–D）
                                   │            │
                                   ▼            ▼
                            inbox/ 收檔      直接放到
@@ -122,16 +122,19 @@ npm run dev
 
 ```bash
 # 方法 A：完整指令
-export ARBOR3D_CMD='python3 /path/to/script.py --job-dir {jobDir} --scan-id {scanId}'
+export ARBOR3D_CMD='python3 /path/to/Arbor3D/scripts/postprocess_from_inbox.py --job-dir {jobDir} --scan-id {scanId} --path-id {pathId}'
 
 # 方法 B：指定 Arbor3D 路徑（自動找 scripts/ 下的 postprocess 腳本）
 export ARBOR3D_ROOT=/path/to/Arbor3D
 ```
 
-管線應產出：
-- `src/data/inventories/{scanId}.json`
-- `public/scans/{scanId}/{photos,masks,dbh,models,maps}/`
-- 更新 `src/data/scanBindings.ts`
+倉庫內建的 `scripts/postprocess_from_inbox.py` 現會自動：
+
+- 驗證 PLY、JPG、`calib.json` 與 `cameras.json`
+- 將素材整理到既有 Python 管線要求的 `3D_treedata*`／`3DGS_Park_Model` 目錄
+- 執行 `run_full_park_pipeline.py`
+- 把報告與附件發佈到 `src/data/inventories/{scanId}.json`、`public/scans/{scanId}/`
+- 更新 `public/scans/_bindings.json`，讓結果立即綁回上傳的路徑
 
 ---
 
@@ -139,7 +142,7 @@ export ARBOR3D_ROOT=/path/to/Arbor3D
 
 | 優先 | 項目 | 說明 |
 |------|------|------|
-| P0 | 接上正式 Arbor3D 量測管線 | App 已能依設定切換正式 adapter，未設定時會明確標為快速預覽；仍需補齊相機校正／姿態輸入並用下一趟真實掃描完成端到端驗收 |
+| P0 | 正式 Arbor3D 新掃描驗收 | adapter、校正／姿態上傳、自動整理與發佈均已完成；仍需用下一趟真實掃描與完整 GPU 依賴跑完端到端驗收 |
 | P0 | 實際步道路線 | 23 條可顯示路線已改用 OSM pedestrian／footway 並通過建物／水域交集檢查；中山醫與弘光因無可靠公開步道而不顯示推測線。全部仍應以現場 GPX／錄製軌跡取代 |
 | P1 | 多掃描同一路徑 | 綁定已支援多 `scanId`，需多份 JSON 再測 |
 | P1 | 正式帳號 API | 現在是寫死示範帳號 |
@@ -169,7 +172,8 @@ export ARBOR3D_ROOT=/path/to/Arbor3D
 | `src/lib/loadPly.ts` | 讀 binary／ascii PLY |
 | `src/components/PlyViewer.tsx` | 3D 點雲（直立、繞鉛直軸） |
 | `src/pages/PathInventoryDialog.tsx` | 盤點視窗（樹表＋影像＋量測＋3D＋碳匯） |
-| `src/pages/PathImportDialog.tsx` | 匯入三格 |
+| `src/pages/PathImportDialog.tsx` | 匯入 PLY、照片與校正／姿態資料 |
+| `../scripts/postprocess_from_inbox.py` | 正式管線輸入整理、前置檢查、執行與發佈 |
 | `src/hooks/usePathRecorder.ts` | GPS 錄製（起測門檻 10 m） |
 | `src/hooks/useFieldMeasures.ts` | 現場手測（localStorage） |
 | `src/lib/carbon.ts` | 碳匯計算 |

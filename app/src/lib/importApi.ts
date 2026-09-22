@@ -28,12 +28,24 @@ export type ImportJob = {
     gaussian: number;
     rawGo: number;
     rawReturn: number;
+    metadata: number;
   };
 };
 
-export type FolderSlot = "denoised" | "gaussian" | "rawGo" | "rawReturn";
+export type FolderSlot =
+  | "denoised"
+  | "gaussian"
+  | "rawGo"
+  | "rawReturn"
+  | "metadata";
 
-const ALL_SLOTS: FolderSlot[] = ["denoised", "gaussian", "rawGo", "rawReturn"];
+const ALL_SLOTS: FolderSlot[] = [
+  "denoised",
+  "gaussian",
+  "rawGo",
+  "rawReturn",
+  "metadata",
+];
 
 export type UploadProgress = {
   loaded: number;

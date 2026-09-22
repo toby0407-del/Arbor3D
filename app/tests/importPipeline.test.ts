@@ -15,5 +15,5 @@ test("configured Arbor3D command selects the official adapter", () => {
   });
   assert.equal(selected.mode, "arbor3d");
   assert.match(selected.script, /run-postprocess\.mjs$/);
-  assert.deepEqual(selected.args, ["/job", "scan"]);
+  assert.deepEqual(selected.args, ["/job", "scan", "path"]);
 });

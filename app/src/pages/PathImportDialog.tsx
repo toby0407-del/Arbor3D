@@ -16,7 +16,7 @@ const folderInputProps = {
   directory: "",
 } as InputHTMLAttributes<HTMLInputElement>;
 
-type SlotKind = "ply" | "folder";
+type SlotKind = "ply" | "folder" | "metadata";
 
 type SlotState = {
   files: File[];
@@ -49,6 +49,12 @@ const SLOTS: {
     title: "原始照片",
     hint: "這一趟訓練用的那包影像（一個資料夾即可）",
   },
+  {
+    key: "metadata",
+    kind: "metadata",
+    title: "相機校正／姿態（正式盤點）",
+    hint: "選擇包含 calib.json 與 cameras.json 的資料夾；快速預覽可不選",
+  },
 ];
 
 function emptySlot(): SlotState {
@@ -61,6 +67,7 @@ function emptySlots(): Record<FolderSlot, SlotState> {
     gaussian: emptySlot(),
     rawGo: emptySlot(),
     rawReturn: emptySlot(),
+    metadata: emptySlot(),
   };
 }
 
@@ -133,6 +140,25 @@ function summarizeFolder(files: FileList | null): SlotState {
     rootLabel,
     formatOk: true,
     formatMsg: `資料夾「${rootLabel}」· ${list.length} 個檔`,
+  };
+}
+
+function summarizeMetadata(files: FileList | null): SlotState {
+  const folder = summarizeFolder(files);
+  if (!folder.files.length) return folder;
+  const names = new Set(folder.files.map((file) => file.name.toLowerCase()));
+  const missing = ["calib.json", "cameras.json"].filter((name) => !names.has(name));
+  if (missing.length) {
+    return {
+      ...folder,
+      formatOk: false,
+      formatMsg: `缺少 ${missing.join("、")}`,
+    };
+  }
+  return {
+    ...folder,
+    formatOk: true,
+    formatMsg: `已找到 calib.json、cameras.json · ${folder.files.length} 個檔`,
   };
 }
 
@@ -217,6 +243,9 @@ function validateAll(slots: Record<FolderSlot, SlotState>): string | null {
   }
   if (!slots.rawGo.formatOk) {
     return slots.rawGo.formatMsg || "請選擇原始照片資料夾";
+  }
+  if (slots.metadata.files.length > 0 && !slots.metadata.formatOk) {
+    return slots.metadata.formatMsg || "校正資料需同時包含 calib.json 與 cameras.json";
   }
   return null;
 }
@@ -322,7 +351,7 @@ export function PathImportDialog({
       if (!next.formatOk && next.formatMsg) setError(next.formatMsg);
       return;
     }
-    const next = summarizeFolder(list);
+    const next = kind === "metadata" ? summarizeMetadata(list) : summarizeFolder(list);
     setSlots((prev) => ({ ...prev, [key]: next }));
     if (!next.formatOk && next.formatMsg) setError(next.formatMsg);
   };
@@ -353,6 +382,7 @@ export function PathImportDialog({
           gaussian: slots.gaussian.files,
           rawGo: slots.rawGo.files,
           rawReturn: [],
+          metadata: slots.metadata.files,
         },
         onProgress: (progress) => {
           setUploadLoaded(progress.loaded);
@@ -409,7 +439,7 @@ export function PathImportDialog({
             <p className="path-db-kicker">{parkName}</p>
             <h2 id="path-import-title">匯入 · {pathName}</h2>
             <p>
-              三項即可：去噪 .ply、高斯濺射 .ply、這一趟的照片資料夾。上傳完成後再按「開始計算」才會出樹身分。標記：
+              快速預覽需三項：去噪 .ply、高斯濺射 .ply、照片資料夾；正式 Arbor3D 盤點另需 calib.json 與 cameras.json。上傳後按「開始計算」。標記：
               <strong> {segmentLabel || "—"}</strong>
             </p>
           </div>
@@ -479,7 +509,7 @@ export function PathImportDialog({
                   <label
                     key={slot.key}
                     className={`import-slot ${
-                      slot.kind === "folder" ? "is-wide" : ""
+                      slot.kind !== "ply" ? "is-wide" : ""
                     } ${
                       state.files.length
                         ? state.formatOk
@@ -507,7 +537,7 @@ export function PathImportDialog({
                         disabled={busy}
                         {...folderInputProps}
                         onChange={(e) => {
-                          void onPick(slot.key, "folder", e.target.files);
+                          void onPick(slot.key, slot.kind, e.target.files);
                         }}
                       />
                     )}

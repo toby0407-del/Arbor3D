@@ -13,7 +13,8 @@ Arbor3D 已具備可展示的 **Physical → Digital → AI** 主流程、真實
 | 區塊 | 完成內容 | 驗證狀態 |
 |---|---|---|
 | 實體與數位盤點 | YOLO 樹幹分割、單木 ID、DBH、3DGS／PLY、JSON／CSV／HTML | 已有逢甲 2026-08-18 真實示範資料，16 棵 |
-| Web App | 示範登入、地圖搜尋、可靠性標示路線、盤點表、燈號、影像、3D、手測、CSV、碳匯；大型盤點工具延遲載入 | App 測試、lint、production build 通過 |
+| Web App | 示範登入、地圖搜尋、可靠性標示路線、盤點表、燈號、影像、3D、手測、CSV、碳匯；大型盤點工具延遲載入 | App 15 項測試、lint、production build 通過 |
+| 正式匯入閉環 | App 接收 PLY、照片、`calib.json`、`cameras.json`；adapter 自動整理既有資料目錄、執行 Python、發佈附件並綁定路徑 | adapter 3 項測試通過；尚待下一趟真實掃描與完整 GPU 環境驗收 |
 | 分析資料層 | Analytics JSON／CSV／Excel、資料契約、誤差與跨期規則 | Python 23 項測試通過；真實／模擬資料分離 |
 | Power BI／Fabric | PBIP/PBIR 產生器、Power Query、DAX、Spark 與 Data Agent 樣板 | 官方 JSON schema 通過；仍待 Windows Desktop 畫面驗收 |
 | App AI 助理 | 以盤點證據回答待複核、精度、碳匯限制與行動建議 | 本機模式與 Azure 失敗退回機制皆已實作 |
@@ -28,7 +29,7 @@ Azure 實際部署資訊與停止費用方式見 [Microsoft Azure 部署紀錄](
 
 | 任務 | 為什麼必要 | 完成條件 |
 |---|---|---|
-| 將 App 匯入功能接上正式 Arbor3D 量測管線 | App 已能自動產生點雲快速預覽，並會在設定 `ARBOR3D_CMD`／`ARBOR3D_ROOT` 時切換正式 adapter；快速預覽已明確標示不可冒充正式 YOLO／DBH 結果 | 補齊相機校正／姿態輸入；用下一趟真實掃描跑完正式 Python 管線並在 App 出現 |
+| 用新掃描驗收正式 Arbor3D 匯入閉環 | App、校正／姿態輸入、正式 adapter 與自動發佈已完成；未設定正式環境時仍明確使用快速預覽 | 取得下一趟真實素材，在具 PyTorch／Open3D／Ultralytics 的環境跑完，並確認 App 出現正式結果 |
 | 完成第二期同路徑真實掃描 | 現在只有一期，成長曲線不能當作實測結果 | 至少兩期掃描、同樹固定 ID 經人工確認，可產生真實 FactGrowth |
 | 補標準 1.3 m 人工 DBH 與日期 | 沒有人工配對時，MAE／RMSE 不可計算 | 完成現場複核並匯出分析 bundle；有效配對數大於 0 |
 | 用現場 GPX 取代暫定路線 | 25 個地點已全量檢查：23 條顯示線貼合 OSM pedestrian／footway 且不與建物、水域相交；中山醫與弘光無可靠公開步道，已停止顯示推測線。樹位仍是相對 XYZ 沿路徑插值 | 實際 GPX／App 錄製軌跡完成並核對樹序 |

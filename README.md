@@ -213,7 +213,7 @@ RANSAC 找地面，把樹擺正，切離地 **1.2–1.4 m**。若這段沒點（
 | P4 | 盤點視窗：樹表、燈號篩選、摘要、最後一欄健康度 | ✅ |
 | P5 | 影像：Segmentation、胸高橫切面、點雲側視（預覽不重複標標題） | ✅ |
 | P6 | 3D 點雲（Three.js，直立＋繞鉛直軸） | ✅ |
-| P7 | 匯入三格（去噪 PLY／高斯 PLY／照片資料夾） | ✅ |
+| P7 | 匯入正式素材（去噪 PLY／高斯 PLY／照片／calib.json／cameras.json）＋自動發佈 | ✅ |
 | P8 | 現場手測＋待複核篩選＋CSV 匯出 | ✅ |
 | P9 | 碳匯工作表 | ✅ |
 | P10 | Microsoft AI/Data 分析層：DBH 誤差、Analytics CSV/Excel、Power BI/Fabric/Agent 樣板 | ✅ |
