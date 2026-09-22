@@ -2831,3 +2831,11 @@ h1 { margin: 0; font-size: 32px; font-weight: 650; letter-spacing: -0.03em; }
   }
   .assistant-suggestions { grid-template-columns: 1fr; }
 }
+/* Quarterly fieldwork scenarios share the inventory's existing visual style. */
+.quarterly-simulation { margin: 12px 0; padding: 12px; border: 1px solid #c6d7cc; border-radius: 8px; background: #f5f9f6; }
+.quarterly-simulation summary { cursor: pointer; font-weight: 700; }
+.quarterly-simulation p { font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.quarterly-simulation select { padding: 6px; }
+.quarterly-table-scroll { overflow-x: auto; max-height: 360px; }
+.quarterly-table-scroll table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.quarterly-table-scroll th, .quarterly-table-scroll td { padding: 8px; border-bottom: 1px solid #d8e2db; white-space: nowrap; text-align: right; }

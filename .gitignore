@@ -1,5 +1,6 @@
 # --- 本機掃描 / 3D 資料（放在上一層環保局資料夾，不要進 Git）---
 *.ply
+!app/public/scans/sim*/simulated-demo/tree-demo.ply
 *.bag
 *.splat
 GPUCache/

@@ -1,6 +1,7 @@
 import { downloadAnalyticsInput, sourceLabel } from "../lib/analytics";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PathTreeMap } from "../components/PathTreeMap";
+import { QuarterlySimulation } from "../components/QuarterlySimulation";
 import { PlyViewer } from "../components/PlyViewer";
 import { InventoryAssistant } from "../components/InventoryAssistant";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
@@ -34,6 +35,7 @@ import {
   growthStatusLabel,
   shiftGrowthRange,
   temporalGrowth,
+  quarterlyGrowth,
   type GrowthPoint,
   type GrowthRange,
   type GrowthRangeMode,
@@ -392,6 +394,7 @@ function temporalForTree(
   carbon: { heightM: number | null; heightEstimated: boolean },
   scanIso: string,
 ): TemporalGrowth | null {
+  if (tree.quarterly_observations?.length) return quarterlyGrowth(tree.quarterly_observations);
   const dbh =
     Number(field?.dbhCm) > 0 ? Number(field?.dbhCm) : tree.DBH_cm;
   if (dbh == null || !(dbh > 0)) return null;
@@ -400,7 +403,7 @@ function temporalForTree(
     heightM: carbon.heightM,
     heightEstimated: carbon.heightEstimated,
     scanIso: Number(field?.dbhCm) > 0 && field?.measuredAt ? field.measuredAt : scanIso,
-    baseSource: Number(field?.dbhCm) > 0 ? "measured" : "ai",
+    baseSource: tree.dataset_kind === "simulated" || tree.DBH_note.includes("模擬") ? "sim" : Number(field?.dbhCm) > 0 ? "measured" : "ai",
     note: tree.DBH_note,
     yoloConfidence: tree.YOLO_confidence,
   });
@@ -736,6 +739,7 @@ export function PathInventoryDialog({
           <div
             className="path-db-table-wrap"
           >
+            <QuarterlySimulation key={report.scan_id} report={report} />
             <div className="inv-filters" role="tablist" aria-label="篩選">
               {(
                 [
@@ -767,10 +771,10 @@ export function PathInventoryDialog({
                 <thead>
                   <tr>
                     <th>樹號</th>
-                    <th>AI 胸徑</th>
+                    <th>{isSimulated ? "模擬 AI 胸徑" : "AI 胸徑"}</th>
                     <th>樹高</th>
                     <th>估算 CO₂ 當量</th>
-                    <th className="growth-col">健康度</th>
+                    <th className="growth-col">{isSimulated ? "模擬成長狀態" : "健康度"}</th>
                   </tr>
                 </thead>
                 <tbody>

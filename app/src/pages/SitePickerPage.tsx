@@ -336,7 +336,7 @@ export function SitePickerPage({ session, onLogout }: Props) {
                     </span>
                     {item.name}
                     {siteHasInventory(item) ? (
-                      <span className="ready-badge">已盤點</span>
+                      <span className="ready-badge">{item.paths.filter(p => p.hasInventory).every(p => p.scanId?.startsWith("sim")) ? "模擬資料" : "已盤點"}</span>
                     ) : null}
                   </strong>
                   <span>
@@ -383,7 +383,7 @@ export function SitePickerPage({ session, onLogout }: Props) {
                         <strong>
                           {item.name}
                           {ready ? (
-                            <span className="ready-badge">已盤點</span>
+                            <span className="ready-badge">{scan?.startsWith("sim") ? "模擬資料" : "已盤點"}</span>
                           ) : (
                             <span className="pending-badge">尚未匯入</span>
                           )}

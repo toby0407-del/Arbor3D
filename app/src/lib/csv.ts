@@ -36,6 +36,7 @@ export function inventoryToCsv(
     "胸徑來源", "人工實測來源", "樹高來源", "碳量來源",
   ];
   const rows = trees.map((tree) => {
+    const simulated = tree.dataset_kind === "simulated" || tree.DBH_note.includes("模擬");
     const field = measures[tree.Tree_ID];
     const carbon = carbonForTree(tree, field, scanCreatedAt);
     return [
@@ -55,9 +56,9 @@ export function inventoryToCsv(
       carbon.carbonD?.toFixed(4) ?? "",
       carbon.co2Ton?.toFixed(3) ?? "",
       carbon.measuredAt,
-      "AI／演算法結果", field?.dbhCm ? "人工實測" : "缺少實測",
-      carbon.heightEstimated ? "推估" : field?.heightM ? "人工實測" : "AI／演算法結果",
-      "公式推估（非碳權或經查證減碳量）",
+      simulated ? "模擬" : "AI／演算法結果", field?.dbhCm ? (simulated ? "模擬場景輸入" : "人工實測") : "缺少實測",
+      simulated ? "模擬" : carbon.heightEstimated ? "推估" : field?.heightM ? "人工實測" : "AI／演算法結果",
+      simulated ? "模擬資料公式推估（非碳權）" : "公式推估（非碳權或經查證減碳量）",
     ]
       .map(cell)
       .join(",");

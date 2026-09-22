@@ -5,6 +5,25 @@ import {
   estimateHeightM,
   treeCarbonD,
 } from "./carbon";
+import type { QuarterlyObservation } from "../types";
+
+/** Stored quarterly scenarios, never relabelled as field observations. */
+export function quarterlyGrowth(rows: QuarterlyObservation[]): TemporalGrowth {
+  const points: GrowthPoint[] = rows.map(row => {
+    const [year, month, day] = row.date.split('-').map(Number);
+    return { year, month, day, label: row.quarter, dbhCm: row.simulated_ai_dbh_cm,
+      heightM: row.simulated_height_m, kind: 'backcast', source: 'sim' };
+  });
+  const current = toSnap('current', '末期模擬', points.at(-1)!);
+  const previous = toSnap('previous', '前季模擬', points.at(-2) ?? points[0]);
+  const trend = toSnap('trend', '起始模擬', points[0]);
+  const delta = current.dbhCm - previous.dbhCm;
+  const status: GrowthStatus = delta < -0.5 ? 'abnormal' : Math.abs(delta) < 0.1 ? 'stalled' : 'normal';
+  return { previous, current, trend, points, status, fit: growthFitFromStatus(status),
+    warning: status === 'abnormal', expectedIncrementCm: 0,
+    periodIncrementCm: delta, carbonDeltaTon: current.co2Ton - previous.co2Ton,
+    carbonNote: '季度情境比較；數值與狀態均為模擬，非健康診斷。' };
+}
 
 /** 本年度固定拍攝期：3 月、7 月、9 月。 */
 export const SURVEY_MONTHS = [3, 7, 9] as const;

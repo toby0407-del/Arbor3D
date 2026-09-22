@@ -1,7 +1,22 @@
 export type DbhMethod = "circle" | "caliper" | string;
 
+export type QuarterlyObservation = {
+  dataset_kind: "simulated";
+  persistent_tree_id: string;
+  quarter: string;
+  date: string;
+  scenario: string;
+  simulated_manual_dbh_cm: number;
+  simulated_ai_dbh_cm: number;
+  simulated_height_m: number;
+  simulated_latitude: number;
+  simulated_longitude: number;
+};
+
 export type TreeRecord = {
   Tree_ID: string;
+  dataset_kind?: "observed" | "simulated";
+  quarterly_observations?: QuarterlyObservation[];
   DBH_cm: number | null;
   previous_DBH_cm?: number | null;
   DBH_method: DbhMethod;

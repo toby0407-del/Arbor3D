@@ -13,6 +13,10 @@ export function analyticsInput(report: ParkInventoryReport, measures: Record<str
     report,
     manual_measurements: report.trees.flatMap(tree => {
       const field = measures[tree.Tree_ID];
+      const simulated = report.dataset_kind === 'simulated' ? tree.quarterly_observations?.at(-1) : undefined;
+      if (simulated && !field) return [{ scan_id: report.scan_id, local_tree_id: tree.Tree_ID,
+        manual_dbh_cm: simulated.simulated_manual_dbh_cm, manual_height_m: simulated.simulated_height_m,
+        carbon_coefficient: null, measured_at: simulated.date, strict_13m: true }];
       if (!field || (positive(field.dbhCm) === null && positive(field.heightM) === null)) return [];
       return [{ scan_id: report.scan_id, local_tree_id: tree.Tree_ID,
         manual_dbh_cm: positive(field.dbhCm), manual_height_m: positive(field.heightM), carbon_coefficient: positive(field.coeff),

@@ -179,7 +179,8 @@ function scoreSite(site: ParkSite, tokens: string[]): number {
 
 function toSite(item: CatalogItem): ParkSite {
   const raw = `${item.name} ${item.district} ${item.keywords}`;
-  const bound = bindingsForPark(item.name);
+  const bound = item.kind === "school" && item.name !== "逢甲大學"
+    ? [] : bindingsForPark(item.name, item.id);
   const paths: ScanPath[] =
     bound.length > 0
       ? bound.map((entry) => {

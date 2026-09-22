@@ -11,7 +11,8 @@
     "postprocess": "node scripts/run-postprocess.mjs",
     "test": "tsx --test tests/*.test.ts",
     "analytics:excel": "node scripts/export-analytics-excel.mjs",
-    "simulate:media": "node scripts/generate-simulated-media.mjs"
+    "simulate:media": "node scripts/generate-simulated-media.mjs",
+    "simulate:parks": "node scripts/generate-demo-inventories.mjs"
   },
   "dependencies": {
     "@azure/identity": "^4.13.3",

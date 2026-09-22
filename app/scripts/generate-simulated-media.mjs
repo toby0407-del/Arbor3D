@@ -49,7 +49,9 @@ for (const file of files) {
   const scanId = String(report.scan_id || path.basename(file, ".json"));
   if (!scanId.startsWith("sim")) throw new Error(`Refusing to modify non-simulated scan: ${scanId}`);
   report.dataset_kind = "simulated";
-  report.simulation_notice = notice;
+  report.simulation_notice = report.simulation_reference
+    ? `四年季度、1.3 m 人工胸徑、樹高、固定樹號與 GPS/GPX 均為模擬。${notice}`
+    : notice;
   report.simulation_media_source = "逢甲大學實拍照片 + 真實掃描 20260818092855（Tree_001～Tree_016）";
   for (const [index, tree] of (report.trees || []).entries()) {
     const sourceNumber = String((index % 16) + 1).padStart(3, "0");

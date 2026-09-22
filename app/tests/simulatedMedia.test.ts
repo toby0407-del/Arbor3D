@@ -8,7 +8,7 @@ const inventoryRoot = path.join(appRoot, "src", "data", "inventories");
 
 test("every simulated inventory is labelled and has loadable demo media", () => {
   const files = fs.readdirSync(inventoryRoot).filter((name) => /^sim.*\.json$/i.test(name));
-  assert.equal(files.length, 24);
+  assert.equal(files.length, 30);
   for (const file of files) {
     const report = JSON.parse(fs.readFileSync(path.join(inventoryRoot, file), "utf8"));
     assert.equal(report.dataset_kind, "simulated", file);

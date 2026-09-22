@@ -1,3 +1,5 @@
+import extraParks from "./extraParkBindings.json";
+import parkScenarios from "../../scripts/park-simulation-sites.json";
 import { hasReport } from "./inventory";
 
 type LatLng = [number, number];
@@ -13,10 +15,11 @@ export type ScanBinding = {
 /**
  * 把掃描綁到 OSM 地點（公園或學校）。
  * parkName 必須與 taiwan_sites.json 的 name 完全相同。
- * sim* scanId 為介面示範用的模擬盤點（僅臺中；無現場媒體）。
+ * sim* scanId 為介面示範用的模擬盤點（僅臺中；借用逢甲媒體，非當地實拍）。
  * polyline 一律走陸域步道／校道，避開湖面與水域中心。
  */
 export const SCAN_BINDINGS: ScanBinding[] = [
+  ...extraParks as ScanBinding[],
   {
     parkName: "逢甲大學",
     pathId: "fengchia-campus-20260818",
@@ -32,162 +35,6 @@ export const SCAN_BINDINGS: ScanBinding[] = [
       [24.18127, 120.647047],
       [24.181288, 120.647095],
       [24.181306, 120.647144],
-    ],
-  },
-  {
-    parkName: "東海大學",
-    pathId: "thu-campus-demo-20260315",
-    pathName: "文理大道人行道（模擬）",
-    scanId: "sim20260315thu001",
-    // OSM footway 227136838
-    polyline: [
-      [24.1792402, 120.6045828],
-      [24.1793356, 120.6041429],
-      [24.1794238, 120.6037473],
-      [24.1796025, 120.6033423],
-    ],
-  },
-  {
-    parkName: "國立中興大學",
-    pathId: "nchu-campus-demo-20260316",
-    pathName: "中興湖人行步道（模擬）",
-    scanId: "sim20260316nchu01",
-    // OSM footway 77606445
-    polyline: [
-      [24.1213336, 120.6744764],
-      [24.1213421, 120.6745553],
-      [24.1213884, 120.6746793],
-      [24.1214021, 120.6747957],
-      [24.1211824, 120.6749456],
-      [24.1209975, 120.6748858],
-      [24.1209203, 120.6748052],
-      [24.1208312, 120.6747863],
-    ],
-  },
-  {
-    parkName: "靜宜大學",
-    pathId: "pu-campus-demo-20260317",
-    pathName: "校園人行步道（模擬）",
-    scanId: "sim20260317pu0001",
-    // OSM footway 400090627
-    polyline: [
-      [24.2265558, 120.5785363],
-      [24.2275225, 120.5788237],
-      [24.227627, 120.5790585],
-    ],
-  },
-  {
-    parkName: "亞洲大學",
-    pathId: "asia-campus-demo-20260318",
-    pathName: "創價大道人行道（模擬）",
-    scanId: "sim20260318asia01",
-    // OSM footway 1155846223
-    polyline: [
-      [24.0480513, 120.6866977],
-      [24.0477863, 120.6868092],
-      [24.0475039, 120.6869287],
-      [24.0471299, 120.6870784],
-    ],
-  },
-  {
-    parkName: "朝陽科技大學",
-    pathId: "cyut-campus-demo-20260319",
-    pathName: "教學區校道（模擬）",
-    scanId: "sim20260319cyut01",
-    // OSM footway 292143208
-    polyline: [
-      [24.069576, 120.714425],
-      [24.0695057, 120.7143963],
-      [24.0694213, 120.7143617],
-      [24.0693068, 120.7146939],
-      [24.0691847, 120.7150482],
-      [24.0691612, 120.7151206],
-      [24.0693893, 120.7152163],
-    ],
-  },
-  {
-    parkName: "中國醫藥大學",
-    pathId: "cmu-campus-demo-20260320",
-    pathName: "校園人行步道（模擬）",
-    scanId: "sim20260320cmu001",
-    // OSM footway 1454215473
-    polyline: [
-      [24.1558081, 120.6817458],
-      [24.1559992, 120.6816696],
-      [24.1565248, 120.6814602],
-      [24.1566667, 120.6814271],
-      [24.1567255, 120.6814398],
-      [24.1568396, 120.6814974],
-    ],
-  },
-  {
-    parkName: "中山醫學大學",
-    pathId: "csmu-campus-demo-20260321",
-    pathName: "待現場錄製路徑（模擬資料）",
-    scanId: "sim20260321csmu01",
-    // 周邊 OSM 尚無可驗證的 pedestrian/footway，不顯示推測線。
-    polyline: [],
-  },
-  {
-    parkName: "國立臺中教育大學",
-    pathId: "ntcu-campus-demo-20260322",
-    pathName: "校園步行區（模擬）",
-    scanId: "sim20260322ntcu01",
-    // OSM pedestrian 563530650
-    polyline: [
-      [24.1422888, 120.6724608],
-      [24.142235, 120.672406],
-      [24.1419961, 120.6721626],
-      [24.1421058, 120.6720428],
-      [24.1421213, 120.6720259],
-      [24.1422353, 120.6719012],
-      [24.1422818, 120.6718504],
-      [24.1424547, 120.6716615],
-    ],
-  },
-  {
-    parkName: "國立臺中科技大學三民校區",
-    pathId: "nutc-campus-demo-20260323",
-    pathName: "校園人行步道（模擬）",
-    scanId: "sim20260323nutc01",
-    // OSM footway 1192718253
-    polyline: [
-      [24.150769, 120.6843818],
-      [24.1500594, 120.6840928],
-    ],
-  },
-  {
-    parkName: "國立勤益科技大學",
-    pathId: "ncut-campus-demo-20260324",
-    pathName: "中山路側校道（模擬）",
-    scanId: "sim20260324ncut01",
-    // OSM footway 1435164613
-    polyline: [
-      [24.1442549, 120.729528],
-      [24.1442139, 120.7302736],
-      [24.1439341, 120.7302598],
-    ],
-  },
-  {
-    parkName: "弘光科技大學",
-    pathId: "hk-campus-demo-20260325",
-    pathName: "待現場錄製路徑（模擬資料）",
-    scanId: "sim20260325hk0001",
-    // 周邊 OSM 尚無可驗證的 pedestrian/footway，不顯示推測線。
-    polyline: [],
-  },
-  {
-    parkName: "僑光科技大學",
-    pathId: "ocu-campus-demo-20260326",
-    pathName: "校園人行步道（模擬）",
-    scanId: "sim20260326ocu001",
-    // OSM footway 878674954
-    polyline: [
-      [24.1890749, 120.643026],
-      [24.1889377, 120.6430235],
-      [24.1886552, 120.6430183],
-      [24.1881354, 120.643007],
-      [24.1879885, 120.6430038],
     ],
   },
   {
@@ -381,8 +228,11 @@ export const SCAN_BINDINGS: ScanBinding[] = [
   },
 ];
 
-export function bindingsForPark(parkName: string): ScanBinding[] {
-  return SCAN_BINDINGS.filter((item) => item.parkName === parkName);
+export function bindingsForPark(parkName: string, siteId?: string): ScanBinding[] {
+  return SCAN_BINDINGS.filter((item) => {
+    const scenario = parkScenarios.find(site => site.scanId === item.scanId);
+    return item.parkName === parkName && (!siteId || !scenario || scenario.siteId === siteId);
+  });
 }
 
 export function bindingHasInventory(item: ScanBinding): boolean {

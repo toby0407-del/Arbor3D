@@ -1,0 +1,44 @@
+[
+  {
+    "parkName": "上安公園",
+    "pathId": "park-sim-park-60af233c91",
+    "pathName": "公園盤點（模擬；路線待現勘）",
+    "scanId": "sim20260630park01",
+    "polyline": []
+  },
+  {
+    "parkName": "上德公園",
+    "pathId": "park-sim-park-056f829658",
+    "pathName": "公園盤點（模擬；路線待現勘）",
+    "scanId": "sim20260630park02",
+    "polyline": []
+  },
+  {
+    "parkName": "上石公園",
+    "pathId": "park-sim-park-b4b73b725a",
+    "pathName": "公園盤點（模擬；路線待現勘）",
+    "scanId": "sim20260630park03",
+    "polyline": []
+  },
+  {
+    "parkName": "世斌公園",
+    "pathId": "park-sim-park-1220334abf",
+    "pathName": "公園盤點（模擬；路線待現勘）",
+    "scanId": "sim20260630park04",
+    "polyline": []
+  },
+  {
+    "parkName": "世貿公園",
+    "pathId": "park-sim-park-5a8cb25a3d",
+    "pathName": "公園盤點（模擬；路線待現勘）",
+    "scanId": "sim20260630park05",
+    "polyline": []
+  },
+  {
+    "parkName": "中清公園",
+    "pathId": "park-sim-park-4e1986e4ce",
+    "pathName": "公園盤點（模擬；路線待現勘）",
+    "scanId": "sim20260630park06",
+    "polyline": []
+  }
+]
