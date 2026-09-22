@@ -71,6 +71,64 @@ function emptySlots(): Record<FolderSlot, SlotState> {
   };
 }
 
+function makeDemoPly(): string {
+  const rows: string[] = [];
+  for (const centerX of [-4, 4]) {
+    for (let level = 0; level < 42; level += 1) {
+      const y = level * 0.12;
+      for (let side = 0; side < 18; side += 1) {
+        const angle = (Math.PI * 2 * side) / 18;
+        const radius = centerX < 0 ? 0.24 : 0.32;
+        rows.push(
+          `${(centerX + Math.cos(angle) * radius).toFixed(5)} ${y.toFixed(5)} ${(Math.sin(angle) * radius).toFixed(5)} 117 82 54`,
+        );
+      }
+    }
+  }
+  return `ply\nformat ascii 1.0\ncomment SIMULATED DEMO - NOT FIELD EVIDENCE\nelement vertex ${rows.length}\nproperty float x\nproperty float y\nproperty float z\nproperty uchar red\nproperty uchar green\nproperty uchar blue\nend_header\n${rows.join("\n")}\n`;
+}
+
+function demoFile(
+  parts: BlobPart[],
+  name: string,
+  type: string,
+  relativePath: string,
+): File {
+  const file = new File(parts, name, { type });
+  Object.defineProperty(file, "webkitRelativePath", { value: relativePath });
+  return file;
+}
+
+function makeDemoSlots(): Record<FolderSlot, SlotState> {
+  const ply = makeDemoPly();
+  const jpeg = Uint8Array.from(
+    atob("/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABBQJ//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAwEBPwF//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAgEBPwF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQAGPwJ//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPyF//9oADAMBAAIAAwAAABD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/EH//xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/EH//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/EH//2Q=="),
+    (char) => char.charCodeAt(0),
+  );
+  const denoised = demoFile([ply], "simulated-denoised.ply", "application/octet-stream", "simulated-denoised.ply");
+  const gaussian = demoFile([ply], "simulated-gaussian.ply", "application/octet-stream", "simulated-gaussian.ply");
+  const photo = demoFile([jpeg], "frame-0001.jpg", "image/jpeg", "SIMULATED_DEMO/frame-0001.jpg");
+  const calib = demoFile(
+    [JSON.stringify({ dataset_kind: "simulated", model: "demo-pinhole", fx: 500, fy: 500, cx: 320, cy: 240 })],
+    "calib.json",
+    "application/json",
+    "SIMULATED_METADATA/calibration/calib.json",
+  );
+  const cameras = demoFile(
+    [JSON.stringify([{ dataset_kind: "simulated", image: "frame-0001.jpg", position: [0, 1.3, -4], rotation: [1, 0, 0, 0] }])],
+    "cameras.json",
+    "application/json",
+    "SIMULATED_METADATA/ray_gaussian/cameras.json",
+  );
+  return {
+    denoised: { files: [denoised], rootLabel: denoised.name, formatOk: true, formatMsg: "DEMO 去噪 PLY · 1,512 點" },
+    gaussian: { files: [gaussian], rootLabel: gaussian.name, formatOk: true, formatMsg: "DEMO 高斯 PLY · 1,512 點" },
+    rawGo: { files: [photo], rootLabel: "SIMULATED_DEMO", formatOk: true, formatMsg: "DEMO 合成照片 · 1 檔" },
+    rawReturn: emptySlot(),
+    metadata: { files: [calib, cameras], rootLabel: "SIMULATED_METADATA", formatOk: true, formatMsg: "DEMO calib.json + cameras.json" },
+  };
+}
+
 function isPlyName(name: string) {
   return /\.ply$/i.test(name.trim());
 }
@@ -457,6 +515,20 @@ export function PathImportDialog({
 
         <div className="import-dialog-body">
           <section className="import-panel">
+            <button
+              type="button"
+              className="ghost-btn"
+              disabled={busy || computing}
+              onClick={() => {
+                const demoId = `sim-demo-${defaultScanId()}`;
+                setSlots(makeDemoSlots());
+                setScanId(demoId);
+                setNote("SIMULATED DEMO：合成 PLY、照片與相機資料，不是現場證據");
+                setError("");
+              }}
+            >
+              一鍵載入完整模擬素材（DEMO）
+            </button>
             <div className="import-meta is-3">
               <label className="login-field">
                 盤點年度

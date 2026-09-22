@@ -638,6 +638,8 @@ export function PathInventoryDialog({
   const carbon = preview
     ? carbonForTree(preview, field, report.created_at)
     : null;
+  const isSimulated =
+    report.dataset_kind === "simulated" || report.scan_id.startsWith("sim");
 
   return (
     <div className="path-db-backdrop" role="presentation" onClick={onClose}>
@@ -654,6 +656,11 @@ export function PathInventoryDialog({
             <p className="path-db-kicker">{parkName}</p>
             <h2 id="path-db-title">{pathName}</h2>
             <p>{formatScanTime(report.created_at)}</p>
+            {isSimulated ? (
+              <p className="simulation-notice" role="note">
+                DEMO 模擬資料 · {report.simulation_notice || "僅供介面展示，不可作為現場量測、路線或精度證據。"}
+              </p>
+            ) : null}
             <div className="inv-summary" aria-label="盤點摘要">
               <span className="pill">{stats.total} 棵</span>
               {stats.green > 0 ? (

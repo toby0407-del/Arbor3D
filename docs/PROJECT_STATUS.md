@@ -15,6 +15,7 @@ Arbor3D 已具備可展示的 **Physical → Digital → AI** 主流程、真實
 | 實體與數位盤點 | YOLO 樹幹分割、單木 ID、DBH、3DGS／PLY、JSON／CSV／HTML | 已有逢甲 2026-08-18 真實示範資料，16 棵 |
 | Web App | 示範登入、地圖搜尋、可靠性標示路線、盤點表、燈號、影像、3D、手測、CSV、碳匯；大型盤點工具延遲載入 | App 15 項測試、lint、production build 通過 |
 | 正式匯入閉環 | App 接收 PLY、照片、`calib.json`、`cameras.json`；adapter 自動整理既有資料目錄、執行 Python、發佈附件並綁定路徑 | adapter 3 項測試通過；尚待下一趟真實掃描與完整 GPU 環境驗收 |
+| DEMO 完整度 | 24 組模擬盤點補齊合成照片、分割圖、胸高橫切面、點雲預覽與 900 點 PLY；匯入視窗可一鍵產生完整模擬素材 | 模擬資料與媒體均有醒目警告且不冒充現場證據；App 自動檢查涵蓋全部 24 組 |
 | 分析資料層 | Analytics JSON／CSV／Excel、資料契約、誤差與跨期規則 | Python 23 項測試通過；真實／模擬資料分離 |
 | Power BI／Fabric | PBIP/PBIR 產生器、Power Query、DAX、Spark 與 Data Agent 樣板 | 官方 JSON schema 通過；仍待 Windows Desktop 畫面驗收 |
 | App AI 助理 | 以盤點證據回答待複核、精度、碳匯限制與行動建議 | 本機模式與 Azure 失敗退回機制皆已實作 |
@@ -51,6 +52,10 @@ Azure 實際部署資訊與停止費用方式見 [Microsoft Azure 部署紀錄](
 - 繼續拆分全臺 10,462 筆地點目錄；盤點／匯入對話框已先改為延遲載入。
 - 清出至少 12 GiB 空間後，再安裝完整 PyTorch／Open3D／Ultralytics 管線並重跑 GPU 驗證。
 - Docker 化本機 RAG／分析服務屬選配，不是 App 展示必要條件。
+
+## 模擬資料界線
+
+目前缺少的展示媒體已用可重建的合成檔補齊，目的是讓影像、3D、上傳與盤點互動能完整演示。這些資料以 `dataset_kind=simulated`、`sim*` 掃描 ID、畫面警告及資產內 `DEMO / SIMULATED` 標記隔離。它們不會補足真實的第二期掃描、人工 1.3 m DBH、現場 GPX 或精度 KPI；上述項目仍須現場取得。
 
 ## 本機展示方式
 

@@ -45,9 +45,10 @@ export function selectPipeline(
   pathId: string,
   env: Record<string, string | undefined> = process.env,
 ) {
-  const configured = Boolean(
-    env.ARBOR3D_CMD?.trim() || env.ARBOR3D_ROOT?.trim(),
-  );
+  const isSimulated = /^sim(?:-|\d)/i.test(scanId);
+  const configured =
+    !isSimulated &&
+    Boolean(env.ARBOR3D_CMD?.trim() || env.ARBOR3D_ROOT?.trim());
   return configured
     ? {
         mode: "arbor3d" as const,
@@ -559,6 +560,7 @@ export function importApiPlugin(projectRoot: string): Plugin {
         ".jpeg": "image/jpeg",
         ".webp": "image/webp",
         ".gif": "image/gif",
+        ".svg": "image/svg+xml; charset=utf-8",
         ".json": "application/json; charset=utf-8",
         ".ply": "application/octet-stream",
       };

@@ -24,6 +24,8 @@ export type TreeRecord = {
 export type ParkInventoryReport = {
   created_at: string;
   scan_id: string;
+  dataset_kind?: "observed" | "simulated";
+  simulation_notice?: string;
   gps_available: boolean;
   num_trees: number;
   trees: TreeRecord[];

@@ -17,3 +17,11 @@ test("configured Arbor3D command selects the official adapter", () => {
   assert.match(selected.script, /run-postprocess\.mjs$/);
   assert.deepEqual(selected.args, ["/job", "scan", "path"]);
 });
+
+test("simulated scans never enter the billable or heavy official pipeline", () => {
+  const selected = selectPipeline("/app", "/job", "sim-demo-20260922", "path", {
+    ARBOR3D_ROOT: "/repo",
+  });
+  assert.equal(selected.mode, "preview");
+  assert.match(selected.script, /compute-inventory\.mjs$/);
+});

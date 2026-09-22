@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "postprocess": "node scripts/run-postprocess.mjs",
     "test": "tsx --test tests/*.test.ts",
-    "analytics:excel": "node scripts/export-analytics-excel.mjs"
+    "analytics:excel": "node scripts/export-analytics-excel.mjs",
+    "simulate:media": "node scripts/generate-simulated-media.mjs"
   },
   "dependencies": {
     "@azure/identity": "^4.13.3",

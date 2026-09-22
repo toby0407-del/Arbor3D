@@ -41,6 +41,8 @@
 | **5. 匯入** | 去噪 PLY、高斯濺射 PLY、原始照片；正式模式另加 `calib.json`、`cameras.json` | 編號自動跟資料夾名；可選年度 |
 | **6. 盤點視窗** | 樹表（燈號篩選）、影像分頁、量測分頁、3D 分頁、碳匯工作表 | 手測存 localStorage、匯出 CSV |
 
+沒有掃描素材時，可在匯入視窗按「一鍵載入完整模擬素材（DEMO）」測試上傳與快速盤點。24 組既有模擬盤點也都附有合成影像、Segmentation 佔位、橫切面、點雲預覽及 900 點 PLY。所有畫面與檔案明確標示 `DEMO / SIMULATED / 非現場證據`。
+
 ### 匯入素材
 
 | 格位 | 類型 | 內容 |
@@ -303,4 +305,5 @@ $env:ARBOR3D_CMD='python3 ...'
 | `src/lib/csv.ts` | CSV 匯出 |
 | `server/importApiPlugin.ts` | `/api/import` 後端 |
 | `scripts/run-postprocess.mjs` | 管線呼叫腳本 |
+| `scripts/generate-simulated-media.mjs` | 重建 24 組明確標示的 DEMO 媒體與 PLY |
 | `../scripts/postprocess_from_inbox.py` | 正式輸入整理、前置檢查、Python 管線與 App 發佈 adapter |

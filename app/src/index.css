@@ -1223,6 +1223,16 @@ h1 { margin: 0; font-size: 32px; font-weight: 650; letter-spacing: -0.03em; }
   font-size: 13px;
   color: var(--ink-soft);
 }
+.path-db-head .simulation-notice {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border: 1px solid #c66d16;
+  border-radius: 8px;
+  background: #fff2d8;
+  color: #7a3f08;
+  font-weight: 700;
+}
 .path-db-table-wrap {
   overflow-x: hidden;
   overflow-y: auto;
