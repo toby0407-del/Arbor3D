@@ -146,12 +146,14 @@ export ARBOR3D_ROOT=/path/to/Arbor3D
 | P2 | 手機版 UX | 戶外單手：大按鈕、地圖全螢幕 |
 | P2 | 離線包 | 公園常沒網 |
 | P2 | 手測同步後端 | 手測目前只存 localStorage |
-| P1 | Azure 正式部署 | 程式已接模型端點；仍需在學生訂閱建立模型部署、填入本機秘密並做費用上限測試 |
 
 ~~P0 接真實掃描檔~~（逢甲示範掃描已完成）  
 ~~P1 真 3D 載入 `.ply`~~（點雲直立＋繞 Z 軸）  
 ~~P1 盤點摘要／待複核／CSV／手測~~（已在盤點視窗）  
 ~~P1 碳匯工作表~~（圓周²×高×係數）
+~~P1 Azure Foundry 正式串接~~（Japan East、`gpt-4.1-mini`、Microsoft Entra 無金鑰認證與 App 端到端測試已完成）
+
+完整優先順序、完成條件與競賽聲明界線見 [`../docs/PROJECT_STATUS.md`](../docs/PROJECT_STATUS.md)。
 
 ---
 

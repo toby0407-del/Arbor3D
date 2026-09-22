@@ -11,7 +11,7 @@
 | 前端獨立鏡像 | https://github.com/toby0407-del/arbor3d-interface |
 | 本機資料夾 | `treee_VScode`（遠端名稱 Arbor3D） |
 | 主掃描（介面示範） | `20260818092855`（逢甲 8/18，16 棵） |
-| 文件日期 | 2026-09-01 |
+| 文件日期 | 2026-09-22 |
 
 ---
 
@@ -198,9 +198,10 @@ RANSAC 找地面，把樹擺正，切離地 **1.2–1.4 m**。若這段沒點（
 
 ---
 
-## 10. 展示系統（`app/`）— 2026-09-01 進度
+## 10. 展示系統（`app/`）— 2026-09-22 進度
 
 前端已可實測，不是預留草圖。啟動見 [`app/README.md`](app/README.md)；接新掃描見 [`app/NEXT_STEPS.md`](app/NEXT_STEPS.md)。
+整體已完成項目、尚待修改與 P0／P1／P2 驗收條件統一整理在 [專案現況與後續路線圖](docs/PROJECT_STATUS.md)。
 
 ### 已完成
 
@@ -279,6 +280,7 @@ CO₂ = D × 3.667
 完整操作與驗證限制見 [競賽版操作指南](docs/microsoft/README.md)。既有 YOLO／DBH／3DGS 管線維持原樣。
 macOS 競賽開發環境與 Azure CLI／Foundry SDK 安裝狀態見 [macOS 建置指南](docs/microsoft/MACOS_SETUP.md)。
 已建立的 Azure for Students Foundry 專案、模型部署與安全設定見 [Azure 部署紀錄](docs/microsoft/AZURE_DEPLOYMENT.md)。
+目前競賽展示狀態與下一輪工作優先順序見 [專案現況與後續路線圖](docs/PROJECT_STATUS.md)。
 
 App 的盤點視窗新增「詢問 AI 助理」。它會把當次樹木盤點整理成受限證據，回答待複核、精度、碳匯與下一步；沒有 Azure 設定時使用本機規則，Azure 暫時失敗也會安全退回。金鑰只由 Vite 伺服器讀取，不送進瀏覽器 bundle。設定方式見 `app/.env.example`。
 

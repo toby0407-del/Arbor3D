@@ -8,7 +8,7 @@
 |---|---|---|
 | Node.js + npm | React/Vite App、Excel 匯出、測試 | 已安裝；`app/node_modules` 已可用 |
 | Python 3.11 | Foundry SDK、Power BI JSON schema 驗證 | 已安裝 |
-| Azure CLI 2.90.0 | Azure 登入、訂閱與資源查詢 | 已安裝；尚未登入 |
+| Azure CLI 2.90.0 | Azure 登入、訂閱與資源查詢 | 已安裝、已登入 Azure for Students |
 | `azure-ai-projects` / `azure-identity` | Microsoft Foundry adapter | 已裝在專案 `.venv` |
 | `jsonschema` 4.26.0 | PBIP/PBIR 官方 schema 驗證 | 已裝在專案 `.venv` |
 | GitHub CLI | 推送與 Pull Request | 已登入 `toby0407-del` |
@@ -35,16 +35,16 @@ npm run build --prefix app
 npm run lint --prefix app
 ```
 
-## Azure 接續步驟
+## Azure 登入與接續使用
 
-安裝 CLI 不等於登入或建立資源。後續由帳號持有人執行：
+目前已完成 Azure for Students 登入與 Foundry 建置；若權杖過期或換機，由帳號持有人重新執行：
 
 ```bash
 az login
 az account show
 ```
 
-確認 Azure for Students 訂閱後，再於 Foundry 建立或選擇模型 deployment。App 設定依 `app/.env.example`；本機優先沿用 `az login`，不需把 API key 寫到磁碟。若因部署環境限制而使用金鑰，也不得使用 `VITE_` 前綴或提交到 Git。
+已建立資源與 `gpt-4.1-mini` deployment，詳見 [Azure 部署紀錄](AZURE_DEPLOYMENT.md)。App 設定依 `app/.env.example`；本機優先沿用 `az login`，不需把 API key 寫到磁碟。若因部署環境限制而使用金鑰，也不得使用 `VITE_` 前綴或提交到 Git。
 
 ## 尚未安裝的重型管線
 
