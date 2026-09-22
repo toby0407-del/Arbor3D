@@ -22,6 +22,7 @@ export type ImportJob = {
   updatedAt: string;
   treeCount?: number | null;
   report?: ParkInventoryReport | null;
+  pipelineMode?: "preview" | "arbor3d";
   fileCounts: {
     denoised: number;
     gaussian: number;

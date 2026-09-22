@@ -12,6 +12,7 @@ export type ScanPath = {
   hasInventory: boolean;
   note: string;
   polyline: LatLng[];
+  routeReliability: "osm-aligned" | "unverified";
 };
 
 export type ParkSite = {
@@ -43,6 +44,7 @@ const emptyPath = (siteId: string): ScanPath => ({
   hasInventory: false,
   note: "尚無盤點 JSON。可先現場錄製路線；遠端把檔案放入 src/data/inventories/{scan_id}.json 並在 scanBindings.ts 綁定後，這裡就會出現。",
   polyline: [],
+  routeReliability: "unverified",
 });
 
 function foldSearch(text: string): string {
@@ -189,9 +191,13 @@ function toSite(item: CatalogItem): ParkSite {
             scanIds: ready ? [entry.scanId] : [],
             hasInventory: ready,
             note: ready
-              ? `已載入掃描 ${entry.scanId}。樹位由相對座標放到這條路徑上。`
+              ? entry.polyline.length >= 2
+                ? `已載入掃描 ${entry.scanId}。路線貼合 OSM pedestrian／footway；樹位由相對座標沿路徑放置，仍待現場 GPX 取代。`
+                : `已載入掃描 ${entry.scanId}，但沒有可驗證的公開步道；請先現場錄製，系統不顯示推測路線。`
               : "尚無盤點 JSON。遠端放入 inventories/{scan_id}.json 並綁定後即可進入。",
             polyline: entry.polyline,
+            routeReliability:
+              entry.polyline.length >= 2 ? "osm-aligned" : "unverified",
           };
         })
       : [emptyPath(item.id)];

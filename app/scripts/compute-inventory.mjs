@@ -818,6 +818,9 @@ async function main() {
   const report = {
     created_at: new Date().toISOString().slice(0, 19),
     scan_id: scanId,
+    analysis_mode: "preview_point_cloud",
+    measurement_warning:
+      "內建快速預覽，不等同正式 Arbor3D Python／YOLO／標準 1.3 m DBH 管線。",
     gps_available: false,
     num_trees: records.length,
     trees: records,

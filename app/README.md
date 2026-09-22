@@ -152,12 +152,12 @@ RayStudio 高斯濺射 → 濺射 .ply ─┤──→ 介面「匯入三格」
                                   └── raw/
                                          │
                          ┌───────────────┤
-                         │ 有設管線？     │
+                         │ 有設正式管線？ │
                          │               │
                     是   ▼          否   ▼
-              run-postprocess.mjs     收檔到
-              → Arbor3D Python        public/scans/{scanId}/_inbox_staged/
-              → 產出 JSON + 媒體       （手動跑 Python 後再綁定）
+              run-postprocess.mjs   compute-inventory.mjs
+              → Arbor3D Python      → 點雲快速預覽
+              → 正式 JSON + 媒體     → 標示非正式 YOLO／DBH
                          │
                          ▼
               src/data/inventories/{scanId}.json  ← 盤點報告
@@ -248,6 +248,8 @@ cp .env.example .env.local
 支援 `https://<resource>.openai.azure.com` 或 `https://<resource>.services.ai.azure.com` 資源端點，App 會呼叫 OpenAI v1 chat completions 路徑。雲端失敗時自動退回本機證據模式。
 
 ### 接量測管線（可選）
+
+未設定下列變數時，「開始計算」仍會產生點雲快速預覽盤點，但不得當作正式 YOLO／標準 1.3 m DBH 成果。設定後會切換到正式 adapter：
 
 ```bash
 # 方法 A：完整指令（{jobDir}、{scanId} 會被代入）

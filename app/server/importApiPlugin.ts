@@ -28,6 +28,7 @@ export type ImportJob = {
   updatedAt: string;
   treeCount: number | null;
   report: unknown | null;
+  pipelineMode: "preview" | "arbor3d";
   fileCounts: {
     denoised: number;
     gaussian: number;
@@ -35,6 +36,29 @@ export type ImportJob = {
     rawReturn: number;
   };
 };
+
+export function selectPipeline(
+  projectRoot: string,
+  dir: string,
+  scanId: string,
+  pathId: string,
+  env: Record<string, string | undefined> = process.env,
+) {
+  const configured = Boolean(
+    env.ARBOR3D_CMD?.trim() || env.ARBOR3D_ROOT?.trim(),
+  );
+  return configured
+    ? {
+        mode: "arbor3d" as const,
+        script: path.join(projectRoot, "scripts", "run-postprocess.mjs"),
+        args: [dir, scanId],
+      }
+    : {
+        mode: "preview" as const,
+        script: path.join(projectRoot, "scripts", "compute-inventory.mjs"),
+        args: [dir, scanId, pathId].filter(Boolean),
+      };
+}
 
 const SLOT_LABELS = {
   denoised: "去噪 PLY",
@@ -153,21 +177,34 @@ export function importApiPlugin(projectRoot: string): Plugin {
   }
 
   async function runPipeline(job: ImportJob) {
+    const dir = jobDir(job);
+    const pipeline = selectPipeline(
+      projectRoot,
+      dir,
+      job.scanId,
+      job.pathId,
+    );
+    job.pipelineMode = pipeline.mode;
     job.status = "running";
-    job.message = "正在計算樹身分…";
+    job.message =
+      pipeline.mode === "arbor3d"
+        ? "正在執行正式 Arbor3D 量測管線…"
+        : "正在建立點雲快速預覽盤點…";
     job.report = null;
     setStage(job, "measure", "running");
     setStage(job, "publish", "pending");
-    pushLog(job, "開始從去噪點雲計算樹身分");
+    pushLog(
+      job,
+      pipeline.mode === "arbor3d"
+        ? "使用 ARBOR3D_CMD／ARBOR3D_ROOT 執行正式量測管線"
+        : "未設定正式管線；使用內建點雲快速預覽，不可當作正式 YOLO／DBH 結果",
+    );
     await persistJob(job);
-
-    const script = path.join(projectRoot, "scripts", "compute-inventory.mjs");
-    const dir = jobDir(job);
 
     await new Promise<void>((resolve) => {
       const child = spawn(
         process.execPath,
-        [script, dir, job.scanId, job.pathId].filter(Boolean),
+        [pipeline.script, ...pipeline.args],
         {
           cwd: projectRoot,
           env: process.env,
@@ -208,7 +245,9 @@ export function importApiPlugin(projectRoot: string): Plugin {
             setStage(job, "publish", "done");
             job.status = "done";
             job.message = job.treeCount
-              ? `已算出 ${job.treeCount} 棵樹身分，可查看盤點。`
+              ? pipeline.mode === "arbor3d"
+                ? `正式 Arbor3D 管線已算出 ${job.treeCount} 棵，可查看盤點。`
+                : `快速預覽辨識出 ${job.treeCount} 棵；正式成果仍需 Arbor3D Python 管線複核。`
               : statusMessage || "計算完成。";
             pushLog(job, job.message);
           } else {
@@ -250,6 +289,7 @@ export function importApiPlugin(projectRoot: string): Plugin {
       updatedAt: nowIso(),
       treeCount: null,
       report: null,
+      pipelineMode: "preview",
       fileCounts: { rawGo: 0, rawReturn: 0, denoised: 0, gaussian: 0 },
     };
     jobs.set(id, job);

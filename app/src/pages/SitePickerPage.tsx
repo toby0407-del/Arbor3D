@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { BrandMark } from "../components/BrandMark";
 import { ColorLegend } from "../components/ColorLegend";
 import { OsmSiteMap } from "../components/OsmSiteMap";
@@ -26,8 +26,17 @@ import { fetchInventories } from "../lib/importApi";
 import { treesAlongPolyline } from "../lib/treePlacement";
 import type { Session } from "../lib/session";
 import type { ParkInventoryReport } from "../types";
-import { PathImportDialog } from "./PathImportDialog";
-import { PathInventoryDialog } from "./PathInventoryDialog";
+
+const PathImportDialog = lazy(() =>
+  import("./PathImportDialog").then((module) => ({
+    default: module.PathImportDialog,
+  })),
+);
+const PathInventoryDialog = lazy(() =>
+  import("./PathInventoryDialog").then((module) => ({
+    default: module.PathInventoryDialog,
+  })),
+);
 
 type Props = {
   session: Session;
@@ -378,6 +387,17 @@ export function SitePickerPage({ session, onLogout }: Props) {
                           ) : (
                             <span className="pending-badge">尚未匯入</span>
                           )}
+                          <span
+                            className={
+                              item.routeReliability === "osm-aligned"
+                                ? "ready-badge"
+                                : "pending-badge"
+                            }
+                          >
+                            {item.routeReliability === "osm-aligned"
+                              ? "OSM 步道"
+                              : "待錄製"}
+                          </span>
                         </strong>
                       </button>
                       <button
@@ -555,36 +575,44 @@ export function SitePickerPage({ session, onLogout }: Props) {
         />
       </div>
 
-      {showImport && park && path ? (
-        <PathImportDialog
-          parkName={park.name}
-          pathName={path.name}
-          pathId={path.id}
-          hasInventory={pathReady}
-          onClose={() => setShowImport(false)}
-          onImported={onImported}
-          onComputed={onComputed}
-          onOpenInventory={() => {
-            setShowImport(false);
-            setShowPathDb(true);
-          }}
-        />
-      ) : null}
+      <Suspense
+        fallback={
+          <div className="path-modal-backdrop" role="status" aria-live="polite">
+            <div className="path-modal-card">正在載入盤點工具…</div>
+          </div>
+        }
+      >
+        {showImport && park && path ? (
+          <PathImportDialog
+            parkName={park.name}
+            pathName={path.name}
+            pathId={path.id}
+            hasInventory={pathReady}
+            onClose={() => setShowImport(false)}
+            onImported={onImported}
+            onComputed={onComputed}
+            onOpenInventory={() => {
+              setShowImport(false);
+              setShowPathDb(true);
+            }}
+          />
+        ) : null}
 
-      {showPathDb && park && path && pathReport ? (
-        <PathInventoryDialog
-          parkName={park.name}
-          pathName={path.name}
-          report={pathReport}
-          previewTreeId={previewTreeId}
-          onPreviewTree={setPreviewTreeId}
-          onClose={() => setShowPathDb(false)}
-          onImport={() => {
-            setShowPathDb(false);
-            setShowImport(true);
-          }}
-        />
-      ) : null}
+        {showPathDb && park && path && pathReport ? (
+          <PathInventoryDialog
+            parkName={park.name}
+            pathName={path.name}
+            report={pathReport}
+            previewTreeId={previewTreeId}
+            onPreviewTree={setPreviewTreeId}
+            onClose={() => setShowPathDb(false)}
+            onImport={() => {
+              setShowPathDb(false);
+              setShowImport(true);
+            }}
+          />
+        ) : null}
+      </Suspense>
 
       {saveDraft ? (
         <div
