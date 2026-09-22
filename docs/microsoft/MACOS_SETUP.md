@@ -50,7 +50,7 @@ az account show
 
 `requirements.txt` 包含 PyTorch、Open3D、Ultralytics、OpenCV 與 Transformers。這批依賴用於重新執行點雲、YOLO 與 SegFormer，不是展示既有盤點與 AI 助理的必要條件。
 
-2026-09-22 本機資料磁碟僅餘約 4.2 GiB，因此未安裝完整重型管線，以免填滿系統磁碟。建議先保留至少 12 GiB 可用空間，再執行：
+2026-09-22 安裝前本機資料磁碟僅餘約 4.2 GiB；Homebrew 清理後約 7.1 GiB，仍未達安全門檻，因此未安裝完整重型管線，以免填滿系統磁碟。建議先保留至少 12 GiB 可用空間，再執行：
 
 ```bash
 .venv/bin/python -m pip install -r requirements.txt
