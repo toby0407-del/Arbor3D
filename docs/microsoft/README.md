@@ -4,6 +4,7 @@
 所有指令預設只讀寫本機。沒有建立雲端資源、開啟試用、升級訂閱或呼叫付費模型。
 
 **Windows 接續更新：** 既有功能分支已合併 main；新增四年季度模擬及五頁 PBIP/PBIR 產生器，詳見 [Windows 指南](WINDOWS.md)。
+macOS 的 Azure CLI、Python 3.11、Foundry SDK 與磁碟需求見 [macOS 建置指南](MACOS_SETUP.md)。
 分析契約 1.1 為所有表新增 `dataset_kind`，真實和合成資料必須分開輸出。App 輸入 bundle 仍維持 1.0。
 以下原先 Mac 上的驗證限制屬歷史紀錄，最新執行結果以 [驗證紀錄](VALIDATION.md) 的 Windows 章節為準。
 
@@ -115,6 +116,15 @@ python3 -m agents.foundry '可以把估算碳量當碳權嗎？'
 第一個是免費本機關鍵字檢索／文件摘錄，附檔名、行號和文件指紋；不是生成式模型。把審核過的 Markdown 放入 `agents/knowledge/` 即可索引。
 第二個只產生 Foundry 設定預覽與檢索片段，不需要 Azure SDK、登入或網路。無證據時回覆不足。
 Foundry 後續部署樣板與成本鎖見 `agents/README.md`。本機 RAG、分析與 App 不依賴任何雲端帳號。
+
+## App 內盤點 AI 助理
+
+盤點視窗已加入可直接操作的 AI 助理。送出的內容是當次掃描摘要與逐樹量測證據，不含 Azure 金鑰；可詢問待複核樹木、是否已有足夠人工配對可談精度、碳匯估算限制與後續行動。
+
+- 預設：本機證據模式，零模型費用。
+- Azure：依 `app/.env.example` 設定既有 Foundry／Azure OpenAI 模型部署，且需明確開啟費用鎖。
+- 失敗處理：逾時、內容過濾或端點錯誤時，自動退回本機回答。
+- 證據限制：不得推斷樹種、健康診斷、未存在的跨期實測或正式碳權。
 
 ## 驗證
 

@@ -216,6 +216,7 @@ RANSAC 找地面，把樹擺正，切離地 **1.2–1.4 m**。若這段沒點（
 | P8 | 現場手測＋待複核篩選＋CSV 匯出 | ✅ |
 | P9 | 碳匯工作表 | ✅ |
 | P10 | Microsoft AI/Data 分析層：DBH 誤差、Analytics CSV/Excel、Power BI/Fabric/Agent 樣板 | ✅ |
+| P11 | App 內盤點 AI 助理：待複核、精度、碳匯與行動建議；Azure AI 可選、本機可退回 | ✅ |
 
 盤點視窗左側只保留路徑圖；原本會逐棵列出的待複核清單已移除，避免在 16 棵以上資料時占滿畫面。待確認、需複核與全部待複核仍可由樹表上方的篩選頁籤查看。
 
@@ -276,6 +277,9 @@ CO₂ = D × 3.667
 
 新增離線 DBH 誤差驗證、統一 Analytics CSV／Excel、確認固定樹號後的跨期比較、Power BI 模型草稿、Fabric／Data Agent 設定與預設關閉雲端的 Foundry／本機 RAG。
 完整操作與驗證限制見 [競賽版操作指南](docs/microsoft/README.md)。既有 YOLO／DBH／3DGS 管線維持原樣。
+macOS 競賽開發環境與 Azure CLI／Foundry SDK 安裝狀態見 [macOS 建置指南](docs/microsoft/MACOS_SETUP.md)。
+
+App 的盤點視窗新增「詢問 AI 助理」。它會把當次樹木盤點整理成受限證據，回答待複核、精度、碳匯與下一步；沒有 Azure 設定時使用本機規則，Azure 暫時失敗也會安全退回。金鑰只由 Vite 伺服器讀取，不送進瀏覽器 bundle。設定方式見 `app/.env.example`。
 
 2026-09-21 已合併既有競賽分支至 main，Windows 接續版新增：
 - 四年季度模擬（2022 Q3–2026 Q2，16 季×16 棵=256 筆），來源及身份明確標為模擬，禁止混入真實 snapshot。

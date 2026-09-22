@@ -1,5 +1,14 @@
 # 本機驗證紀錄
 
+## App 盤點 AI 助理（2026-09-22）
+
+- App 測試：11 項通過，其中 3 項驗證待複核樹號、無人工配對時拒絕捏造準確率，以及碳匯必須標為估算。
+- Production build 與 lint：通過；既有大型 bundle 警告仍在。
+- Python analytics：23 項通過。
+- `/api/assistant` 已用實際 HTTP 請求驗證本機證據模式、回傳樹號與依據。
+- Azure 金鑰只由 Vite server 讀取，環境變數沒有 `VITE_` 前綴；請求失敗會退回本機證據模式。
+- 此 Mac 未安裝 Azure CLI，也沒有提供資源端點、模型 deployment 或金鑰，因此本輪沒有建立 Azure 資源或做會計費的雲端推論。程式已可依 `app/.env.example` 接上既有部署。
+
 ## Windows 接續驗證（2026-09-21）
 
 基準：PR #1 合併後 `1624ee9`。以下取代原 Mac 階段對本機環境的描述。
