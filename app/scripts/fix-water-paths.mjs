@@ -17,7 +17,7 @@ function mulberry32(a) {
 /** landSign: Local_XYZ X 取此方向，讓樹留在陸側 */
 const byScan = {
   sim20260329qhg001: {
-    pathName: "北側高架步道（模擬）",
+    pathName: "北側高架步道",
     // 谷頂北側陸域（臺灣大道側），全程在水池以北
     polyline: [
       [24.16848, 120.6384],
@@ -30,7 +30,7 @@ const byScan = {
     landSign: 1,
   },
   sim20260327tcp001: {
-    pathName: "日月湖東岸轉彎（模擬）",
+    pathName: "日月湖東岸轉彎",
     polyline: [
       [24.1429, 120.68505],
       [24.14315, 120.68515],
@@ -43,7 +43,7 @@ const byScan = {
     landSign: -1,
   },
   sim20260330wxf001: {
-    pathName: "北緣園道（模擬）",
+    pathName: "北緣園道",
     polyline: [
       [24.14615, 120.6441],
       [24.14618, 120.6444],
@@ -55,7 +55,7 @@ const byScan = {
     landSign: 1,
   },
   sim20260328flp001: {
-    pathName: "南側園道（模擬）",
+    pathName: "南側園道",
     polyline: [
       [24.13005, 120.6419],
       [24.13008, 120.6422],
@@ -67,7 +67,7 @@ const byScan = {
     landSign: -1,
   },
   sim20260402tcc001: {
-    pathName: "中央公園大道東側（模擬）",
+    pathName: "中央公園大道東側",
     polyline: [
       [24.1854, 120.65455],
       [24.1857, 120.65458],
@@ -79,7 +79,7 @@ const byScan = {
     landSign: 1,
   },
   sim20260401tcm001: {
-    pathName: "東側主園道（模擬）",
+    pathName: "東側主園道",
     polyline: [
       [24.2084, 120.59825],
       [24.2082, 120.59828],

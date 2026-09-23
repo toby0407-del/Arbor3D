@@ -46,3 +46,23 @@ test("every simulated inventory uses labelled, varied and loadable synthetic med
   assert.equal(slices.size, 4);
   assert.equal(clouds.size, 4);
 });
+
+test("every enabled synthetic route has a published inventory and all three evidence images", () => {
+  const bindingSource = fs.readFileSync(path.join(appRoot, "src/data/scanBindings.ts"), "utf8");
+  const bound = [...bindingSource.matchAll(/scanId:\s*"(sim[^"]+)"/g)].map((match) => match[1]);
+  const extra = JSON.parse(fs.readFileSync(path.join(appRoot, "src/data/extraParkBindings.json"), "utf8"));
+  const scanIds = [...bound, ...extra.map((item: { scanId: string }) => item.scanId)];
+  assert.equal(scanIds.length, 18);
+  assert.equal(new Set(scanIds).size, 18);
+  for (const scanId of scanIds) {
+    const reportPath = path.join(inventoryRoot, `${scanId}.json`);
+    assert.ok(fs.existsSync(reportPath), scanId);
+    const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+    assert.ok(report.trees.length > 0, scanId);
+    for (const tree of report.trees) {
+      assert.ok(tree.Mask_Path, `${scanId}:${tree.Tree_ID}:Mask_Path`);
+      assert.ok(tree.Cross_Section_Image, `${scanId}:${tree.Tree_ID}:Cross_Section_Image`);
+      assert.ok(tree.PointCloud_Preview, `${scanId}:${tree.Tree_ID}:PointCloud_Preview`);
+    }
+  }
+});

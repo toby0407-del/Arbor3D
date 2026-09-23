@@ -2,7 +2,7 @@
   {
     "parkName": "臺中公園",
     "pathId": "tc-park-demo-20260327",
-    "pathName": "日月湖東岸轉彎（模擬）",
+    "pathName": "日月湖東岸轉彎",
     "scanId": "sim20260327tcp001",
     "polyline": [
       [
@@ -40,7 +40,7 @@
   {
     "parkName": "豐樂雕塑公園",
     "pathId": "fengle-demo-20260328",
-    "pathName": "南側園道（模擬）",
+    "pathName": "南側園道",
     "scanId": "sim20260328flp001",
     "polyline": [
       [
@@ -86,7 +86,7 @@
   {
     "parkName": "秋紅谷廣場",
     "pathId": "qiuhonggu-demo-20260329",
-    "pathName": "北側高架步道（模擬）",
+    "pathName": "北側高架步道",
     "scanId": "sim20260329qhg001",
     "polyline": [
       [
@@ -132,7 +132,7 @@
   {
     "parkName": "文心森林公園",
     "pathId": "wenxin-forest-demo-20260330",
-    "pathName": "北緣園道（模擬）",
+    "pathName": "北緣園道",
     "scanId": "sim20260330wxf001",
     "polyline": [
       [
@@ -178,7 +178,7 @@
   {
     "parkName": "惠來公園",
     "pathId": "huilai-demo-20260331",
-    "pathName": "惠來路側綠帶（模擬）",
+    "pathName": "惠來路側綠帶",
     "scanId": "sim20260331hlp001",
     "polyline": [
       [
@@ -208,7 +208,7 @@
   {
     "parkName": "臺中都會公園",
     "pathId": "tc-metro-demo-20260401",
-    "pathName": "東側主園道（模擬）",
+    "pathName": "東側主園道",
     "scanId": "sim20260401tcm001",
     "polyline": [
       [
@@ -254,7 +254,7 @@
   {
     "parkName": "臺中中央公園",
     "pathId": "tc-central-demo-20260402",
-    "pathName": "中央公園大道東側（模擬）",
+    "pathName": "中央公園大道東側",
     "scanId": "sim20260402tcc001",
     "polyline": [
       [
@@ -292,7 +292,7 @@
   {
     "parkName": "草悟道",
     "pathId": "calligraphy-greenway-demo-20260403",
-    "pathName": "草悟道周邊人行步道（模擬）",
+    "pathName": "草悟道周邊人行步道",
     "scanId": "sim20260403cgw001",
     "polyline": [
       [
@@ -318,7 +318,7 @@
   {
     "parkName": "國立自然科學博物館",
     "pathId": "nmns-demo-20260404",
-    "pathName": "館前廣場步道（模擬）",
+    "pathName": "館前廣場步道",
     "scanId": "sim20260404nmns01",
     "polyline": [
       [
@@ -364,7 +364,7 @@
   {
     "parkName": "廍子公園",
     "pathId": "buzih-demo-20260405",
-    "pathName": "環園步道北側（模擬）",
+    "pathName": "環園步道北側",
     "scanId": "sim20260405bzp001",
     "polyline": [
       [
@@ -410,7 +410,7 @@
   {
     "parkName": "黎新公園",
     "pathId": "lixin-demo-20260406",
-    "pathName": "園區西側步道（模擬）",
+    "pathName": "園區西側步道",
     "scanId": "sim20260406lxp001",
     "polyline": [
       [
@@ -448,7 +448,7 @@
   {
     "parkName": "望高寮夜景公園",
     "pathId": "wanggaoliao-demo-20260407",
-    "pathName": "觀景平台外側步道（模擬）",
+    "pathName": "觀景平台外側步道",
     "scanId": "sim20260407wgl001",
     "polyline": [
       [
@@ -494,7 +494,7 @@
   {
     "parkName": "上安公園",
     "pathId": "park-sim-park-60af233c91",
-    "pathName": "公園盤點（模擬；路線待現勘）",
+    "pathName": "公園盤點（路線待現勘）",
     "scanId": "sim20260630park01",
     "polyline": [],
     "trees": 16,
@@ -507,7 +507,7 @@
   {
     "parkName": "上德公園",
     "pathId": "park-sim-park-056f829658",
-    "pathName": "公園盤點（模擬；路線待現勘）",
+    "pathName": "公園盤點（路線待現勘）",
     "scanId": "sim20260630park02",
     "polyline": [],
     "trees": 16,
@@ -520,7 +520,7 @@
   {
     "parkName": "上石公園",
     "pathId": "park-sim-park-b4b73b725a",
-    "pathName": "公園盤點（模擬；路線待現勘）",
+    "pathName": "公園盤點（路線待現勘）",
     "scanId": "sim20260630park03",
     "polyline": [],
     "trees": 16,
@@ -533,7 +533,7 @@
   {
     "parkName": "世斌公園",
     "pathId": "park-sim-park-1220334abf",
-    "pathName": "公園盤點（模擬；路線待現勘）",
+    "pathName": "公園盤點（路線待現勘）",
     "scanId": "sim20260630park04",
     "polyline": [],
     "trees": 16,
@@ -546,7 +546,7 @@
   {
     "parkName": "世貿公園",
     "pathId": "park-sim-park-5a8cb25a3d",
-    "pathName": "公園盤點（模擬；路線待現勘）",
+    "pathName": "公園盤點（路線待現勘）",
     "scanId": "sim20260630park05",
     "polyline": [],
     "trees": 16,
@@ -559,7 +559,7 @@
   {
     "parkName": "中清公園",
     "pathId": "park-sim-park-4e1986e4ce",
-    "pathName": "公園盤點（模擬；路線待現勘）",
+    "pathName": "公園盤點（路線待現勘）",
     "scanId": "sim20260630park06",
     "polyline": [],
     "trees": 16,

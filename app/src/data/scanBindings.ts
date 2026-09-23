@@ -41,7 +41,7 @@ export const SCAN_BINDINGS: ScanBinding[] = [
     // OSM footway 82257486；日月湖東岸陸域
     parkName: "臺中公園",
     pathId: "tc-park-demo-20260327",
-    pathName: "日月湖東岸轉彎（模擬）",
+    pathName: "日月湖東岸轉彎",
     scanId: "sim20260327tcp001",
     polyline: [
       [24.1429215, 120.6844633],
@@ -55,7 +55,7 @@ export const SCAN_BINDINGS: ScanBinding[] = [
   {
     parkName: "豐樂雕塑公園",
     pathId: "fengle-demo-20260328",
-    pathName: "南側園道（模擬）",
+    pathName: "南側園道",
     scanId: "sim20260328flp001",
     // OSM footway 396642063
     polyline: [
@@ -73,7 +73,7 @@ export const SCAN_BINDINGS: ScanBinding[] = [
     // OSM footway 336765605；谷頂北側陸域，全程在水池以北
     parkName: "秋紅谷廣場",
     pathId: "qiuhonggu-demo-20260329",
-    pathName: "北側高架步道（模擬）",
+    pathName: "北側高架步道",
     scanId: "sim20260329qhg001",
     polyline: [
       [24.1679681, 120.6391904],
@@ -89,7 +89,7 @@ export const SCAN_BINDINGS: ScanBinding[] = [
   {
     parkName: "文心森林公園",
     pathId: "wenxin-forest-demo-20260330",
-    pathName: "北緣園道（模擬）",
+    pathName: "北緣園道",
     scanId: "sim20260330wxf001",
     // OSM footway 341681753
     polyline: [
@@ -106,7 +106,7 @@ export const SCAN_BINDINGS: ScanBinding[] = [
   {
     parkName: "惠來公園",
     pathId: "huilai-demo-20260331",
-    pathName: "惠來路側綠帶（模擬）",
+    pathName: "惠來路側綠帶",
     scanId: "sim20260331hlp001",
     // OSM footway 272604159
     polyline: [
@@ -119,7 +119,7 @@ export const SCAN_BINDINGS: ScanBinding[] = [
   {
     parkName: "臺中都會公園",
     pathId: "tc-metro-demo-20260401",
-    pathName: "東側主園道（模擬）",
+    pathName: "東側主園道",
     scanId: "sim20260401tcm001",
     // OSM footway 396402614
     polyline: [
@@ -136,7 +136,7 @@ export const SCAN_BINDINGS: ScanBinding[] = [
   {
     parkName: "臺中中央公園",
     pathId: "tc-central-demo-20260402",
-    pathName: "中央公園大道東側（模擬）",
+    pathName: "中央公園大道東側",
     scanId: "sim20260402tcc001",
     // OSM footway 878658732
     polyline: [
@@ -151,7 +151,7 @@ export const SCAN_BINDINGS: ScanBinding[] = [
   {
     parkName: "草悟道",
     pathId: "calligraphy-greenway-demo-20260403",
-    pathName: "草悟道周邊人行步道（模擬）",
+    pathName: "草悟道周邊人行步道",
     scanId: "sim20260403cgw001",
     // OSM footway 272607747
     polyline: [
@@ -163,7 +163,7 @@ export const SCAN_BINDINGS: ScanBinding[] = [
   {
     parkName: "國立自然科學博物館",
     pathId: "nmns-demo-20260404",
-    pathName: "館前廣場步道（模擬）",
+    pathName: "館前廣場步道",
     scanId: "sim20260404nmns01",
     // OSM pedestrian 937668846
     polyline: [
@@ -180,7 +180,7 @@ export const SCAN_BINDINGS: ScanBinding[] = [
   {
     parkName: "廍子公園",
     pathId: "buzih-demo-20260405",
-    pathName: "環園步道北側（模擬）",
+    pathName: "環園步道北側",
     scanId: "sim20260405bzp001",
     // OSM footway 377680420
     polyline: [
@@ -197,7 +197,7 @@ export const SCAN_BINDINGS: ScanBinding[] = [
   {
     parkName: "黎新公園",
     pathId: "lixin-demo-20260406",
-    pathName: "園區西側步道（模擬）",
+    pathName: "園區西側步道",
     scanId: "sim20260406lxp001",
     // OSM footway 572082892
     polyline: [
@@ -212,7 +212,7 @@ export const SCAN_BINDINGS: ScanBinding[] = [
   {
     parkName: "望高寮夜景公園",
     pathId: "wanggaoliao-demo-20260407",
-    pathName: "觀景平台外側步道（模擬）",
+    pathName: "觀景平台外側步道",
     scanId: "sim20260407wgl001",
     // OSM footway 871367733
     polyline: [
