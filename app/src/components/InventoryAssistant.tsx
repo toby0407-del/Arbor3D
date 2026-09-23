@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FieldMeasure } from "../hooks/useFieldMeasures";
 import {
   askInventoryAssistant,
+  fetchAssistantStatus,
   inventoryAssistantContext,
   type AssistantReply,
+  type AssistantStatus,
 } from "../lib/assistant";
 import type { ParkInventoryReport } from "../types";
 
@@ -33,10 +35,21 @@ export function InventoryAssistant({
   const [reply, setReply] = useState<AssistantReply | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<AssistantStatus | null>(null);
   const context = useMemo(
     () => inventoryAssistantContext(parkName, pathName, report, measures),
     [measures, parkName, pathName, report],
   );
+
+  useEffect(() => {
+    let active = true;
+    void fetchAssistantStatus().then((next) => {
+      if (active) setStatus(next);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const submit = async (nextQuestion = question) => {
     const value = nextQuestion.trim();
@@ -54,6 +67,13 @@ export function InventoryAssistant({
     }
   };
 
+  const modeLabel =
+    status?.activeMode === "copilot"
+      ? "Microsoft Copilot Studio（已就緒）"
+      : status?.activeMode === "azure"
+        ? "Azure AI（已就緒）"
+        : "本機證據模式";
+
   return (
     <div className="assistant-backdrop" role="presentation" onClick={onClose}>
       <section
@@ -67,11 +87,22 @@ export function InventoryAssistant({
           <div>
             <p>Microsoft Copilot × Arbor3D</p>
             <h2 id="assistant-title">盤點 AI 助理</h2>
+            <p className="assistant-mode" role="status">
+              目前：{modeLabel}
+            </p>
           </div>
           <button type="button" className="ghost-btn" onClick={onClose}>
             關閉
           </button>
         </header>
+
+        {status?.hints?.length ? (
+          <ul className="assistant-hints" aria-label="Copilot 設定提示">
+            {status.hints.map((hint) => (
+              <li key={hint}>{hint}</li>
+            ))}
+          </ul>
+        ) : null}
 
         <div className="assistant-context" aria-label="本次盤點摘要">
           <span>{context.summary.total} 棵</span>
@@ -138,12 +169,15 @@ export function InventoryAssistant({
             ))}
             <h3>資料依據</h3>
             <ul>
-              {reply.evidence.map((item) => <li key={item}>{item}</li>)}
+              {reply.evidence.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
           </article>
         ) : (
           <p className="assistant-empty">
-            回答只使用目前盤點資料；資料不足時會明確說明。未設定 Copilot Studio 時自動使用本機證據模式。
+            回答只使用目前盤點資料；資料不足時會明確說明。未設定 Copilot Studio
+            Token 或未開啟費用鎖時，自動使用本機證據模式（見 docs/microsoft/COPILOT_SETUP.md）。
           </p>
         )}
       </section>

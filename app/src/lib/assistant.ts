@@ -93,3 +93,29 @@ export async function askInventoryAssistant(
   if (!response.ok) throw new Error(body.error || "AI 助理暫時無法回答");
   return body;
 }
+
+export type AssistantStatus = {
+  provider: string;
+  billableAllowed: boolean;
+  copilotConfigured: boolean;
+  azureConfigured: boolean;
+  activeMode: "local" | "copilot" | "azure" | string;
+  hints: string[];
+};
+
+export async function fetchAssistantStatus(): Promise<AssistantStatus> {
+  const response = await fetch("/api/assistant/status", {
+    credentials: "same-origin",
+  });
+  if (!response.ok) {
+    return {
+      provider: "local",
+      billableAllowed: false,
+      copilotConfigured: false,
+      azureConfigured: false,
+      activeMode: "local",
+      hints: ["無法讀取助理狀態，使用本機證據模式"],
+    };
+  }
+  return (await response.json()) as AssistantStatus;
+}

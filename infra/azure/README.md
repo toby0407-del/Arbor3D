@@ -2,6 +2,8 @@
 
 正式平台使用 Microsoft Entra ID 驗證使用者，並以 Azure Cosmos DB for NoSQL 保存人工盤點資料；不使用 Firebase Authentication 或 Firestore。
 
+**雲端胸徑計算：** 見 [Cloud DBH](../../docs/microsoft/CLOUD_DBH.md) 與 `infra/azure/dbh-compute.bicep`（Container Apps 包裝既有 DBH 管線）。
+
 ## 1. 建立 Cosmos DB
 
 ```bash

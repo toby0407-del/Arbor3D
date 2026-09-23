@@ -12,6 +12,11 @@ def main():
     parser.add_argument("--identities", help="Confirmed cross-scan identity CSV")
     parser.add_argument("--max-pair-days", type=int, default=0)
     parser.add_argument("--out", required=True)
+    parser.add_argument(
+        "--allow-simulated",
+        action="store_true",
+        help="Allow dataset_kind=simulated reports (demo only; not field evidence)",
+    )
     args = parser.parse_args()
     try:
         if not args.report and not args.bundle:
@@ -28,7 +33,13 @@ def main():
             manual = [dict(r, site_id=args.site_id) for r in bundle["manual_measurements"]]
         else:
             manual = load_csv(args.manual)
-        tables = build(reports, manual, load_csv(args.identities), args.max_pair_days)
+        tables = build(
+            reports,
+            manual,
+            load_csv(args.identities),
+            args.max_pair_days,
+            allow_simulated=args.allow_simulated,
+        )
         export(tables, args.out, args.max_pair_days)
         print(json.dumps(tables["Summary"][0], ensure_ascii=False))
     except (ValueError, KeyError, TypeError, OSError) as exc:

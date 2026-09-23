@@ -23,6 +23,24 @@ test('export preserves missing manual values and unconfirmed height',()=>{
   const m=analyticsInput(r,{T:{dbhCm:'21',heightM:'',note:'',coeff:'',measuredAt:'2026-01-01'}}).manual_measurements[0];
   assert.equal(m.strict_13m,false); assert.equal(m.manual_dbh_cm,21);
 });
+test('Power BI chart pack builds KPI and status series', async () => {
+  const { powerBiChartTables } = await import('../src/lib/powerBiCharts.ts');
+  const r = {
+    scan_id: 's1',
+    created_at: '2026-01-01',
+    trees: [
+      { Tree_ID: 'T1', DBH_cm: 20, dbh_is_strict_breast_height: true, DBH_method: 'circle', DBH_note: '' },
+      { Tree_ID: 'T2', DBH_cm: 55, dbh_is_strict_breast_height: false, DBH_method: 'caliper', DBH_note: 'review' },
+    ],
+  } as ParkInventoryReport;
+  const tables = powerBiChartTables(r, {
+    T1: { dbhCm: '19', heightM: '', note: '', coeff: '', measuredAt: '2026-01-01', strict13m: true },
+  });
+  assert.equal(tables.summary[0].observations, 2);
+  assert.equal(tables.summary[0].paired_count, 1);
+  assert.equal(tables.statusChart.length, 3);
+  assert.ok((tables.summary[0].mae_cm ?? 0) > 0);
+});
 test('measurement parser rejects nonpositive and nonfinite',()=>{
   for(const v of [null,'',0,-1,Infinity,'NaN',true]) assert.equal(positive(v),null);
 });

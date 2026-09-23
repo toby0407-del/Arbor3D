@@ -83,9 +83,19 @@ npm run dev --prefix app -- --host 127.0.0.1 --port 5174
 自訂 Python 可用 `ARBOR_PYTHON` 指向絕對路徑。原 App 示範登入／掃描流程保持不變；
 本次季度資料在 Analytics／Power BI 展示，**尚未接到 App 原有模擬月曲線**，不把季度合成掃描偽裝成實際上傳。
 
-## 仍需外部條件
+## 合成展示影像
+
+由逢甲實圖與既有 4 組合成圖衍生 **12 組 × 3 類**（mask／橫切面／點雲預覽），全部打上 `DEMO / SIMULATED` 浮水印。
+
+```powershell
+python scripts/expand_synthetic_media.py --count 12
+npm run simulate:media --prefix app
+# 或一次：
+npm run simulate:media:expand --prefix app
+```
 
 - 人工 DBH 和第二期真實掃描仍未取得；模擬資料不補足真實精度或生長證據。
-- Power BI Desktop 的 DAX、刷新及畫面驗收仍待執行；未產生已驗收 PBIX。
+- Power BI Desktop 的 DAX、刷新及畫面驗收仍待執行；未產生已驗收 PBIX。可用 `scripts/windows/rebuild-microsoft-outputs.ps1` 先產生 PBIP。
 - Fabric／Data Agent／Foundry 維持本機樣板與費用鎖，沒有部署、容量試用或付款。
-- Docker 未偵測到，容器尚未實際 build；GPU 管線需要本機原始資料與環境。
+- **Cloud DBH**：`cloud_dbh/` + `infra/azure/dbh-compute.bicep` 已就緒；本機 HTTP `/health` 與 prepare-only job 已在 Windows 煙測通過。完整 GPU 映像與 Azure 部署需 ACR、`az login`（安裝 Azure CLI 需系統管理員）與配額。見 [CLOUD_DBH.md](CLOUD_DBH.md)。
+- Docker 若未安裝，可先本機 `uvicorn cloud_dbh.app:app`；GPU 管線仍需本機原始資料與 `requirements.txt` 依賴。

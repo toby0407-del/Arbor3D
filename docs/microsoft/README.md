@@ -4,6 +4,9 @@
 所有指令預設只讀寫本機。沒有建立雲端資源、開啟試用、升級訂閱或呼叫付費模型。
 
 **Windows 接續更新：** 既有功能分支已合併 main；新增四年季度模擬及五頁 PBIP/PBIR 產生器，詳見 [Windows 指南](WINDOWS.md)。
+**雲端胸徑：** 既有 DBH 管線已可接到 Azure，見 [CLOUD_DBH.md](CLOUD_DBH.md)。
+**Copilot：** 設定步驟見 [COPILOT_SETUP.md](COPILOT_SETUP.md)。
+**資料庫邊界：** 手測 → Cosmos `FieldMeasures`；盤點 → App JSON；圖表 → 匯出 CSV／PBIP。
 macOS 的 Azure CLI、Python 3.11、Foundry SDK 與磁碟需求見 [macOS 建置指南](MACOS_SETUP.md)。
 Azure for Students 的實際 Foundry 資源、模型與安全設定見 [Azure 部署紀錄](AZURE_DEPLOYMENT.md)。
 跨 App、資料、Power BI、Fabric 與 Azure 的整體完成度及後續優先順序見 [專案現況與後續路線圖](../PROJECT_STATUS.md)。

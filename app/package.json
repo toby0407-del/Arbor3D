@@ -12,6 +12,7 @@
     "test": "tsx --test tests/*.test.ts",
     "analytics:excel": "node scripts/export-analytics-excel.mjs",
     "simulate:media": "node scripts/generate-simulated-media.mjs",
+    "simulate:media:expand": "python ../scripts/expand_synthetic_media.py --count 12 && node scripts/generate-simulated-media.mjs",
     "simulate:parks": "node scripts/generate-demo-inventories.mjs",
     "rag:generate": "node ../agents/generate_qa_1000.mjs"
   },

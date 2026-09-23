@@ -2767,6 +2767,89 @@ h1 { margin: 0; font-size: 32px; font-weight: 650; letter-spacing: -0.03em; }
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+.assistant-mode {
+  margin-top: 6px !important;
+  color: var(--ink-soft) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+.assistant-hints {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sand) 70%, white);
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.assistant-hints li + li { margin-top: 4px; }
+.inv-charts {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--card) 92%, var(--sand));
+}
+.inv-charts-head h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+.inv-charts-head p {
+  margin: 0 0 12px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+.inv-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.inv-chart-card {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--card);
+}
+.inv-chart-card figcaption {
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--moss);
+}
+.inv-bar-chart {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.inv-bar-chart li {
+  display: grid;
+  grid-template-columns: 64px 1fr 40px;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+.inv-bar-track {
+  height: 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--line) 55%, white);
+  overflow: hidden;
+}
+.inv-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--moss);
+}
+.inv-bar.is-green { background: #2f7d4a; }
+.inv-bar.is-yellow { background: #c4a035; }
+.inv-bar.is-red { background: #b4473a; }
+.inv-bar.is-dbh { background: #3d6b8c; }
+@media (max-width: 900px) {
+  .inv-charts-grid { grid-template-columns: 1fr; }
+}
 .assistant-context {
   display: flex;
   flex-wrap: wrap;

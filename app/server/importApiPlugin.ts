@@ -48,7 +48,11 @@ export function selectPipeline(
   const isSimulated = /^sim(?:-|\d)/i.test(scanId);
   const configured =
     !isSimulated &&
-    Boolean(env.ARBOR3D_CMD?.trim() || env.ARBOR3D_ROOT?.trim());
+    Boolean(
+      env.ARBOR3D_CLOUD_DBH_URL?.trim() ||
+        env.ARBOR3D_CMD?.trim() ||
+        env.ARBOR3D_ROOT?.trim(),
+    );
   return configured
     ? {
         mode: "arbor3d" as const,
@@ -200,7 +204,7 @@ export function importApiPlugin(projectRoot: string): Plugin {
     pushLog(
       job,
       pipeline.mode === "arbor3d"
-        ? "使用 ARBOR3D_CMD／ARBOR3D_ROOT 執行正式量測管線"
+        ? "使用 ARBOR3D_CLOUD_DBH_URL／ARBOR3D_CMD／ARBOR3D_ROOT 執行正式量測管線"
         : "未設定正式管線；使用內建點雲快速預覽，不可當作正式 YOLO／DBH 結果",
     );
     await persistJob(job);

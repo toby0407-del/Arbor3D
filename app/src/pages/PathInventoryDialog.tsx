@@ -1,4 +1,6 @@
 import { downloadPowerBiAnalyticsInput, sourceLabel } from "../lib/analytics";
+import { downloadPowerBiChartCsvPack } from "../lib/powerBiCharts";
+import { InventoryCharts } from "../components/InventoryCharts";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { PathTreeMap } from "../components/PathTreeMap";
 import { QuarterlySimulation } from "../components/QuarterlySimulation";
@@ -24,8 +26,7 @@ import {
   methodLabel,
 } from "../lib/format";
 import { scanAssetUrl } from "../lib/scanMedia";
-import {
-  availableYears,
+import {  availableYears,
   defaultGrowthRange,
   filterPointsByRange,
   formatAxisMonthYear,
@@ -524,7 +525,7 @@ export function PathInventoryDialog({
   const [growthTreeId, setGrowthTreeId] = useState<string | null>(null);
   const [tab, setTab] = useState<PreviewTab>("images");
   const [filter, setFilter] = useState<Filter>("all");
-  const { measures, update } = useFieldMeasures(report.scan_id);
+  const { measures, update, storage } = useFieldMeasures(report.scan_id);
   const stats = useMemo(() => inventoryStats(report.trees), [report.trees]);
   const co2Total = useMemo(
     () => totalCo2Ton(report.trees, measures, report.created_at),
@@ -686,6 +687,16 @@ export function PathInventoryDialog({
               <span className="pill is-green">
                 估算 CO₂ 當量 {co2Total.toFixed(2)} ton
               </span>
+              <span
+                className="pill"
+                title={
+                  storage === "cosmos"
+                    ? "現場手測寫入 Azure Cosmos DB（FieldMeasures）；盤點 JSON 仍在本機 App 檔案"
+                    : "現場手測暫存本機（localStorage + .runtime）；設定 AZURE_COSMOS_ENDPOINT 後改走 Cosmos"
+                }
+              >
+                手測庫：{storage === "cosmos" ? "Cosmos DB" : storage === "file" ? "本機檔案" : "同步中…"}
+              </span>
             </div>
           </div>
           <div className="path-db-head-actions">
@@ -722,10 +733,18 @@ export function PathInventoryDialog({
             <button
               type="button"
               className="ghost-btn"
-              title="匯出正式分析輸入；可產生 Power BI PBIP/PBIR，Excel 僅作資料快照與交叉核對"
+              title="匯出正式分析輸入 JSON；可產生五頁 PBIP/PBIR"
               onClick={() => downloadPowerBiAnalyticsInput(report, measures)}
             >
               匯出 Power BI 分析資料
+            </button>
+            <button
+              type="button"
+              className="ghost-btn"
+              title="匯出圖表用 CSV（燈號／胸徑／KPI）供 Power BI Desktop 直接建視覺"
+              onClick={() => downloadPowerBiChartCsvPack(report, measures)}
+            >
+              匯出 Power BI 圖表
             </button>
             {onImport ? (
               <button type="button" className="ghost-btn" onClick={onImport}>
@@ -752,6 +771,7 @@ export function PathInventoryDialog({
             className="path-db-table-wrap"
           >
             <QuarterlySimulation key={report.scan_id} report={report} />
+            <InventoryCharts report={report} measures={measures} />
             <div className="inv-filters" role="tablist" aria-label="篩選">
               {(
                 [

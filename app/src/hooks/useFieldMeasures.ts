@@ -33,30 +33,42 @@ function writeStore(scanId: string, store: Store) {
 export function useFieldMeasures(scanId: string) {
   const [measures, setMeasures] = useState<Store>(() => readStore(scanId));
   const [serverReady, setServerReady] = useState(false);
+  const [storage, setStorage] = useState<"cosmos" | "file" | "unknown">("unknown");
 
   useEffect(() => {
     let active = true;
     const local = readStore(scanId);
     setMeasures(local);
     setServerReady(false);
+    setStorage("unknown");
     void fetch(`/api/field-measures?scanId=${encodeURIComponent(scanId)}`, {
       credentials: "same-origin",
     })
       .then(async (response) => {
         if (!response.ok) throw new Error("無法讀取伺服器量測");
-        return response.json() as Promise<{ measures?: Store }>;
+        return response.json() as Promise<{
+          measures?: Store;
+          storage?: "cosmos" | "file";
+        }>;
       })
       .then((body) => {
         if (!active) return;
         const merged = { ...(body.measures ?? {}), ...local };
         writeStore(scanId, merged);
         setMeasures(merged);
+        if (body.storage === "cosmos" || body.storage === "file") {
+          setStorage(body.storage);
+        }
       })
-      .catch(() => undefined)
+      .catch(() => {
+        if (active) setStorage("file");
+      })
       .finally(() => {
         if (active) setServerReady(true);
       });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [scanId]);
 
   useEffect(() => {
@@ -67,7 +79,15 @@ export function useFieldMeasures(scanId: string) {
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ measures }),
-      }).catch(() => undefined);
+      })
+        .then(async (response) => {
+          if (!response.ok) return;
+          const body = (await response.json()) as { storage?: "cosmos" | "file" };
+          if (body.storage === "cosmos" || body.storage === "file") {
+            setStorage(body.storage);
+          }
+        })
+        .catch(() => undefined);
     };
     const timer = window.setTimeout(sync, 600);
     window.addEventListener("online", sync);
@@ -99,5 +119,5 @@ export function useFieldMeasures(scanId: string) {
     [scanId],
   );
 
-  return { measures, update };
+  return { measures, update, storage };
 }

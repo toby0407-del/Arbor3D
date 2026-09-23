@@ -64,3 +64,20 @@ test("Copilot Studio adapter stays disabled without an endpoint", async () => {
   }, []);
   assert.equal(reply, null);
 });
+
+test("assistant status stays local until token and billable lock are set", async () => {
+  const { assistantProviderStatus } = await import("../server/assistantApiPlugin.ts");
+  const locked = assistantProviderStatus({
+    ARBOR_AI_PROVIDER: "copilot",
+    ARBOR_ALLOW_BILLABLE_CLOUD: "NO",
+  });
+  assert.equal(locked.activeMode, "local");
+  assert.equal(locked.copilotConfigured, false);
+  const ready = assistantProviderStatus({
+    ARBOR_AI_PROVIDER: "copilot",
+    COPILOT_STUDIO_TOKEN_ENDPOINT: "https://example.test/token",
+    ARBOR_ALLOW_BILLABLE_CLOUD: "YES_I_ACCEPT_COSTS",
+  });
+  assert.equal(ready.activeMode, "copilot");
+  assert.equal(ready.copilotConfigured, true);
+});

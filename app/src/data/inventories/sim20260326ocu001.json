@@ -19,7 +19,7 @@
         -38.3,
         1.46
       ],
-      "Mask_Path": "../_shared/synthetic-tree-evidence/masks/mask-04.png",
+      "Mask_Path": "../_shared/synthetic-tree-evidence/masks/mask-08.png",
       "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-02.png",
       "3D_Model_Path": "simulated-demo/tree-demo.ply",
       "Single_Tree_Ply": "simulated-demo/tree-demo.ply",
@@ -42,8 +42,8 @@
         -31.581,
         1.255
       ],
-      "Mask_Path": "../_shared/synthetic-tree-evidence/masks/mask-03.png",
-      "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-01.png",
+      "Mask_Path": "../_shared/synthetic-tree-evidence/masks/mask-07.png",
+      "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-05.png",
       "3D_Model_Path": "simulated-demo/tree-demo.ply",
       "Single_Tree_Ply": "simulated-demo/tree-demo.ply",
       "YOLO_confidence": 0.4248,
@@ -65,13 +65,13 @@
         -23.711,
         1.426
       ],
-      "Mask_Path": "../_shared/synthetic-tree-evidence/masks/mask-02.png",
+      "Mask_Path": "../_shared/synthetic-tree-evidence/masks/mask-06.png",
       "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-04.png",
       "3D_Model_Path": "simulated-demo/tree-demo.ply",
       "Single_Tree_Ply": "simulated-demo/tree-demo.ply",
       "YOLO_confidence": 0.6276,
       "num_detections": 1,
-      "PointCloud_Preview": "../_shared/synthetic-tree-evidence/point-clouds/point-cloud-01.png"
+      "PointCloud_Preview": "../_shared/synthetic-tree-evidence/point-clouds/point-cloud-05.png"
     },
     {
       "Tree_ID": "Tree_004",
@@ -88,13 +88,13 @@
         -17.339,
         1.409
       ],
-      "Mask_Path": "../_shared/synthetic-tree-evidence/masks/mask-01.png",
-      "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-03.png",
+      "Mask_Path": "../_shared/synthetic-tree-evidence/masks/mask-05.png",
+      "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-07.png",
       "3D_Model_Path": "simulated-demo/tree-demo.ply",
       "Single_Tree_Ply": "simulated-demo/tree-demo.ply",
       "YOLO_confidence": 0.508,
       "num_detections": 1,
-      "PointCloud_Preview": "../_shared/synthetic-tree-evidence/point-clouds/point-cloud-02.png"
+      "PointCloud_Preview": "../_shared/synthetic-tree-evidence/point-clouds/point-cloud-06.png"
     },
     {
       "Tree_ID": "Tree_005",
@@ -112,12 +112,12 @@
         1.271
       ],
       "Mask_Path": "../_shared/synthetic-tree-evidence/masks/mask-04.png",
-      "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-02.png",
+      "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-06.png",
       "3D_Model_Path": "simulated-demo/tree-demo.ply",
       "Single_Tree_Ply": "simulated-demo/tree-demo.ply",
       "YOLO_confidence": 0.4641,
       "num_detections": 1,
-      "PointCloud_Preview": "../_shared/synthetic-tree-evidence/point-clouds/point-cloud-03.png"
+      "PointCloud_Preview": "../_shared/synthetic-tree-evidence/point-clouds/point-cloud-07.png"
     },
     {
       "Tree_ID": "Tree_006",
@@ -135,12 +135,12 @@
         1.416
       ],
       "Mask_Path": "../_shared/synthetic-tree-evidence/masks/mask-03.png",
-      "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-01.png",
+      "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-09.png",
       "3D_Model_Path": "simulated-demo/tree-demo.ply",
       "Single_Tree_Ply": "simulated-demo/tree-demo.ply",
       "YOLO_confidence": 0.3976,
       "num_detections": 1,
-      "PointCloud_Preview": "../_shared/synthetic-tree-evidence/point-clouds/point-cloud-04.png"
+      "PointCloud_Preview": "../_shared/synthetic-tree-evidence/point-clouds/point-cloud-08.png"
     },
     {
       "Tree_ID": "Tree_007",
@@ -158,12 +158,12 @@
         1.409
       ],
       "Mask_Path": "../_shared/synthetic-tree-evidence/masks/mask-02.png",
-      "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-04.png",
+      "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-08.png",
       "3D_Model_Path": "simulated-demo/tree-demo.ply",
       "Single_Tree_Ply": "simulated-demo/tree-demo.ply",
       "YOLO_confidence": 0.5282,
       "num_detections": 1,
-      "PointCloud_Preview": "../_shared/synthetic-tree-evidence/point-clouds/point-cloud-01.png"
+      "PointCloud_Preview": "../_shared/synthetic-tree-evidence/point-clouds/point-cloud-09.png"
     },
     {
       "Tree_ID": "Tree_008",
@@ -181,12 +181,12 @@
         1.476
       ],
       "Mask_Path": "../_shared/synthetic-tree-evidence/masks/mask-01.png",
-      "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-03.png",
+      "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-07.png",
       "3D_Model_Path": "simulated-demo/tree-demo.ply",
       "Single_Tree_Ply": "simulated-demo/tree-demo.ply",
       "YOLO_confidence": 0.5971,
       "num_detections": 1,
-      "PointCloud_Preview": "../_shared/synthetic-tree-evidence/point-clouds/point-cloud-02.png"
+      "PointCloud_Preview": "../_shared/synthetic-tree-evidence/point-clouds/point-cloud-06.png"
     },
     {
       "Tree_ID": "Tree_009",
@@ -203,13 +203,13 @@
         19.408,
         1.254
       ],
-      "Mask_Path": "../_shared/synthetic-tree-evidence/masks/mask-04.png",
-      "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-02.png",
+      "Mask_Path": "../_shared/synthetic-tree-evidence/masks/mask-12.png",
+      "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-06.png",
       "3D_Model_Path": "simulated-demo/tree-demo.ply",
       "Single_Tree_Ply": "simulated-demo/tree-demo.ply",
       "YOLO_confidence": 0.7871,
       "num_detections": 1,
-      "PointCloud_Preview": "../_shared/synthetic-tree-evidence/point-clouds/point-cloud-03.png"
+      "PointCloud_Preview": "../_shared/synthetic-tree-evidence/point-clouds/point-cloud-07.png"
     },
     {
       "Tree_ID": "Tree_010",
@@ -227,12 +227,12 @@
         1.252
       ],
       "Mask_Path": "../_shared/synthetic-tree-evidence/masks/mask-02.png",
-      "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-04.png",
+      "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-08.png",
       "3D_Model_Path": "simulated-demo/tree-demo.ply",
       "Single_Tree_Ply": "simulated-demo/tree-demo.ply",
       "YOLO_confidence": 0.708,
       "num_detections": 1,
-      "PointCloud_Preview": "../_shared/synthetic-tree-evidence/point-clouds/point-cloud-01.png"
+      "PointCloud_Preview": "../_shared/synthetic-tree-evidence/point-clouds/point-cloud-09.png"
     },
     {
       "Tree_ID": "Tree_011",
@@ -250,12 +250,12 @@
         1.497
       ],
       "Mask_Path": "../_shared/synthetic-tree-evidence/masks/mask-03.png",
-      "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-01.png",
+      "Cross_Section_Image": "../_shared/synthetic-tree-evidence/cross-sections/cross-section-09.png",
       "3D_Model_Path": "simulated-demo/tree-demo.ply",
       "Single_Tree_Ply": "simulated-demo/tree-demo.ply",
       "YOLO_confidence": 0.48,
       "num_detections": 1,
-      "PointCloud_Preview": "../_shared/synthetic-tree-evidence/point-clouds/point-cloud-04.png"
+      "PointCloud_Preview": "../_shared/synthetic-tree-evidence/point-clouds/point-cloud-08.png"
     }
   ],
   "dataset_kind": "simulated",

@@ -232,6 +232,43 @@ async function askAzure(
   };
 }
 
+export function assistantProviderStatus(env: Record<string, string | undefined> = process.env) {
+  const configured = (env.ARBOR_AI_PROVIDER?.trim().toLowerCase() || "copilot") as string;
+  const provider = ["auto", "copilot", "azure", "local"].includes(configured)
+    ? configured
+    : "copilot";
+  const billable = env.ARBOR_ALLOW_BILLABLE_CLOUD === "YES_I_ACCEPT_COSTS";
+  const copilotEndpoint = Boolean(env.COPILOT_STUDIO_TOKEN_ENDPOINT?.trim());
+  const azureReady = Boolean(env.AZURE_AI_ENDPOINT?.trim() && env.AZURE_AI_MODEL?.trim());
+  return {
+    provider,
+    billableAllowed: billable,
+    copilotConfigured: copilotEndpoint,
+    azureConfigured: azureReady,
+    activeMode:
+      provider === "local"
+        ? "local"
+        : provider === "copilot" && copilotEndpoint && billable
+          ? "copilot"
+          : provider === "azure" && azureReady && billable
+            ? "azure"
+            : provider === "auto" && copilotEndpoint && billable
+              ? "copilot"
+              : provider === "auto" && azureReady && billable
+                ? "azure"
+                : "local",
+    hints: [
+      !copilotEndpoint
+        ? "尚未填 COPILOT_STUDIO_TOKEN_ENDPOINT（Copilot Studio → Channels → Mobile app）"
+        : null,
+      !billable
+        ? "ARBOR_ALLOW_BILLABLE_CLOUD 未開啟，雲端 Copilot／Azure AI 不會計費呼叫"
+        : null,
+      "現場手測資料庫：設定 AZURE_COSMOS_ENDPOINT 時用 Cosmos FieldMeasures；盤點本體仍是 App JSON 檔",
+    ].filter(Boolean),
+  };
+}
+
 export function assistantApiPlugin(
   env: Record<string, string | undefined> = process.env,
   knowledgeFolder = "",
@@ -241,6 +278,10 @@ export function assistantApiPlugin(
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const url = req.url?.split("?")[0] ?? "";
+        if (url === "/api/assistant/status" && req.method === "GET") {
+          sendJson(res, 200, assistantProviderStatus(env));
+          return;
+        }
         if (url !== "/api/assistant") return next();
         if (req.method !== "POST") {
           sendJson(res, 405, { error: "只接受 POST" });

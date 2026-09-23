@@ -17,7 +17,7 @@ function evidenceVariant(scanId, treeId, salt) {
     seed ^= char.charCodeAt(0);
     seed = Math.imul(seed, 16777619) >>> 0;
   }
-  return String((seed % 4) + 1).padStart(2, "0");
+  return String((seed % 12) + 1).padStart(2, "0");
 }
 
 function demoPly(scanId) {

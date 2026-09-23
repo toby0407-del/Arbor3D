@@ -59,9 +59,9 @@ test("every simulated inventory uses labelled, varied and loadable synthetic med
       clouds.add(tree.PointCloud_Preview);
     }
   }
-  assert.equal(masks.size, 4);
-  assert.equal(slices.size, 4);
-  assert.equal(clouds.size, 4);
+  assert.equal(masks.size, 12);
+  assert.equal(slices.size, 12);
+  assert.equal(clouds.size, 12);
 });
 
 test("every enabled synthetic route has a published inventory and all three evidence images", () => {

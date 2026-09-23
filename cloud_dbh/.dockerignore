@@ -1,0 +1,13 @@
+.git
+**/.runtime
+**/node_modules
+**/__pycache__
+**/.venv
+**/outputs
+**/*.ply
+**/*.pt
+**/*.pth
+**/*.zip
+app/public/scans
+*.md
+!cloud_dbh/README.md

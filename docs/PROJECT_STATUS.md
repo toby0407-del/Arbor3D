@@ -26,10 +26,13 @@ Arbor3D 已具備可展示的 **Physical → Digital → AI** 主流程、真實
 | 實體與數位盤點 | YOLO 樹幹分割、單木 ID、DBH、3DGS／PLY、JSON／CSV／HTML | 已有逢甲 2026-08-18 真實示範資料，16 棵 |
 | Web App | Microsoft Entra／展示登入、HttpOnly Session、地圖搜尋、可靠性標示路線、盤點表、燈號、影像、3D、手測、CSV、碳匯；地點、盤點、MSAL 與 3D 按需載入 | App 26 項測試、lint、production build 通過；正式密碼不進 App |
 | 帳號與手測後端 | Entra ID MSAL + PKCE、JWT issuer/audience/signature、App roles、8 小時伺服器 Session；人工 DBH／樹高／日期離線保存並同步 Cosmos DB | Entra/Cosmos adapter 與 Bicep 已完成；本機展示登入、Session、file fallback 寫入／讀回、登出後 401 已驗證；待租戶與 Azure 資源實際部署驗收 |
-| 正式匯入閉環 | App 接收 PLY、照片、`calib.json`、`cameras.json`；adapter 自動整理既有資料目錄、執行 Python、發佈附件並綁定路徑 | adapter 3 項測試通過；尚待下一趟真實掃描與完整 GPU 環境驗收 |
+| 正式匯入閉環 | App 接收 PLY、照片、`calib.json`、`cameras.json`；adapter 自動整理既有資料目錄、執行 Python、發佈附件並綁定路徑；可改走 `ARBOR3D_CLOUD_DBH_URL` 雲端 DBH | adapter 測試含雲端 URL 選路；Cloud DBH FastAPI + Bicep 已就緒；完整 GPU 映像待 ACR／配額 |
+| 雲端 DBH（Microsoft） | `cloud_dbh/` HTTP API 包裝 `postprocess_from_inbox.py`；App Service `arbor3d-dbh-1ec69a14`（eastasia、F1）；App 設 `ARBOR3D_CLOUD_DBH_URL` | `/health` 已驗；prepare-only。學生訂閱無 ACR Tasks／常無 GPU；完整胸徑用本機 GPU + `ARBOR3D_ROOT` |
+| 合成展示影像 | 由逢甲實圖＋既有 4 組合成圖衍生 **12×3** 張 DEMO 標示影像；`simulate:media:expand` | `simulatedMedia` 3 項測試通過 |
+| Azure 成本防護 | 訂閱年預算 `arbor3d-100usd`＝**100 USD**，50／80／100% 與預測告警寄至學生帳號 | 已建立；請在 portal Cost Management 再確認通知 |
 | DEMO 完整度 | 30 組模擬檔（18 個啟用公園場景、12 個停用學校歷史檔）使用 12 張新合成素材：4 種分割圖、4 種胸高橫切面、4 種點雲側視，獨立分派後形成最多 64 種組合；另附 900 點示意 PLY | 31 組目前發布資料共 481 棵皆有可載入橫切面；新匯入只要包含橫切面，就強制同批每棵樹完整，否則拒絕發布 |
 | 分析資料層 | Analytics JSON／CSV、資料契約、誤差與跨期規則；Excel 僅作資料快照與交叉核對 | Python 26 項測試通過；真實／模擬資料分離 |
-| Power BI／Fabric | Power BI 作為主要分析輔助；App bundle 可用單一指令產生 canonical Analytics、五頁 PBIP/PBIR 與交付報告；另有 Power Query、DAX、Spark 與 Data Agent 樣板 | 重新產生五頁 PBIP，50 個專案 JSON 通過 Microsoft schema；仍待 Windows Desktop 執行 DAX 與畫面驗收 |
+| Power BI／Fabric | Power BI 作為主要分析輔助；App 可匯出分析輸入 JSON、**圖表 CSV 包**（燈號／胸徑／KPI）與盤內圖表預覽；另可產生五頁 PBIP | 圖表匯出測試通過；Desktop 畫面驗收仍待 |
 | App AI 助理 | Copilot Studio 優先、Azure AI 可選備援、本機證據模式兜底；1,000 題 Markdown／JSONL RAG 以盤點證據回答待複核、精度、碳匯限制與行動建議 | Direct Line adapter 與無端點退回行為通過測試；Top-1 97.4%、Top-3 100%、MRR 98.7%；待發布租戶代理與專家抽查生成答案 |
 | Azure Foundry | Azure for Students 資源、project、`gpt-4.1-mini` deployment、Entra 無金鑰認證 | 資源／project／deployment 均為 Succeeded；App API 回傳 `provider=azure` |
 | 安全與依賴 | `.env.local` 不進 Git、瀏覽器拿不到金鑰、Node 依賴稽核 | `npm audit` 0 vulnerabilities |
@@ -61,17 +64,18 @@ Azure 實際部署資訊與停止費用方式見 [Microsoft Azure 部署紀錄](
 |---|---|
 | Windows Power BI Desktop 驗收 | 實際刷新 Power Query、驗證 DAX、關係、空值語意及五頁版面，再決定是否發佈 |
 | Fabric／Power BI 雲端發佈決策 | 確認學生訂閱能力、容量、成本、RLS 與展示帳號後才部署；目前不宣稱已發佈 |
-| Azure 成本防護 | 在 Azure Cost Management 建立可通知負責人的 budget／alert，並定期檢查用量 |
+| Azure 成本防護 | **已設訂閱年預算 `arbor3d-100usd`＝100 USD**（50／80／100% 與預測告警）；請持續在 Cost Management 監控 |
 | Copilot Studio 正式啟用 | 在 Microsoft 租戶建立並發布 Arbor3D 代理、開啟 Mobile app channel、填入 Token Endpoint，依組織政策完成 Entra／DLP／用量驗收 |
-| Entra／Cosmos 正式部署 | 建立 App registration、API scope、App roles、Managed Identity 與 Cosmos DB；填入正式 tenant/client/endpoint 後完成租戶登入及雲端讀寫驗收 |
+| Entra／Cosmos 正式部署 | **Cosmos 已部署** `arbor3dcos483bd05e16`（Japan East）＋`Arbor3D`／`FieldMeasures`；`.env.local` 已填 endpoint。Entra App registration 需租戶目錄權限（學生帳目前不足），待 portal 建立後填 client id |
+| Cloud DBH 上線 | **已上線** App Service `https://arbor3d-dbh-1ec69a14.azurewebsites.net`（F1、prepare-only），`.env.local` 已填 URL；完整 GPU 胸徑仍待本機或配額 |
 
 ### P2 — 場域體驗與工程優化
 
 - 手機戶外單手操作與地圖全螢幕仍需更多實機驗收。
 - PWA manifest、Service Worker、已開啟頁面／影像／地點 JSON 快取及離線提示已完成；現場人工量測保留在裝置，恢復連線後會重試同步至 Cosmos DB；本機開發使用 file fallback。
 - 全臺 10,462 筆地點已改為獨立 JSON；31 份盤點依路線載入，3D 引擎只在開啟點雲時載入。若未來目錄顯著成長，再依縣市切成多檔與伺服器搜尋。
-- 清出至少 12 GiB 空間後，再安裝完整 PyTorch／Open3D／Ultralytics 管線並重跑 GPU 驗證。
-- Docker 化本機 RAG／分析服務屬選配，不是 App 展示必要條件。
+- 清出至少 12 GiB 空間後，再安裝完整 PyTorch／Open3D／Ultralytics 管線並重跑 GPU 驗證；或改用 Windows GPU／Azure Cloud DBH full image。
+- Docker 化本機 RAG／分析服務屬選配；**Cloud DBH**（`cloud_dbh/`）已提供量測管線的容器與 Bicep，不是 App 展示必要條件但為正式匯入雲端路徑。
 
 ## 模擬資料界線
 

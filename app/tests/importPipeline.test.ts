@@ -18,6 +18,14 @@ test("configured Arbor3D command selects the official adapter", () => {
   assert.deepEqual(selected.args, ["/job", "scan", "path"]);
 });
 
+test("cloud DBH URL selects the official adapter", () => {
+  const selected = selectPipeline("/app", "/job", "scan", "path", {
+    ARBOR3D_CLOUD_DBH_URL: "https://arbor3d-dbh.example.azurecontainerapps.io",
+  });
+  assert.equal(selected.mode, "arbor3d");
+  assert.match(selected.script, /run-postprocess\.mjs$/);
+});
+
 test("simulated scans never enter the billable or heavy official pipeline", () => {
   const selected = selectPipeline("/app", "/job", "sim-demo-20260922", "path", {
     ARBOR3D_ROOT: "/repo",
