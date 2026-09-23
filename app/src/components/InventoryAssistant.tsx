@@ -65,7 +65,7 @@ export function InventoryAssistant({
       >
         <header className="assistant-head">
           <div>
-            <p>Microsoft AI × Arbor3D</p>
+            <p>Microsoft Copilot × Arbor3D</p>
             <h2 id="assistant-title">盤點 AI 助理</h2>
           </div>
           <button type="button" className="ghost-btn" onClick={onClose}>
@@ -121,9 +121,11 @@ export function InventoryAssistant({
             <div className="assistant-answer-label">
               <strong>回答</strong>
               <span>
-                {reply.provider === "azure"
-                  ? `Azure AI · ${reply.model || "模型部署"}`
-                  : "本機證據模式"}
+                {reply.provider === "copilot"
+                  ? `Microsoft Copilot · ${reply.model || "Copilot Studio"}`
+                  : reply.provider === "azure"
+                    ? `Azure AI · ${reply.model || "模型部署"}`
+                    : "本機證據模式"}
                 {reply.ragSources?.length
                   ? reply.ragQuestionCount
                     ? ` + ${reply.ragQuestionCount.toLocaleString("zh-TW")} 題 RAG`
@@ -141,7 +143,7 @@ export function InventoryAssistant({
           </article>
         ) : (
           <p className="assistant-empty">
-            回答只使用目前盤點資料；資料不足時會明確說明。未設定 Azure 時自動使用本機證據模式。
+            回答只使用目前盤點資料；資料不足時會明確說明。未設定 Copilot Studio 時自動使用本機證據模式。
           </p>
         )}
       </section>

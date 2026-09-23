@@ -123,12 +123,13 @@ Foundry 後續部署樣板與成本鎖見 `agents/README.md`。本機 RAG、分�
 
 盤點視窗已加入可直接操作的 AI 助理。送出的內容是當次掃描摘要與逐樹量測證據，不含 Azure 金鑰；可詢問待複核樹木、是否已有足夠人工配對可談精度、碳匯估算限制與後續行動。
 
-目前雲端生成模型是 Azure AI Foundry／Azure OpenAI 部署的 `gpt-4.1-mini`。App 會先從 `agents/knowledge/*.md` 與 1,000 題 JSONL 做免費本機檢索，將最多三段附來源與行號的規範片段提供給模型，因此雲端模式為「Azure AI + 本機 RAG」。沒有 Azure 或呼叫失敗時，仍保留本機規則回答並列出命中的 RAG 來源；不需要另建 Azure AI Search 才能運作。
+App 已改為 **Microsoft Copilot Studio 優先**。它會先從 `agents/knowledge/*.md` 與 1,000 題 JSONL 做免費本機檢索，再透過 Copilot Studio 的 Mobile app／Direct Line 通道，把當次盤點證據與最多三段附來源、行號的規範片段交給 Arbor3D Copilot 代理。Direct Line token 只在 App 伺服器端取得，不會暴露在瀏覽器。既有 Azure AI Foundry／Azure OpenAI `gpt-4.1-mini` 僅保留為 `auto` 模式的可選備援；`copilot` 模式不會呼叫 GPT。
 
 零費用 leave-one-out retrieval 評測結果：1,000 題、Top-1 分類命中率 97.4%、Top-3 100%、MRR 98.7%。這是檢索評測，不代表 GPT 答案已有 100% 正確率；正式 Fine-tuning 前仍需領域專家建立人工審核與保留測試集。
 
-- 預設：本機證據模式，零模型費用。
-- Azure：依 `app/.env.example` 設定既有 Foundry／Azure OpenAI 模型部署，且需明確開啟費用鎖。
+- 預設 `copilot`：發布 Copilot Studio 代理後，填入 Mobile app Token Endpoint；失敗時只使用本機證據模式，不會呼叫 GPT，且需明確開啟費用鎖。
+- `auto`：只有明確選用時，才依序嘗試 Copilot Studio、Azure AI，最後使用本機證據模式。
+- Azure：既有 Foundry／Azure OpenAI 部署只作相容性備援，也可用 `ARBOR_AI_PROVIDER=azure` 單獨指定。
 - 失敗處理：逾時、內容過濾或端點錯誤時，自動退回本機回答。
 - 證據限制：不得推斷樹種、健康診斷、未存在的跨期實測或正式碳權。
 

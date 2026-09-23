@@ -244,19 +244,19 @@ npm run dev
 
 瀏覽器開 http://127.0.0.1:5173/，登入後搜尋「逢甲」即可驗證。
 
-### 盤點 AI 助理（選用 Azure）
+### 盤點 AI 助理（Copilot Studio 優先）
 
-未設定 Azure 時，助理會使用本機證據規則回答，不產生雲端費用。要接既有 Foundry／Azure OpenAI 模型部署：
+Copilot 不是可直接取代 `gpt-4.1-mini` 的模型名稱，而是 Microsoft 的代理服務。App 已使用 Copilot Studio 的 Mobile app／Direct Line 通道作為第一順位；未設定雲端服務時，助理會使用本機證據規則回答，不產生雲端費用。
 
-助理會先從 `../agents/knowledge/*.md` 執行本機 RAG，回答畫面會顯示實際 Azure deployment 名稱及 `+ RAG`。目前既有部署為 `gpt-4.1-mini`；RAG 檢索本身不呼叫付費 embedding 或搜尋服務。
+助理會先從 `../agents/knowledge/*.md` 執行本機 RAG，再把當次盤點證據與命中的規範片段送給 Copilot Studio。回答畫面會顯示代理名稱及 `+ RAG`；RAG 檢索本身不呼叫付費 embedding 或搜尋服務。
 
 ```bash
 cp .env.example .env.local
 ```
 
-在 `.env.local` 填入 `AZURE_AI_ENDPOINT`、`AZURE_AI_MODEL`，並把 `ARBOR_ALLOW_BILLABLE_CLOUD` 設為 `YES_I_ACCEPT_COSTS` 後重啟。本機預設沿用 `az login` 的 Microsoft Entra 身分；部署環境建議 Managed Identity。只有無法使用身分驗證時才填 `AZURE_AI_API_KEY`。不要改成 `VITE_` 前綴，也不要提交 `.env.local`。
+先在 Copilot Studio 建立並發布代理，到 **Channels → Mobile app** 複製 Token Endpoint。在 `.env.local` 填入 `COPILOT_STUDIO_TOKEN_ENDPOINT`、`COPILOT_STUDIO_AGENT_NAME`，把 `ARBOR_AI_PROVIDER` 設為 `copilot`，並把 `ARBOR_ALLOW_BILLABLE_CLOUD` 設為 `YES_I_ACCEPT_COSTS` 後重啟。`copilot` 模式失敗時只退回本機證據模式，不會呼叫 GPT。Token Endpoint 不要改成 `VITE_` 前綴，也不要提交 `.env.local`。
 
-支援 `https://<resource>.openai.azure.com` 或 `https://<resource>.services.ai.azure.com` 資源端點，App 會呼叫 OpenAI v1 chat completions 路徑。雲端失敗時自動退回本機證據模式。
+`ARBOR_AI_PROVIDER=auto` 則依序使用 Copilot Studio、既有 Azure AI、最後退回本機證據模式。舊的 `AZURE_AI_ENDPOINT`／`AZURE_AI_MODEL` 設定保留為可選備援；若要完全排除 GPT，使用 `copilot` 模式即可。所有 Direct Line token 與 Azure 憑證只在伺服器端處理。
 
 ### 接量測管線（可選）
 

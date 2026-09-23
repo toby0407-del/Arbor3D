@@ -30,7 +30,7 @@ export type AssistantContext = {
 export type AssistantReply = {
   answer: string;
   evidence: string[];
-  provider: "local" | "azure";
+  provider: "local" | "azure" | "copilot";
   model?: string;
   ragSources?: string[];
   ragQuestionCount?: number;

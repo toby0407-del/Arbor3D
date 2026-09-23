@@ -14,6 +14,7 @@ import {
 } from "./localRag.js";
 
 const MAX_BODY_BYTES = 256 * 1024;
+const DIRECT_LINE_BASE = "https://directline.botframework.com/v3/directline";
 
 function sendJson(res: ServerResponse, status: number, body: unknown) {
   res.statusCode = status;
@@ -55,6 +56,117 @@ function azureUrl(endpoint: string) {
   return base.includes("/openai/v1")
     ? `${base}/chat/completions`
     : `${base}/openai/v1/chat/completions`;
+}
+
+type DirectLineToken = {
+  token?: string;
+  conversationId?: string;
+};
+
+type DirectLineActivity = {
+  type?: string;
+  text?: string;
+  from?: { id?: string; name?: string };
+};
+
+const assistantEvidence = (context: AssistantContext) => [
+  `掃描 ${context.scanId}，${context.summary.total} 棵`,
+  `較可信 ${context.summary.reliable}、待確認 ${context.summary.pending}、需複核 ${context.summary.review}`,
+];
+
+export async function askCopilotStudio(
+  question: string,
+  context: AssistantContext,
+  env: Record<string, string | undefined>,
+  ragHits: RagHit[],
+): Promise<AssistantReply | null> {
+  const tokenEndpoint = env.COPILOT_STUDIO_TOKEN_ENDPOINT?.trim();
+  const allowed = env.ARBOR_ALLOW_BILLABLE_CLOUD === "YES_I_ACCEPT_COSTS";
+  if (!tokenEndpoint || !allowed) return null;
+  if (!/^https:\/\//i.test(tokenEndpoint)) {
+    throw new Error("Copilot Studio Token Endpoint 必須使用 HTTPS");
+  }
+
+  const tokenResponse = await fetch(tokenEndpoint, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!tokenResponse.ok) {
+    throw new Error(`Copilot Studio Token Endpoint 回應 ${tokenResponse.status}`);
+  }
+  const tokenData = (await tokenResponse.json()) as DirectLineToken;
+  if (!tokenData.token) throw new Error("Copilot Studio 沒有回傳 Direct Line token");
+  const authorization = { Authorization: `Bearer ${tokenData.token}` };
+
+  let conversationId = tokenData.conversationId;
+  if (!conversationId) {
+    const conversationResponse = await fetch(`${DIRECT_LINE_BASE}/conversations`, {
+      method: "POST",
+      headers: authorization,
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!conversationResponse.ok) {
+      throw new Error(`Copilot Studio 無法建立對話：${conversationResponse.status}`);
+    }
+    const conversation = (await conversationResponse.json()) as DirectLineToken;
+    conversationId = conversation.conversationId;
+  }
+  if (!conversationId) throw new Error("Copilot Studio 沒有回傳 conversationId");
+
+  const appUserId = `arbor3d-${context.scanId.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const activityUrl = `${DIRECT_LINE_BASE}/conversations/${encodeURIComponent(conversationId)}/activities`;
+  const prompt = [
+    assistantSystemPrompt(context, ragPrompt(ragHits)),
+    `使用者問題：${question}`,
+  ].join("\n\n");
+  const activityResponse = await fetch(activityUrl, {
+    method: "POST",
+    headers: { ...authorization, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: "message",
+      from: { id: appUserId, name: "Arbor3D App" },
+      locale: "zh-TW",
+      text: prompt,
+    }),
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!activityResponse.ok) {
+    throw new Error(`Copilot Studio 無法送出訊息：${activityResponse.status}`);
+  }
+
+  const deadline = Date.now() + 25_000;
+  while (Date.now() < deadline) {
+    const activitiesResponse = await fetch(activityUrl, {
+      method: "GET",
+      headers: { ...authorization, Accept: "application/json" },
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!activitiesResponse.ok) {
+      throw new Error(`Copilot Studio 無法讀取回答：${activitiesResponse.status}`);
+    }
+    const activitiesData = (await activitiesResponse.json()) as {
+      activities?: DirectLineActivity[];
+    };
+    const answer = [...(activitiesData.activities ?? [])]
+      .reverse()
+      .find((activity) =>
+        activity.type === "message" &&
+        activity.from?.id !== appUserId &&
+        Boolean(activity.text?.trim()),
+      )?.text?.trim();
+    if (answer) {
+      return {
+        provider: "copilot",
+        model: env.COPILOT_STUDIO_AGENT_NAME?.trim() || "Microsoft Copilot Studio",
+        answer,
+        evidence: assistantEvidence(context),
+        ragSources: ragHits.map((hit) => `${hit.source}:${hit.line}`),
+      };
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  throw new Error("Copilot Studio 回答逾時");
 }
 
 async function askAzure(
@@ -115,10 +227,7 @@ async function askAzure(
     provider: "azure",
     model,
     answer,
-    evidence: [
-      `掃描 ${context.scanId}，${context.summary.total} 棵`,
-      `較可信 ${context.summary.reliable}、待確認 ${context.summary.pending}、需複核 ${context.summary.review}`,
-    ],
+    evidence: assistantEvidence(context),
     ragSources: ragHits.map((hit) => `${hit.source}:${hit.line}`),
   };
 }
@@ -149,14 +258,33 @@ export function assistantApiPlugin(
           const folder = env.ARBOR_RAG_KNOWLEDGE?.trim() || knowledgeFolder;
           const ragHits = folder ? retrieveKnowledge(question, folder) : [];
           const ragQuestionCount = folder ? countKnowledgeQuestions(folder) : 0;
-          let reply: AssistantReply;
-          try {
-            reply =
-              (await askAzure(question, context, env, ragHits)) ??
-              localAssistantReply(question, context);
-          } catch {
+          const configuredProvider = env.ARBOR_AI_PROVIDER?.trim().toLowerCase();
+          const provider = ["auto", "copilot", "azure", "local"].includes(configuredProvider ?? "")
+            ? configuredProvider
+            : "copilot";
+          let reply: AssistantReply | null = null;
+          let cloudFailed = false;
+          if (provider === "auto" || provider === "copilot") {
+            try {
+              reply = await askCopilotStudio(question, context, env, ragHits);
+            } catch {
+              cloudFailed = true;
+            }
+          }
+          if (!reply && (provider === "auto" || provider === "azure")) {
+            try {
+              reply = await askAzure(question, context, env, ragHits);
+            } catch {
+              cloudFailed = true;
+            }
+          }
+          if (!reply) {
             reply = localAssistantReply(question, context);
-            reply.answer += "\n\n（Azure AI 暫時無法使用，已切換成本機證據回答。）";
+            if (cloudFailed) {
+              reply.answer += "\n\n（Microsoft 雲端 AI 暫時無法使用，已切換成本機證據回答。）";
+            } else if (provider === "copilot") {
+              reply.answer += "\n\n（Copilot Studio 尚未設定或費用鎖未開啟，已使用本機證據回答。）";
+            }
           }
           if (ragHits.length && !reply.ragSources?.length) {
             reply.ragSources = ragHits.map((hit) => `${hit.source}:${hit.line}`);
