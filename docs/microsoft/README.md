@@ -28,7 +28,7 @@ node app/scripts/export-analytics-excel.mjs outputs/competition/analytics.json o
 ```
 
 輸出同一份 canonical snapshot 的 `analytics.json`、6 張 UTF-8 BOM CSV、`analytics.xlsx` 和雜湊 manifest。
-Excel 是可篩選、凍結標題的數值快照，並非編輯後自動回寫 App 的資料庫；變更資料後需重跑分析與匯出。
+Power BI 是主要分析輔助；PBIP/PBIR 使用同一份 canonical analytics snapshot 建立視覺、KPI 與跨期比較。Excel 僅是可篩選、凍結標題的數值快照與交叉核對檔，並非唯一分析介面，也不會在編輯後自動回寫 App；變更資料後需重跑分析、Power BI 專案與 Excel 匯出。
 空表保留 CSV 欄名；Excel 顯示「無可用資料」。數值缺測保留 null/空白，不補 0。
 CSV 防公式注入會在危險字串前加單引號；JSON 保留原始字串，Excel 使用文字儲存。一般 Tree_ID 不受影響。
 
@@ -36,7 +36,7 @@ CSV 防公式注入會在危險字串前加單引號；JSON 保留原始字串�
 
 1. 啟動 `npm run dev --prefix app`，開啟掃描樹木詳情。
 2. 輸入人工胸徑／樹高、日期，確認實際量測位置是標準 1.3 m 後才勾選確認。
-3. 按「匯出分析資料」，下載含原報告和人工資料的 JSON。
+3. 按「匯出 Power BI 分析資料」，下載含原報告和人工資料的 JSON。
 4. 執行：
 
 ```sh

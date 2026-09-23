@@ -15,7 +15,7 @@ export type ScanBinding = {
 /**
  * 把掃描綁到 OSM 地點（公園或學校）。
  * parkName 必須與 taiwan_sites.json 的 name 完全相同。
- * sim* scanId 為介面示範用的模擬盤點（僅臺中；借用逢甲媒體，非當地實拍）。
+ * sim* scanId 為介面示範用的模擬盤點（僅臺中；使用合成技術影像，非當地實拍）。
  * polyline 一律走陸域步道／校道，避開湖面與水域中心。
  */
 export const SCAN_BINDINGS: ScanBinding[] = [

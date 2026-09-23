@@ -1,6 +1,5 @@
 /** Generate explicitly labelled demo media for every simulated inventory. */
 import fs from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -8,20 +7,17 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(here, "..");
 const inventoryRoot = path.join(appRoot, "src", "data", "inventories");
 const publicRoot = path.join(appRoot, "public", "scans");
-const observedScanId = "20260818092855";
-const notice = "樹表數值仍為合成；四格影像借用逢甲大學實拍照片與 2026-08-18 真實掃描成果，僅供跨地點介面模擬，不代表目前地點的現場資料。";
-const sharedPhoto = path.join(publicRoot, "_shared", "fengchia-field", "field-photo.jpg");
-const fieldPhotoSource = process.env.ARBOR3D_FENGCHIA_PHOTO || path.join(os.homedir(), "Downloads", "image.jpg");
+const notice = "樹表數值與三類技術影像均為可重建的合成展示資料，不代表目前地點的現場量測。";
+const evidenceRoot = "../_shared/synthetic-tree-evidence";
 
-await fs.mkdir(path.dirname(sharedPhoto), { recursive: true });
-try {
-  await fs.copyFile(fieldPhotoSource, sharedPhoto);
-} catch (error) {
-  try {
-    await fs.access(sharedPhoto);
-  } catch {
-    throw new Error(`找不到逢甲實拍照片：${fieldPhotoSource}`, { cause: error });
+function evidenceVariant(scanId, treeId, salt) {
+  const input = `${salt}:${scanId}:${treeId}`;
+  let seed = 2166136261;
+  for (const char of input) {
+    seed ^= char.charCodeAt(0);
+    seed = Math.imul(seed, 16777619) >>> 0;
   }
+  return String((seed % 4) + 1).padStart(2, "0");
 }
 
 function demoPly(scanId) {
@@ -52,17 +48,16 @@ for (const file of files) {
   report.simulation_notice = report.simulation_reference
     ? `四年季度、1.3 m 人工胸徑、樹高、固定樹號與 GPS/GPX 均為模擬。${notice}`
     : notice;
-  report.simulation_media_source = "逢甲大學實拍照片 + 真實掃描 20260818092855（Tree_001～Tree_016）";
+  report.simulation_media_source = "Arbor3D 合成展示素材庫（樹幹分割、胸高橫切面、點雲側視）";
   for (const [index, tree] of (report.trees || []).entries()) {
-    const sourceNumber = String((index % 16) + 1).padStart(3, "0");
-    const sourceTree = `Tree_${sourceNumber}`;
+    const treeKey = String(tree.Tree_ID || index);
     tree.DBH_note = String(tree.DBH_note || "").includes("模擬")
       ? tree.DBH_note
       : `模擬資料,${tree.DBH_note || "no_measurement"}`;
-    tree.Best_Photo = "../_shared/fengchia-field/field-photo.jpg";
-    tree.Mask_Path = `../${observedScanId}/masks/real_tree_mask_${sourceTree}.png`;
-    tree.Cross_Section_Image = `../${observedScanId}/dbh/dbh_slice_top_down_${sourceTree}.png`;
-    tree.PointCloud_Preview = `../${observedScanId}/previews/${sourceTree}.png`;
+    delete tree.Best_Photo;
+    tree.Mask_Path = `${evidenceRoot}/masks/mask-${evidenceVariant(scanId, treeKey, "mask")}.png`;
+    tree.Cross_Section_Image = `${evidenceRoot}/cross-sections/cross-section-${evidenceVariant(scanId, treeKey, "cross")}.png`;
+    tree.PointCloud_Preview = `${evidenceRoot}/point-clouds/point-cloud-${evidenceVariant(scanId, treeKey, "cloud")}.png`;
     tree["3D_Model_Path"] = "simulated-demo/tree-demo.ply";
     tree.Single_Tree_Ply = "simulated-demo/tree-demo.ply";
   }

@@ -26,9 +26,9 @@ Arbor3D 已具備可展示的 **Physical → Digital → AI** 主流程、真實
 | 實體與數位盤點 | YOLO 樹幹分割、單木 ID、DBH、3DGS／PLY、JSON／CSV／HTML | 已有逢甲 2026-08-18 真實示範資料，16 棵 |
 | Web App | 示範登入、地圖搜尋、可靠性標示路線、盤點表、燈號、影像、3D、手測、CSV、碳匯；大型盤點工具延遲載入 | App 15 項測試、lint、production build 通過 |
 | 正式匯入閉環 | App 接收 PLY、照片、`calib.json`、`cameras.json`；adapter 自動整理既有資料目錄、執行 Python、發佈附件並綁定路徑 | adapter 3 項測試通過；尚待下一趟真實掃描與完整 GPU 環境驗收 |
-| DEMO 完整度 | 30 組模擬檔（18 個啟用公園場景、12 個停用學校歷史檔）的四格影像改用逢甲實拍照片與真實掃描 `20260818092855` 的分割圖、胸高橫切面、點雲側視；另附 900 點示意 PLY；匯入視窗可一鍵產生完整模擬素材 | 模擬資料會標明「借用逢甲來源、非目前地點現場證據」；App 自動檢查涵蓋全部 30 組 |
-| 分析資料層 | Analytics JSON／CSV／Excel、資料契約、誤差與跨期規則 | Python 23 項測試通過；真實／模擬資料分離 |
-| Power BI／Fabric | PBIP/PBIR 產生器、Power Query、DAX、Spark 與 Data Agent 樣板 | 官方 JSON schema 通過；仍待 Windows Desktop 畫面驗收 |
+| DEMO 完整度 | 30 組模擬檔（18 個啟用公園場景、12 個停用學校歷史檔）使用 12 張新合成素材：4 種分割圖、4 種胸高橫切面、4 種點雲側視，獨立分派後形成最多 64 種組合；另附 900 點示意 PLY | 不再依賴逢甲實拍原圖或真實掃描影像；App 自動檢查素材涵蓋全部 30 組 |
+| 分析資料層 | Analytics JSON／CSV、資料契約、誤差與跨期規則；Excel 僅作資料快照與交叉核對 | Python 23 項測試通過；真實／模擬資料分離 |
+| Power BI／Fabric | Power BI 作為主要分析輔助；已有 PBIP/PBIR 產生器、Power Query、DAX、Spark 與 Data Agent 樣板 | 官方 JSON schema 通過；仍待 Windows Desktop 畫面驗收 |
 | App AI 助理 | 以盤點證據回答待複核、精度、碳匯限制與行動建議 | 本機模式與 Azure 失敗退回機制皆已實作 |
 | Azure Foundry | Azure for Students 資源、project、`gpt-4.1-mini` deployment、Entra 無金鑰認證 | 資源／project／deployment 均為 Succeeded；App API 回傳 `provider=azure` |
 | 安全與依賴 | `.env.local` 不進 Git、瀏覽器拿不到金鑰、Node 依賴稽核 | `npm audit` 0 vulnerabilities |
@@ -52,6 +52,7 @@ Azure 實際部署資訊與停止費用方式見 [Microsoft Azure 部署紀錄](
 |---|---|
 | 正式帳號與權限 API | 取代寫死的示範帳號；至少具管理者／盤點人員角色與伺服器端 session |
 | 手測資料同步後端 | 人工 DBH、樹高與複核狀態不再只存在單一瀏覽器 localStorage |
+| App → Power BI 分析閉環 | App 匯出的分析輸入可一鍵產生 canonical CSV、PBIP/PBIR 與驗證報告；Excel 保留為資料快照，不作為唯一分析介面 |
 | Windows Power BI Desktop 驗收 | 實際刷新 Power Query、驗證 DAX、關係、空值語意及五頁版面，再決定是否發佈 |
 | Fabric／Power BI 雲端發佈決策 | 確認學生訂閱能力、容量、成本、RLS 與展示帳號後才部署；目前不宣稱已發佈 |
 | Azure 成本防護 | 在 Azure Cost Management 建立可通知負責人的 budget／alert，並定期檢查用量 |

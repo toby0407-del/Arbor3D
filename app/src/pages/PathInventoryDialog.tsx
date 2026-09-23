@@ -1,4 +1,4 @@
-import { downloadAnalyticsInput, sourceLabel } from "../lib/analytics";
+import { downloadPowerBiAnalyticsInput, sourceLabel } from "../lib/analytics";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PathTreeMap } from "../components/PathTreeMap";
 import { QuarterlySimulation } from "../components/QuarterlySimulation";
@@ -714,7 +714,14 @@ export function PathInventoryDialog({
             >
               匯出 CSV
             </button>
-            <button type="button" className="ghost-btn" onClick={() => downloadAnalyticsInput(report, measures)}>匯出分析資料</button>
+            <button
+              type="button"
+              className="ghost-btn"
+              title="匯出正式分析輸入；可產生 Power BI PBIP/PBIR，Excel 僅作資料快照與交叉核對"
+              onClick={() => downloadPowerBiAnalyticsInput(report, measures)}
+            >
+              匯出 Power BI 分析資料
+            </button>
             {onImport ? (
               <button type="button" className="ghost-btn" onClick={onImport}>
                 再匯入
@@ -881,7 +888,7 @@ export function PathInventoryDialog({
             ) : tab === "images" ? (
               <>
                 <h3>
-                  {preview.Tree_ID} · Segmentation{isSimulated ? "（借用逢甲實測）" : ""} · 信心度{" "}
+                  {preview.Tree_ID} · Segmentation{isSimulated ? "（合成展示）" : ""} · 信心度{" "}
                   {formatConfidence(preview.YOLO_confidence)}
                 </h3>
                 {maskUrl ? (
@@ -899,7 +906,7 @@ export function PathInventoryDialog({
                 ) : (
                   <div className="path-db-empty">尚無 Segmentation 圖</div>
                 )}
-                <h3>{isSimulated ? "橫切面（借用逢甲實測）" : "橫切面"}</h3>
+                <h3>{isSimulated ? "橫切面（合成展示）" : "橫切面"}</h3>
                 {sliceUrl ? (
                   <ZoomImage
                     src={sliceUrl}
@@ -915,25 +922,23 @@ export function PathInventoryDialog({
                 ) : (
                   <div className="path-db-empty">尚無橫切面圖</div>
                 )}
-                {photoUrl ? (
+                {photoUrl && !isSimulated ? (
                   <>
-                    <h3>{isSimulated ? "逢甲實拍參考圖" : "原圖"}</h3>
+                    <h3>原圖</h3>
                     <ZoomImage
                       src={photoUrl}
-                      title={isSimulated ? "逢甲實拍參考圖" : "原圖"}
-                      alt={isSimulated ? "逢甲大學實拍參考" : `${preview.Tree_ID} 照片`}
+                      title="原圖"
+                      alt={`${preview.Tree_ID} 照片`}
                       onOpen={() =>
                         setLightbox({
                           src: photoUrl,
-                          title: isSimulated
-                            ? `${preview.Tree_ID} · 逢甲實拍參考（非目前地點）`
-                            : `${preview.Tree_ID} · 原圖`,
+                          title: `${preview.Tree_ID} · 原圖`,
                         })
                       }
                     />
                   </>
                 ) : null}
-                <h3>{isSimulated ? "點雲側視（借用逢甲實測）" : "點雲側視"}</h3>
+                <h3>{isSimulated ? "點雲側視（合成展示）" : "點雲側視"}</h3>
                 {cloudPreviewUrl ? (
                   <ZoomImage
                     src={cloudPreviewUrl}

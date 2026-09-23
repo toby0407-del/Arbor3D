@@ -74,7 +74,7 @@ for (const [siteIndex, site] of sites.entries()) {
   });
   const report = {
     scan_id: site.scanId, created_at: '2026-06-30T10:30:00+08:00', dataset_kind: 'simulated',
-    simulation_notice: '四年季度、1.3 m 人工胸徑、樹高、固定樹號與 GPS/GPX 均為模擬。圖片借用逢甲真實掃描，非本公園現場證據。',
+    simulation_notice: '四年季度、1.3 m 人工胸徑、樹高、固定樹號、GPS/GPX 與三類技術影像均為合成展示資料，非本公園現場證據。',
     simulation_reference: { scan_id: template.scan_id, sha256: sha, seed },
     gps_available: false, position_kind: 'simulated', num_trees: trees.length, trees,
   };

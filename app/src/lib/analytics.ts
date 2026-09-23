@@ -24,14 +24,14 @@ export function analyticsInput(report: ParkInventoryReport, measures: Record<str
     }),
   };
 }
-export function downloadAnalyticsInput(report: ParkInventoryReport, measures: Record<string, FieldMeasure>) {
+export function downloadPowerBiAnalyticsInput(report: ParkInventoryReport, measures: Record<string, FieldMeasure>) {
   const data = analyticsInput(report, measures);
   if (data.manual_measurements.some(row => !/^\d{4}-\d{2}-\d{2}$/.test(row.measured_at))) {
-    alert('請為有人工量測的樹木填寫量測日期（YYYY-MM-DD），再匯出分析資料。');
+    alert('請為有人工量測的樹木填寫量測日期（YYYY-MM-DD），再匯出 Power BI 分析資料。');
     return;
   }
   const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'}));
   const a = document.createElement('a');
-  a.href = url; a.download = `${report.scan_id}-analytics-input.json`; a.click();
+  a.href = url; a.download = `${report.scan_id}-powerbi-analytics-input.json`; a.click();
   URL.revokeObjectURL(url);
 }
