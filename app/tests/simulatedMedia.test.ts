@@ -6,6 +6,23 @@ import test from "node:test";
 const appRoot = path.resolve(import.meta.dirname, "..");
 const inventoryRoot = path.join(appRoot, "src", "data", "inventories");
 
+test("every currently published tree has a loadable cross-section image", () => {
+  const files = fs.readdirSync(inventoryRoot).filter((name) => name.endsWith(".json"));
+  let treeCount = 0;
+  for (const file of files) {
+    const report = JSON.parse(fs.readFileSync(path.join(inventoryRoot, file), "utf8"));
+    for (const tree of report.trees ?? []) {
+      treeCount += 1;
+      assert.ok(tree.Cross_Section_Image, `${file}:${tree.Tree_ID}:Cross_Section_Image`);
+      assert.ok(
+        fs.existsSync(path.resolve(appRoot, "public", "scans", report.scan_id, tree.Cross_Section_Image)),
+        `${file}:${tree.Tree_ID}:Cross_Section_Image file`,
+      );
+    }
+  }
+  assert.equal(treeCount, 481);
+});
+
 test("every simulated inventory uses labelled, varied and loadable synthetic media", () => {
   const files = fs.readdirSync(inventoryRoot).filter((name) => /^sim.*\.json$/i.test(name));
   assert.equal(files.length, 30);

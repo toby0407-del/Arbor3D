@@ -8,6 +8,8 @@ import textwrap
 import unittest
 from pathlib import Path
 
+from scripts.postprocess_from_inbox import publish_report
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = REPO_ROOT / "scripts" / "postprocess_from_inbox.py"
@@ -146,6 +148,38 @@ class PostprocessFromInboxTests(unittest.TestCase):
             self.assertEqual(bindings["site:path"], "test-scan")
             source_inventory = fake_repo / "app/src/data/inventories/test-scan.json"
             self.assertTrue(source_inventory.is_file())
+
+    def test_publish_rejects_partial_cross_section_set(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            output = root / "output"
+            output.mkdir()
+            cross_section = output / "Tree_001.png"
+            cross_section.write_bytes(b"png-test")
+            report_path = output / "park_inventory_report.json"
+            report_path.write_text(
+                json.dumps(
+                    {
+                        "trees": [
+                            {
+                                "Tree_ID": "Tree_001",
+                                "Cross_Section_Image": str(cross_section),
+                            },
+                            {"Tree_ID": "Tree_002", "Cross_Section_Image": None},
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "Tree_002"):
+                publish_report(
+                    report_path,
+                    output,
+                    root / "repo",
+                    root / "data",
+                    "test-scan",
+                    "",
+                )
 
 
 if __name__ == "__main__":

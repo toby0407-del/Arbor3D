@@ -162,6 +162,29 @@ def publish_report(
     if not isinstance(report, dict) or not isinstance(report.get("trees"), list):
         raise ValueError(f"正式管線報告格式不正確：{report_path}")
 
+    trees = [tree for tree in report["trees"] if isinstance(tree, dict)]
+    has_cross_sections = any(
+        isinstance(tree.get("Cross_Section_Image"), str)
+        and bool(tree["Cross_Section_Image"].strip())
+        for tree in trees
+    )
+    if has_cross_sections:
+        missing_cross_sections = []
+        for index, tree in enumerate(trees):
+            tree_id = str(tree.get("Tree_ID") or f"tree_{index + 1}")
+            value = tree.get("Cross_Section_Image")
+            if (
+                not isinstance(value, str)
+                or not value.strip()
+                or resolve_asset(value, output_dir, data_root) is None
+            ):
+                missing_cross_sections.append(tree_id)
+        if missing_cross_sections:
+            missing = "、".join(missing_cross_sections)
+            raise ValueError(
+                f"橫切面素材不完整：同批每棵樹都必須有木頭橫切面，缺少 {missing}"
+            )
+
     public_dir = repo_root / "app" / "public" / "scans" / scan_id
     inventory_dir = repo_root / "app" / "src" / "data" / "inventories"
     public_dir.mkdir(parents=True, exist_ok=True)

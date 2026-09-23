@@ -42,18 +42,45 @@ def passages(path, folder):
         if passage.strip():
             yield {'source': str(path.relative_to(folder)), 'line': start+1, 'sha256': digest, 'text': passage}
 
-def retrieve(question, folder, limit=4):
-    query = set(tokens(question)); chunks = []
+def load_chunks(folder):
+    chunks = []
     paths = sorted(path for path in Path(folder).rglob('*') if path.suffix.lower() in {'.md', '.jsonl'})
     for path in paths:
         if path.is_symlink():
             continue
         for passage in passages(path, Path(folder)):
-            chunks.append(dict(passage, terms=Counter(tokens(passage['text']))))
+            terms = Counter(tokens(passage['text']))
+            keyword_line = next(
+                (line.removeprefix('關鍵詞：') for line in passage['text'].splitlines() if line.startswith('關鍵詞：')),
+                '',
+            )
+            terms.update({term: 2 for term in tokens(keyword_line)})
+            chunks.append(dict(passage, terms=terms))
+    document_frequency = Counter()
     for chunk in chunks:
-        chunk['score'] = sum((1+math.log(chunk['terms'][t])) * math.log(1+len(chunks)/(1+sum(t in c['terms'] for c in chunks))) for t in query if t in chunk['terms'])
-    hits = sorted((c for c in chunks if c['score'] > 0), key=lambda c: (-c['score'],c['source'],c['line']))[:limit]
-    return [{k:v for k,v in c.items() if k != 'terms'} for c in hits]
+        document_frequency.update(chunk['terms'].keys())
+    return chunks, document_frequency
+
+def retrieve_from_chunks(question, chunks, document_frequency, limit=4):
+    query = set(tokens(question)); scored = []
+    for chunk in chunks:
+        score = sum(
+            (1 + math.log(chunk['terms'][term]))
+            * math.log(1 + len(chunks) / (1 + document_frequency[term]))
+            for term in query
+            if term in chunk['terms']
+        )
+        if score > 0:
+            scored.append((score, chunk))
+    hits = sorted(scored, key=lambda item: (-item[0], item[1]['source'], item[1]['line']))[:limit]
+    return [
+        {**{key: value for key, value in chunk.items() if key != 'terms'}, 'score': score}
+        for score, chunk in hits
+    ]
+
+def retrieve(question, folder, limit=4):
+    chunks, document_frequency = load_chunks(folder)
+    return retrieve_from_chunks(question, chunks, document_frequency, limit)
 
 def answer(question, folder):
     hits=retrieve(question,folder)

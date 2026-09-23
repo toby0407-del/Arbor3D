@@ -11,7 +11,7 @@
 - 逢甲原始掃描 JSON 未修改；真實人工胸徑與第二期真實掃描仍未取得。來源照片／橫切面／點雲預覽僅供參考，不宣稱是其他公園實拍。
 - 全部欄位與假設、重建方式見 [公園模擬資料說明](../app/scenarios/parks/README.md)。本機分析輸出位於 `outputs/parks-simulated-20260923/analytics`，未進 Git。
 
-本次驗證：App 20 項、Python 23 項測試通過，Lint 與 production build 通過；已在瀏覽器驗證季度樹號切換、曲線、圖片與 CSV 下載（單園 256 筆）。重建結果一致、逢甲原始 JSON 與 Git 基準內容一致。Build 仍提示現有全臺目錄與資料主包偏大，尚未做拆包優化。
+本次驗證：App 22 項、Analytics／AI 25 項、正式匯入 4 項測試通過，Lint 與 production build 通過；已在瀏覽器驗證季度樹號切換、曲線、圖片與 CSV 下載（單園 256 筆）。重建結果一致、逢甲原始 JSON 與 Git 基準內容一致。Build 仍提示現有全臺目錄與資料主包偏大，尚未做拆包優化。
 
 ## 目前結論
 
@@ -26,10 +26,10 @@ Arbor3D 已具備可展示的 **Physical → Digital → AI** 主流程、真實
 | 實體與數位盤點 | YOLO 樹幹分割、單木 ID、DBH、3DGS／PLY、JSON／CSV／HTML | 已有逢甲 2026-08-18 真實示範資料，16 棵 |
 | Web App | 示範登入、地圖搜尋、可靠性標示路線、盤點表、燈號、影像、3D、手測、CSV、碳匯；大型盤點工具延遲載入 | App 15 項測試、lint、production build 通過 |
 | 正式匯入閉環 | App 接收 PLY、照片、`calib.json`、`cameras.json`；adapter 自動整理既有資料目錄、執行 Python、發佈附件並綁定路徑 | adapter 3 項測試通過；尚待下一趟真實掃描與完整 GPU 環境驗收 |
-| DEMO 完整度 | 30 組模擬檔（18 個啟用公園場景、12 個停用學校歷史檔）使用 12 張新合成素材：4 種分割圖、4 種胸高橫切面、4 種點雲側視，獨立分派後形成最多 64 種組合；另附 900 點示意 PLY | 不再依賴逢甲實拍原圖或真實掃描影像；App 自動檢查素材涵蓋全部 30 組 |
+| DEMO 完整度 | 30 組模擬檔（18 個啟用公園場景、12 個停用學校歷史檔）使用 12 張新合成素材：4 種分割圖、4 種胸高橫切面、4 種點雲側視，獨立分派後形成最多 64 種組合；另附 900 點示意 PLY | 31 組目前發布資料共 481 棵皆有可載入橫切面；新匯入只要包含橫切面，就強制同批每棵樹完整，否則拒絕發布 |
 | 分析資料層 | Analytics JSON／CSV、資料契約、誤差與跨期規則；Excel 僅作資料快照與交叉核對 | Python 23 項測試通過；真實／模擬資料分離 |
-| Power BI／Fabric | Power BI 作為主要分析輔助；已有 PBIP/PBIR 產生器、Power Query、DAX、Spark 與 Data Agent 樣板 | 官方 JSON schema 通過；仍待 Windows Desktop 畫面驗收 |
-| App AI 助理 | Azure AI Foundry `gpt-4.1-mini` 搭配本機 Markdown RAG；以盤點證據回答待複核、精度、碳匯限制與行動建議 | RAG 來源附檔名與行號；Azure 失敗時退回本機證據模式 |
+| Power BI／Fabric | Power BI 作為主要分析輔助；已有 PBIP/PBIR 產生器、Power Query、DAX、Spark 與 Data Agent 樣板 | 重新產生五頁 PBIP，50 個專案 JSON 通過 Microsoft schema；仍待 Windows Desktop 執行 DAX 與畫面驗收 |
+| App AI 助理 | Azure AI Foundry `gpt-4.1-mini` 搭配本機 Markdown／JSONL RAG；1,000 題領域問答以盤點證據回答待複核、精度、碳匯限制與行動建議 | Leave-one-out retrieval：Top-1 97.4%、Top-3 100%、MRR 98.7%；Azure 失敗時退回本機證據模式，GPT 答案仍待專家抽查 |
 | Azure Foundry | Azure for Students 資源、project、`gpt-4.1-mini` deployment、Entra 無金鑰認證 | 資源／project／deployment 均為 Succeeded；App API 回傳 `provider=azure` |
 | 安全與依賴 | `.env.local` 不進 Git、瀏覽器拿不到金鑰、Node 依賴稽核 | `npm audit` 0 vulnerabilities |
 
@@ -67,8 +67,8 @@ Azure 實際部署資訊與停止費用方式見 [Microsoft Azure 部署紀錄](
 
 ### P2 — 場域體驗與工程優化
 
-- 手機戶外單手操作、較大按鈕與地圖全螢幕。
-- PWA／離線地圖與待同步佇列，因公園現場網路可能不穩。
+- 手機戶外單手操作與地圖全螢幕仍需更多實機驗收。
+- PWA manifest、Service Worker、已開啟頁面／影像快取及離線提示已完成；現場人工量測原本即保留在裝置。正式後端同步佇列仍須等後端帳號與資料 API。
 - 繼續拆分全臺 10,462 筆地點目錄；盤點／匯入對話框已先改為延遲載入。
 - 清出至少 12 GiB 空間後，再安裝完整 PyTorch／Open3D／Ultralytics 管線並重跑 GPU 驗證。
 - Docker 化本機 RAG／分析服務屬選配，不是 App 展示必要條件。

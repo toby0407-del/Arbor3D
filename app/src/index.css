@@ -114,6 +114,24 @@ button:disabled, select:disabled, input:disabled { cursor: not-allowed; }
   grid-template-rows: auto 1fr;
 }
 
+.offline-banner {
+  position: fixed;
+  z-index: 9999;
+  top: max(8px, env(safe-area-inset-top));
+  left: 50%;
+  translate: -50% 0;
+  width: min(680px, calc(100% - 24px));
+  padding: 10px 14px;
+  border: 1px solid #b78322;
+  border-radius: 12px;
+  background: #fff2c9;
+  color: #5f4613;
+  box-shadow: var(--shadow);
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 .topbar {
   display: flex;
   align-items: center;

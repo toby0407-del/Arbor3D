@@ -5,6 +5,8 @@
 
 `knowledge/arbor3d-qa-1000.jsonl` 是 20 類、每類 50 題的 Arbor3D 領域問答庫，共 1,000 題。它用於 RAG 參考與迴歸評測，不代表 1,000 筆現場觀測，也不會直接微調 GPT。執行 `cd app && npm run rag:generate` 可依受控規則重新產生，測試會檢查題數、唯一性、分類與檢索結果。
 
+`python3 -m agents.evaluate_rag --out outputs/rag-evaluation.json` 會執行零費用的 leave-one-out 檢索評測：逐題排除原題，再檢查前 1／前 3 筆是否仍命中同分類。這只評估 retrieval，不取代 GPT 答案正確性與領域專家人工審核。
+
 App 的 `/api/assistant` 已使用同一個 `knowledge/*.md` 資料夾：先在本機擷取最多三段，再交給既有 Azure AI 模型；回答會顯示 `+ RAG` 並列出來源檔名與行號。Azure 未設定或失敗時仍使用本機規則回答，檢索本身不產生模型費用。可用 `ARBOR_RAG_KNOWLEDGE` 指向另一個受控 Markdown 知識資料夾。
 
 `python3 -m agents.foundry 'DBH 誤差'` 產生 agent definition 預覽及同一批檢索來源。

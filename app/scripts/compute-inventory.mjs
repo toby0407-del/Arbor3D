@@ -753,6 +753,19 @@ async function main() {
 
   log("繪製路徑圖、Segmentation、橫切面…");
   await renderOfficialFigures(outScan, trees);
+  const missingSlices = [];
+  for (let i = 0; i < trees.length; i += 1) {
+    const id = padId(i + 1);
+    const slice = path.join(outScan, "dbh", `dbh_slice_top_down_${id}.png`);
+    try {
+      await fs.access(slice);
+    } catch {
+      missingSlices.push(id);
+    }
+  }
+  if (missingSlices.length) {
+    throw new Error(`橫切面素材不完整，缺少：${missingSlices.join("、")}`);
+  }
 
   const images = [
     ...(await listImages(path.join(rawDir, "go"))),

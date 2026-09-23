@@ -82,6 +82,8 @@ export function retrieveKnowledge(question: string, folder: string, limit = 3): 
     for (const chunk of fileChunks(file, folder)) {
       const terms = new Map<string, number>();
       for (const token of tokens(chunk.text)) terms.set(token, (terms.get(token) ?? 0) + 1);
+      const keywordLine = chunk.text.match(/^關鍵詞：(.*)$/m)?.[1] ?? "";
+      for (const token of tokens(keywordLine)) terms.set(token, (terms.get(token) ?? 0) + 2);
       chunks.push({ ...chunk, terms });
     }
   }

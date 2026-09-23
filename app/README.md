@@ -19,6 +19,8 @@ AI 助理採用本機 RAG＋可選 Azure GPT：知識庫含 1,000 題 Arbor3D �
 
 **技術棧**：React 19 + TypeScript + Vite 8 + Leaflet（國土測繪底圖）+ Three.js（3D 點雲）
 
+Production build 會註冊 PWA Service Worker。使用者曾開啟的頁面、程式資產與影像可在弱網／離線時重用；畫面會顯示離線提示，人工量測繼續保存在裝置。尚未查看過的地圖區域仍需要網路，正式跨裝置同步則需後端 API。
+
 ---
 
 ## 二、使用流程
