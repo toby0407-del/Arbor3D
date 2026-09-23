@@ -28,6 +28,9 @@ export type AssistantReply = {
   answer: string;
   evidence: string[];
   provider: "local" | "azure";
+  model?: string;
+  ragSources?: string[];
+  ragQuestionCount?: number;
 };
 
 const fmt = (value: number, digits = 2) => value.toFixed(digits);
@@ -114,12 +117,13 @@ export function localAssistantReply(
   };
 }
 
-export function assistantSystemPrompt(context: AssistantContext) {
+export function assistantSystemPrompt(context: AssistantContext, ragContext = "") {
   return [
     "你是 Arbor3D 校園樹木盤點助理。請使用繁體中文，回答精簡、可行動。",
     "只能根據下方 JSON 證據回答；不得捏造樹種、健康診斷、跨期實測、模型精度或碳權結論。",
     "若資料不足，明確說明缺少什麼。將推估 CO2 稱為管理估算，不稱為正式查證碳權。",
     "回答最後加一行「依據：」，列出 1–3 個使用到的樹號或統計值。",
+    ragContext,
     JSON.stringify(context),
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 }

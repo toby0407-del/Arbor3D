@@ -10,7 +10,11 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig(({ mode }) => {
   const env = { ...process.env, ...loadEnv(mode, root, "") };
   return {
-    plugins: [react(), importApiPlugin(root), assistantApiPlugin(env)],
+    plugins: [
+      react(),
+      importApiPlugin(root),
+      assistantApiPlugin(env, path.resolve(root, "..", "agents", "knowledge")),
+    ],
     server: {
       watch: {
         ignored: [

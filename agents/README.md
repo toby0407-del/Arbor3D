@@ -1,7 +1,11 @@
 # 本機 RAG 與可選 Foundry Adapter
 
-預設完全離線。`python3 -m agents.rag 'DBH 誤差'` 從 `knowledge/*.md` 擷取相符文件片段，回傳文件／行號／SHA-256。沒有匹配時明確回覆無依據。
+預設完全離線。`python3 -m agents.rag 'DBH 誤差'` 從 `knowledge/*.md` 與 `knowledge/*.jsonl` 擷取相符文件片段，回傳文件／行號／SHA-256。沒有匹配時明確回覆無依據。
 支援英文詞與中文雙字切分；此輕量檢索不需要向量資料庫或付費 embedding。它不是完整語意搜尋，近義詞可能無法匹配。
+
+`knowledge/arbor3d-qa-1000.jsonl` 是 20 類、每類 50 題的 Arbor3D 領域問答庫，共 1,000 題。它用於 RAG 參考與迴歸評測，不代表 1,000 筆現場觀測，也不會直接微調 GPT。執行 `cd app && npm run rag:generate` 可依受控規則重新產生，測試會檢查題數、唯一性、分類與檢索結果。
+
+App 的 `/api/assistant` 已使用同一個 `knowledge/*.md` 資料夾：先在本機擷取最多三段，再交給既有 Azure AI 模型；回答會顯示 `+ RAG` 並列出來源檔名與行號。Azure 未設定或失敗時仍使用本機規則回答，檢索本身不產生模型費用。可用 `ARBOR_RAG_KNOWLEDGE` 指向另一個受控 Markdown 知識資料夾。
 
 `python3 -m agents.foundry 'DBH 誤差'` 產生 agent definition 預覽及同一批檢索來源。
 `config.env.example` 無任何密鑰，程式不自動載入 env 檔。使用者未來可透過環境變數配置已存在的專案與模型。

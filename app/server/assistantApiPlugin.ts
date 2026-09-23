@@ -6,6 +6,12 @@ import {
   type AssistantContext,
   type AssistantReply,
 } from "./assistantCore.js";
+import {
+  countKnowledgeQuestions,
+  ragPrompt,
+  retrieveKnowledge,
+  type RagHit,
+} from "./localRag.js";
 
 const MAX_BODY_BYTES = 256 * 1024;
 
@@ -55,6 +61,7 @@ async function askAzure(
   question: string,
   context: AssistantContext,
   env: Record<string, string | undefined>,
+  ragHits: RagHit[],
 ): Promise<AssistantReply | null> {
   const endpoint = env.AZURE_AI_ENDPOINT?.trim();
   const apiKey = env.AZURE_AI_API_KEY?.trim();
@@ -89,7 +96,7 @@ async function askAzure(
       temperature: 0.2,
       max_tokens: 500,
       messages: [
-        { role: "system", content: assistantSystemPrompt(context) },
+        { role: "system", content: assistantSystemPrompt(context, ragPrompt(ragHits)) },
         { role: "user", content: question },
       ],
     }),
@@ -106,16 +113,19 @@ async function askAzure(
   if (!answer) throw new Error("Azure AI 沒有回傳文字");
   return {
     provider: "azure",
+    model,
     answer,
     evidence: [
       `掃描 ${context.scanId}，${context.summary.total} 棵`,
       `較可信 ${context.summary.reliable}、待確認 ${context.summary.pending}、需複核 ${context.summary.review}`,
     ],
+    ragSources: ragHits.map((hit) => `${hit.source}:${hit.line}`),
   };
 }
 
 export function assistantApiPlugin(
   env: Record<string, string | undefined> = process.env,
+  knowledgeFolder = "",
 ): Plugin {
   return {
     name: "arbor3d-assistant-api",
@@ -136,15 +146,23 @@ export function assistantApiPlugin(
             return;
           }
           const context = body.context;
+          const folder = env.ARBOR_RAG_KNOWLEDGE?.trim() || knowledgeFolder;
+          const ragHits = folder ? retrieveKnowledge(question, folder) : [];
+          const ragQuestionCount = folder ? countKnowledgeQuestions(folder) : 0;
           let reply: AssistantReply;
           try {
             reply =
-              (await askAzure(question, context, env)) ??
+              (await askAzure(question, context, env, ragHits)) ??
               localAssistantReply(question, context);
           } catch {
             reply = localAssistantReply(question, context);
             reply.answer += "\n\n（Azure AI 暫時無法使用，已切換成本機證據回答。）";
           }
+          if (ragHits.length && !reply.ragSources?.length) {
+            reply.ragSources = ragHits.map((hit) => `${hit.source}:${hit.line}`);
+            reply.evidence.push(...reply.ragSources.map((source) => `本機 RAG：${source}`));
+          }
+          if (ragQuestionCount) reply.ragQuestionCount = ragQuestionCount;
           sendJson(res, 200, reply);
         } catch (error) {
           sendJson(res, 400, {

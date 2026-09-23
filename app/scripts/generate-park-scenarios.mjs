@@ -21,6 +21,10 @@ const allRows = [];
 const manifest = [];
 for (const [siteIndex, site] of sites.entries()) {
   if (!site.scanId.startsWith('sim') || /大學|學校|高中|國中|國小/.test(site.parkName)) throw Error('Park-only simulations required');
+  const [latitude, longitude] = site.center;
+  if (latitude < 23.95 || latitude > 24.35 || longitude < 120.45 || longitude > 120.85) {
+    throw Error(`Taichung-only simulation scope required: ${site.parkName}`);
+  }
   const seed = 20260923 + siteIndex;
   let state = seed;
   const random = () => ((state = (Math.imul(1664525, state) + 1013904223) >>> 0) / 4294967296);
@@ -94,7 +98,7 @@ json('scenarios/parks/manifest.json', {
     'Manual noise SD=0.04 cm; AI noise bias=0.12 cm, SD=0.32 cm; assumed, not validated accuracy.',
     'Height = 1.3+1.8*sqrt(latent DBH); no measured height reference.',
     'Identity, 1.3m protocol, GPS and GPX are synthetic. New park tracks are schematic circles, not mapped footways.',
-    'FCU images are reference-only; borrowed imagery does not depict simulated measurements.'],
+    'Three technical image categories use synthetic display assets and do not depict field measurements.'],
 });
 await import('./generate-simulated-media.mjs');
 console.log(`Generated ${sites.length} park scenarios, ${allRows.length} quarterly observations.`);

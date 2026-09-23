@@ -25,6 +25,8 @@ test('all park scenarios preserve source lineage, identities, 16 quarters and pu
   const persistent = new Set();
   let total = 0;
   for (const site of manifest.sites) {
+    assert.ok(site.center[0] >= 23.95 && site.center[0] <= 24.35, site.parkName);
+    assert.ok(site.center[1] >= 120.45 && site.center[1] <= 120.85, site.parkName);
     const report = read(`src/data/inventories/${site.scanId}.json`);
     assert.deepEqual(report, read(`public/scans/${site.scanId}/inventory.json`));
     assert.equal(report.dataset_kind, 'simulated');

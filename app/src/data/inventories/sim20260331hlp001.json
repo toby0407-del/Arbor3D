@@ -5,7 +5,7 @@
   "simulation_notice": "四年季度、1.3 m 人工胸徑、樹高、固定樹號與 GPS/GPX 均為模擬。樹表數值與三類技術影像均為可重建的合成展示資料，不代表目前地點的現場量測。",
   "simulation_reference": {
     "scan_id": "20260818092855",
-    "sha256": "52d16e031da36c56d18f13da48dec4f8f4dd3b4d7cf341e45c8cfbc503cbd3b2",
+    "sha256": "961cc8d382c2cccf7052b6a103761f8bc0ef7d6892ce575d5b77d5b05ec256d8",
     "seed": 20260927
   },
   "gps_available": false,

@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 import unittest
@@ -18,3 +19,11 @@ class AgentTests(unittest.TestCase):
             result=run('DBH','agents/knowledge')
             self.assertFalse(result['cloud_called'])
             with self.assertRaises(ValueError): run('DBH','agents/knowledge',True)
+    def test_jsonl_knowledge_is_searchable(self):
+        with tempfile.TemporaryDirectory() as d:
+            Path(d,'qa.jsonl').write_text(json.dumps({
+                'id':'Q-1','category':'RAG','question':'RAG 如何引用資料？',
+                'answer':'回答要列出檔名與行號。','keywords':['RAG','引用']
+            }, ensure_ascii=False) + '\n', encoding='utf-8')
+            result=answer('RAG 引用',d)
+            self.assertEqual(result['citations'][0]['source'],'qa.jsonl')

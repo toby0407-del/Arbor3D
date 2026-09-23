@@ -11,7 +11,7 @@
 - 逢甲原始掃描 JSON 未修改；真實人工胸徑與第二期真實掃描仍未取得。來源照片／橫切面／點雲預覽僅供參考，不宣稱是其他公園實拍。
 - 全部欄位與假設、重建方式見 [公園模擬資料說明](../app/scenarios/parks/README.md)。本機分析輸出位於 `outputs/parks-simulated-20260923/analytics`，未進 Git。
 
-本次驗證：App 17 項、Python 23 項測試通過，Lint 與 production build 通過；已在瀏覽器驗證季度樹號切換、曲線、圖片與 CSV 下載（單園 256 筆）。重建結果一致、逢甲原始 JSON 與 Git 基準內容一致。Build 仍提示現有全臺目錄與資料主包偏大，尚未做拆包優化。
+本次驗證：App 20 項、Python 23 項測試通過，Lint 與 production build 通過；已在瀏覽器驗證季度樹號切換、曲線、圖片與 CSV 下載（單園 256 筆）。重建結果一致、逢甲原始 JSON 與 Git 基準內容一致。Build 仍提示現有全臺目錄與資料主包偏大，尚未做拆包優化。
 
 ## 目前結論
 
@@ -29,13 +29,21 @@ Arbor3D 已具備可展示的 **Physical → Digital → AI** 主流程、真實
 | DEMO 完整度 | 30 組模擬檔（18 個啟用公園場景、12 個停用學校歷史檔）使用 12 張新合成素材：4 種分割圖、4 種胸高橫切面、4 種點雲側視，獨立分派後形成最多 64 種組合；另附 900 點示意 PLY | 不再依賴逢甲實拍原圖或真實掃描影像；App 自動檢查素材涵蓋全部 30 組 |
 | 分析資料層 | Analytics JSON／CSV、資料契約、誤差與跨期規則；Excel 僅作資料快照與交叉核對 | Python 23 項測試通過；真實／模擬資料分離 |
 | Power BI／Fabric | Power BI 作為主要分析輔助；已有 PBIP/PBIR 產生器、Power Query、DAX、Spark 與 Data Agent 樣板 | 官方 JSON schema 通過；仍待 Windows Desktop 畫面驗收 |
-| App AI 助理 | 以盤點證據回答待複核、精度、碳匯限制與行動建議 | 本機模式與 Azure 失敗退回機制皆已實作 |
+| App AI 助理 | Azure AI Foundry `gpt-4.1-mini` 搭配本機 Markdown RAG；以盤點證據回答待複核、精度、碳匯限制與行動建議 | RAG 來源附檔名與行號；Azure 失敗時退回本機證據模式 |
 | Azure Foundry | Azure for Students 資源、project、`gpt-4.1-mini` deployment、Entra 無金鑰認證 | 資源／project／deployment 均為 Succeeded；App API 回傳 `provider=azure` |
 | 安全與依賴 | `.env.local` 不進 Git、瀏覽器拿不到金鑰、Node 依賴稽核 | `npm audit` 0 vulnerabilities |
 
 Azure 實際部署資訊與停止費用方式見 [Microsoft Azure 部署紀錄](microsoft/AZURE_DEPLOYMENT.md)。
 
 ## 待完成與優先順序
+
+### 台中展示替代層（已完成）
+
+- 範圍固定為台中 18 個公園／綠地場景；產生器會拒絕超出台中座標範圍的場景。
+- 295 棵樹均有 2022 Q3–2026 Q2 共 16 季的歷史推估，合計 4,720 筆。
+- 每季包含季末日期、標準 1.3 m 模擬人工 DBH、模擬 AI DBH、模擬樹高、位置與固定樹號。
+- 同棵樹跨季以 `persistent_tree_id` 連接，可展示 steady、slow、stalled 與 negative_review 成長情境。
+- 上述完成的是展示與 Power BI 分析輔助資料；下一節的真實掃描、人工量測與 GPX 仍是正式驗證條件。
 
 ### P0 — 競賽可信度與真正閉環
 

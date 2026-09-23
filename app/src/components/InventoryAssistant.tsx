@@ -120,7 +120,16 @@ export function InventoryAssistant({
           <article className="assistant-answer" aria-live="polite">
             <div className="assistant-answer-label">
               <strong>回答</strong>
-              <span>{reply.provider === "azure" ? "Azure AI" : "本機證據模式"}</span>
+              <span>
+                {reply.provider === "azure"
+                  ? `Azure AI · ${reply.model || "模型部署"}`
+                  : "本機證據模式"}
+                {reply.ragSources?.length
+                  ? reply.ragQuestionCount
+                    ? ` + ${reply.ragQuestionCount.toLocaleString("zh-TW")} 題 RAG`
+                    : " + RAG"
+                  : ""}
+              </span>
             </div>
             {reply.answer.split("\n").map((line, index) => (
               <p key={`${index}-${line}`}>{line || " "}</p>

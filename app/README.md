@@ -15,6 +15,8 @@
 4. 填寫現場手測、碳匯計算、匯出 CSV
 5. 在盤點視窗詢問 AI 助理，取得待複核、精度、碳匯與下一步建議
 
+AI 助理採用本機 RAG＋可選 Azure GPT：知識庫含 1,000 題 Arbor3D 領域問答，先檢索相關證據再交給 GPT；Azure 未啟用或失敗時會回退到本機規則回答。這 1,000 題是知識與評測資料，不是 1,000 筆現場盤點。
+
 **技術棧**：React 19 + TypeScript + Vite 8 + Leaflet（國土測繪底圖）+ Three.js（3D 點雲）
 
 ---
@@ -243,6 +245,8 @@ npm run dev
 ### 盤點 AI 助理（選用 Azure）
 
 未設定 Azure 時，助理會使用本機證據規則回答，不產生雲端費用。要接既有 Foundry／Azure OpenAI 模型部署：
+
+助理會先從 `../agents/knowledge/*.md` 執行本機 RAG，回答畫面會顯示實際 Azure deployment 名稱及 `+ RAG`。目前既有部署為 `gpt-4.1-mini`；RAG 檢索本身不呼叫付費 embedding 或搜尋服務。
 
 ```bash
 cp .env.example .env.local

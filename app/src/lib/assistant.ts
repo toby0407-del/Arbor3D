@@ -31,6 +31,9 @@ export type AssistantReply = {
   answer: string;
   evidence: string[];
   provider: "local" | "azure";
+  model?: string;
+  ragSources?: string[];
+  ragQuestionCount?: number;
 };
 
 function positive(value: string | undefined) {

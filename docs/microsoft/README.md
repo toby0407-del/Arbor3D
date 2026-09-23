@@ -123,6 +123,8 @@ Foundry 後續部署樣板與成本鎖見 `agents/README.md`。本機 RAG、分�
 
 盤點視窗已加入可直接操作的 AI 助理。送出的內容是當次掃描摘要與逐樹量測證據，不含 Azure 金鑰；可詢問待複核樹木、是否已有足夠人工配對可談精度、碳匯估算限制與後續行動。
 
+目前雲端生成模型是 Azure AI Foundry／Azure OpenAI 部署的 `gpt-4.1-mini`。App 會先從 `agents/knowledge/*.md` 做免費本機檢索，將最多三段附來源與行號的規範片段提供給模型，因此雲端模式為「Azure AI + 本機 RAG」。沒有 Azure 或呼叫失敗時，仍保留本機規則回答並列出命中的 RAG 來源；不需要另建 Azure AI Search 才能運作。
+
 - 預設：本機證據模式，零模型費用。
 - Azure：依 `app/.env.example` 設定既有 Foundry／Azure OpenAI 模型部署，且需明確開啟費用鎖。
 - 失敗處理：逾時、內容過濾或端點錯誤時，自動退回本機回答。
