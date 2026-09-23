@@ -1,5 +1,3 @@
-import type { StaffAccount } from "../data/staff";
-
 const KEY = "arbor3d.session";
 
 export type Session = {
@@ -18,7 +16,7 @@ export function readSession(): Session | null {
   }
 }
 
-export function writeSession(staff: StaffAccount): Session {
+export function writeSession(staff: Session): Session {
   const session: Session = {
     workId: staff.workId,
     name: staff.name,

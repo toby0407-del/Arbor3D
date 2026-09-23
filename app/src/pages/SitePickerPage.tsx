@@ -13,7 +13,7 @@ import {
   type ParkSite,
   type SiteKind,
 } from "../data/sites";
-import { getReport } from "../data/inventory";
+import { getReport, hasReport, loadReport } from "../data/inventory";
 import { usePathRecorder, START_ACCURACY_M } from "../hooks/usePathRecorder";
 import { downloadGpx, haversineMeters, toLatLngs } from "../lib/gpx";
 import {
@@ -55,7 +55,7 @@ function withLiveInventory(
     ...site,
     paths: site.paths.map((path) => {
       const scan = binds[path.id] || path.scanId;
-      const ready = Boolean(scan && (reports[scan] || getReport(scan)));
+      const ready = Boolean(scan && (reports[scan] || hasReport(scan)));
       return {
         ...path,
         scanId: ready ? scan : path.scanId,
@@ -159,7 +159,7 @@ export function SitePickerPage({ session, onLogout }: Props) {
     setNotice(null);
   };
 
-  const pickPath = (nextParkId: string, nextPathId: string) => {
+  const pickPath = async (nextParkId: string, nextPathId: string) => {
     if (recorder.recording) {
       setNotice({ tone: "err", text: "請先停止記錄，再選路徑。" });
       return;
@@ -170,8 +170,11 @@ export function SitePickerPage({ session, onLogout }: Props) {
     if (!found) return;
     setNotice(null);
     const scan = liveBinds[nextPathId] || found.scanId;
-    const report = scan ? liveReports[scan] || getReport(scan) : undefined;
+    const report = scan
+      ? liveReports[scan] || getReport(scan) || await loadReport(scan)
+      : undefined;
     if (report) {
+      setLiveReports((prev) => ({ ...prev, [report.scan_id]: report }));
       setPreviewTreeId(report.trees[0]?.Tree_ID ?? null);
       setShowPathDb(true);
       setShowImport(false);
@@ -370,7 +373,7 @@ export function SitePickerPage({ session, onLogout }: Props) {
                 {park.paths.map((item) => {
                   const scan = liveBinds[item.id] || item.scanId;
                   const ready = Boolean(
-                    scan && (liveReports[scan] || getReport(scan)),
+                    scan && (liveReports[scan] || hasReport(scan)),
                   );
                   return (
                   <li key={item.id}>
@@ -378,7 +381,7 @@ export function SitePickerPage({ session, onLogout }: Props) {
                       <button
                         type="button"
                         className="picker-item"
-                        onClick={() => pickPath(park.id, item.id)}
+                        onClick={() => void pickPath(park.id, item.id)}
                       >
                         <strong>
                           {item.name}

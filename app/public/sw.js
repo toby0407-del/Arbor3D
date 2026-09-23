@@ -1,4 +1,4 @@
-const VERSION = "arbor3d-v1";
+const VERSION = "arbor3d-v2";
 const SHELL_CACHE = `${VERSION}-shell`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 const SHELL = ["/", "/manifest.webmanifest", "/favicon.svg"];
@@ -53,7 +53,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (["script", "style", "image", "font"].includes(request.destination)) {
+  if (
+    ["script", "style", "image", "font"].includes(request.destination) ||
+    url.pathname.endsWith(".json")
+  ) {
     event.respondWith(cacheFirst(request));
   }
 });

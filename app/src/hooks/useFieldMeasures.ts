@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export type FieldMeasure = {
   strict13m?: boolean;
@@ -32,6 +32,50 @@ function writeStore(scanId: string, store: Store) {
 
 export function useFieldMeasures(scanId: string) {
   const [measures, setMeasures] = useState<Store>(() => readStore(scanId));
+  const [serverReady, setServerReady] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const local = readStore(scanId);
+    setMeasures(local);
+    setServerReady(false);
+    void fetch(`/api/field-measures?scanId=${encodeURIComponent(scanId)}`, {
+      credentials: "same-origin",
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("無法讀取伺服器量測");
+        return response.json() as Promise<{ measures?: Store }>;
+      })
+      .then((body) => {
+        if (!active) return;
+        const merged = { ...(body.measures ?? {}), ...local };
+        writeStore(scanId, merged);
+        setMeasures(merged);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setServerReady(true);
+      });
+    return () => { active = false; };
+  }, [scanId]);
+
+  useEffect(() => {
+    if (!serverReady) return;
+    const sync = () => {
+      void fetch(`/api/field-measures?scanId=${encodeURIComponent(scanId)}`, {
+        method: "PUT",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ measures }),
+      }).catch(() => undefined);
+    };
+    const timer = window.setTimeout(sync, 600);
+    window.addEventListener("online", sync);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("online", sync);
+    };
+  }, [measures, scanId, serverReady]);
 
   const update = useCallback(
     (treeId: string, patch: Partial<FieldMeasure>) => {

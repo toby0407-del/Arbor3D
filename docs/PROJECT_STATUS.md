@@ -11,7 +11,7 @@
 - 逢甲原始掃描 JSON 未修改；真實人工胸徑與第二期真實掃描仍未取得。來源照片／橫切面／點雲預覽僅供參考，不宣稱是其他公園實拍。
 - 全部欄位與假設、重建方式見 [公園模擬資料說明](../app/scenarios/parks/README.md)。本機分析輸出位於 `outputs/parks-simulated-20260923/analytics`，未進 Git。
 
-本次驗證：App 24 項、Analytics／AI 25 項、正式匯入 4 項測試通過，Lint 與 production build 通過；已在瀏覽器驗證季度樹號切換、曲線、圖片與 CSV 下載（單園 256 筆）。重建結果一致、逢甲原始 JSON 與 Git 基準內容一致。Build 仍提示現有全臺目錄與資料主包偏大，尚未做拆包優化。
+本次驗證：App 26 項、Analytics／AI 26 項、正式匯入 4 項測試通過，Lint、production build、npm audit 與 Azure Bicep 編譯通過；展示登入、HttpOnly Session、file fallback 人工量測寫入／讀回與登出失效另以 API 端到端驗證。首頁主程式由約 5.2 MB 降至約 193 KB，10,462 筆地點改為獨立 JSON，31 份盤點、MSAL 與 3D 點雲引擎均按需載入。
 
 ## 目前結論
 
@@ -24,11 +24,12 @@ Arbor3D 已具備可展示的 **Physical → Digital → AI** 主流程、真實
 | 區塊 | 完成內容 | 驗證狀態 |
 |---|---|---|
 | 實體與數位盤點 | YOLO 樹幹分割、單木 ID、DBH、3DGS／PLY、JSON／CSV／HTML | 已有逢甲 2026-08-18 真實示範資料，16 棵 |
-| Web App | 示範登入、地圖搜尋、可靠性標示路線、盤點表、燈號、影像、3D、手測、CSV、碳匯；大型盤點工具延遲載入 | App 24 項測試、lint、production build 通過 |
+| Web App | Microsoft Entra／展示登入、HttpOnly Session、地圖搜尋、可靠性標示路線、盤點表、燈號、影像、3D、手測、CSV、碳匯；地點、盤點、MSAL 與 3D 按需載入 | App 26 項測試、lint、production build 通過；正式密碼不進 App |
+| 帳號與手測後端 | Entra ID MSAL + PKCE、JWT issuer/audience/signature、App roles、8 小時伺服器 Session；人工 DBH／樹高／日期離線保存並同步 Cosmos DB | Entra/Cosmos adapter 與 Bicep 已完成；本機展示登入、Session、file fallback 寫入／讀回、登出後 401 已驗證；待租戶與 Azure 資源實際部署驗收 |
 | 正式匯入閉環 | App 接收 PLY、照片、`calib.json`、`cameras.json`；adapter 自動整理既有資料目錄、執行 Python、發佈附件並綁定路徑 | adapter 3 項測試通過；尚待下一趟真實掃描與完整 GPU 環境驗收 |
 | DEMO 完整度 | 30 組模擬檔（18 個啟用公園場景、12 個停用學校歷史檔）使用 12 張新合成素材：4 種分割圖、4 種胸高橫切面、4 種點雲側視，獨立分派後形成最多 64 種組合；另附 900 點示意 PLY | 31 組目前發布資料共 481 棵皆有可載入橫切面；新匯入只要包含橫切面，就強制同批每棵樹完整，否則拒絕發布 |
-| 分析資料層 | Analytics JSON／CSV、資料契約、誤差與跨期規則；Excel 僅作資料快照與交叉核對 | Python 23 項測試通過；真實／模擬資料分離 |
-| Power BI／Fabric | Power BI 作為主要分析輔助；已有 PBIP/PBIR 產生器、Power Query、DAX、Spark 與 Data Agent 樣板 | 重新產生五頁 PBIP，50 個專案 JSON 通過 Microsoft schema；仍待 Windows Desktop 執行 DAX 與畫面驗收 |
+| 分析資料層 | Analytics JSON／CSV、資料契約、誤差與跨期規則；Excel 僅作資料快照與交叉核對 | Python 26 項測試通過；真實／模擬資料分離 |
+| Power BI／Fabric | Power BI 作為主要分析輔助；App bundle 可用單一指令產生 canonical Analytics、五頁 PBIP/PBIR 與交付報告；另有 Power Query、DAX、Spark 與 Data Agent 樣板 | 重新產生五頁 PBIP，50 個專案 JSON 通過 Microsoft schema；仍待 Windows Desktop 執行 DAX 與畫面驗收 |
 | App AI 助理 | Copilot Studio 優先、Azure AI 可選備援、本機證據模式兜底；1,000 題 Markdown／JSONL RAG 以盤點證據回答待複核、精度、碳匯限制與行動建議 | Direct Line adapter 與無端點退回行為通過測試；Top-1 97.4%、Top-3 100%、MRR 98.7%；待發布租戶代理與專家抽查生成答案 |
 | Azure Foundry | Azure for Students 資源、project、`gpt-4.1-mini` deployment、Entra 無金鑰認證 | 資源／project／deployment 均為 Succeeded；App API 回傳 `provider=azure` |
 | 安全與依賴 | `.env.local` 不進 Git、瀏覽器拿不到金鑰、Node 依賴稽核 | `npm audit` 0 vulnerabilities |
@@ -58,19 +59,17 @@ Azure 實際部署資訊與停止費用方式見 [Microsoft Azure 部署紀錄](
 
 | 任務 | 完成條件 |
 |---|---|
-| 正式帳號與權限 API | 取代寫死的示範帳號；至少具管理者／盤點人員角色與伺服器端 session |
-| 手測資料同步後端 | 人工 DBH、樹高與複核狀態不再只存在單一瀏覽器 localStorage |
-| App → Power BI 分析閉環 | App 匯出的分析輸入可一鍵產生 canonical CSV、PBIP/PBIR 與驗證報告；Excel 保留為資料快照，不作為唯一分析介面 |
 | Windows Power BI Desktop 驗收 | 實際刷新 Power Query、驗證 DAX、關係、空值語意及五頁版面，再決定是否發佈 |
 | Fabric／Power BI 雲端發佈決策 | 確認學生訂閱能力、容量、成本、RLS 與展示帳號後才部署；目前不宣稱已發佈 |
 | Azure 成本防護 | 在 Azure Cost Management 建立可通知負責人的 budget／alert，並定期檢查用量 |
 | Copilot Studio 正式啟用 | 在 Microsoft 租戶建立並發布 Arbor3D 代理、開啟 Mobile app channel、填入 Token Endpoint，依組織政策完成 Entra／DLP／用量驗收 |
+| Entra／Cosmos 正式部署 | 建立 App registration、API scope、App roles、Managed Identity 與 Cosmos DB；填入正式 tenant/client/endpoint 後完成租戶登入及雲端讀寫驗收 |
 
 ### P2 — 場域體驗與工程優化
 
 - 手機戶外單手操作與地圖全螢幕仍需更多實機驗收。
-- PWA manifest、Service Worker、已開啟頁面／影像快取及離線提示已完成；現場人工量測原本即保留在裝置。正式後端同步佇列仍須等後端帳號與資料 API。
-- 繼續拆分全臺 10,462 筆地點目錄；盤點／匯入對話框已先改為延遲載入。
+- PWA manifest、Service Worker、已開啟頁面／影像／地點 JSON 快取及離線提示已完成；現場人工量測保留在裝置，恢復連線後會重試同步至 Cosmos DB；本機開發使用 file fallback。
+- 全臺 10,462 筆地點已改為獨立 JSON；31 份盤點依路線載入，3D 引擎只在開啟點雲時載入。若未來目錄顯著成長，再依縣市切成多檔與伺服器搜尋。
 - 清出至少 12 GiB 空間後，再安裝完整 PyTorch／Open3D／Ultralytics 管線並重跑 GPU 驗證。
 - Docker 化本機 RAG／分析服務屬選配，不是 App 展示必要條件。
 

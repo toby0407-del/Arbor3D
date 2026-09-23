@@ -1,26 +1,58 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { BrandMark } from "../components/BrandMark";
-import { STAFF } from "../data/staff";
+import { fetchAccounts } from "../lib/authApi";
+import type { Session } from "../lib/session";
 
 type Props = {
-  onLogin: (workId: string, password: string) => boolean;
+  onLogin: (workId: string, password: string, demo: boolean) => Promise<boolean>;
+  onMicrosoftLogin: () => Promise<boolean>;
 };
 
-export function LoginPage({ onLogin }: Props) {
-  const [workId, setWorkId] = useState(STAFF[0].workId);
+export function LoginPage({ onLogin, onMicrosoftLogin }: Props) {
+  const [accounts, setAccounts] = useState<Session[]>([]);
+  const [demoEnabled, setDemoEnabled] = useState(false);
+  const [mode, setMode] = useState<"entra" | "demo">("demo");
+  const [workId, setWorkId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const selected = STAFF.find((item) => item.workId === workId) ?? STAFF[0];
+  useEffect(() => {
+    void fetchAccounts()
+      .then((result) => {
+        setAccounts(result.accounts);
+        setDemoEnabled(result.demo);
+        setMode(result.mode);
+        setWorkId((current) => current || result.accounts[0]?.workId || "");
+      })
+      .catch(() => setError("無法連接帳號服務，請確認伺服器已啟動。"));
+  }, []);
 
-  const submit = (event: FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (!password.trim()) {
       setError("請輸入密碼。");
       return;
     }
-    const ok = onLogin(workId, password);
+    setBusy(true);
+    const ok = await onLogin(workId, password, false);
+    setBusy(false);
     if (!ok) setError("密碼不正確，請再試一次。");
+  };
+
+  const submitDemo = async () => {
+    if (!workId) return;
+    setBusy(true);
+    const ok = await onLogin(workId, "", true);
+    setBusy(false);
+    if (!ok) setError("示範登入暫時無法使用。");
+  };
+
+  const submitMicrosoft = async () => {
+    setBusy(true);
+    const ok = await onMicrosoftLogin();
+    setBusy(false);
+    if (!ok) setError("Microsoft Entra ID 登入失敗，請確認租戶、應用程式與 API 權限設定。");
   };
 
   return (
@@ -97,11 +129,13 @@ export function LoginPage({ onLogin }: Props) {
           <p className="login-hero-copy">環保局樹木盤點</p>
         </aside>
 
-        <form className="login-card" onSubmit={submit}>
+        <form className="login-card" onSubmit={(event) => void submit(event)}>
           <h2 className="login-card-title">登入</h2>
 
-          <div className="login-staff-grid" role="listbox" aria-label="工作人員">
-            {STAFF.map((staff) => {
+          {mode === "entra" ? (
+            <p className="login-help">使用機關的 Microsoft 工作帳號登入；密碼只交由 Microsoft Entra ID 處理。</p>
+          ) : <div className="login-staff-grid" role="listbox" aria-label="工作人員">
+            {accounts.map((staff) => {
               const active = staff.workId === workId;
               return (
                 <button
@@ -121,9 +155,9 @@ export function LoginPage({ onLogin }: Props) {
                 </button>
               );
             })}
-          </div>
+          </div>}
 
-          <label className="login-field">
+          {mode === "demo" ? <label className="login-field">
             密碼
             <input
               type="password"
@@ -137,7 +171,7 @@ export function LoginPage({ onLogin }: Props) {
                 setError("");
               }}
             />
-          </label>
+          </label> : null}
 
           {error ? (
             <p className="login-error" id="login-error" role="alert">
@@ -146,16 +180,30 @@ export function LoginPage({ onLogin }: Props) {
           ) : null}
 
           <div className="login-actions">
-            <button type="submit" className="primary-btn login-primary">
-              進入
-            </button>
-            <button
-              type="button"
-              className="ghost-btn login-ghost"
-              onClick={() => onLogin(selected.workId, selected.password)}
-            >
-              示範登入
-            </button>
+            {mode === "entra" ? (
+              <button
+                type="button"
+                className="primary-btn login-primary"
+                disabled={busy}
+                onClick={() => void submitMicrosoft()}
+              >
+                {busy ? "連線 Microsoft…" : "使用 Microsoft 帳號登入"}
+              </button>
+            ) : (
+              <button type="submit" className="primary-btn login-primary" disabled={busy || !workId}>
+                {busy ? "登入中…" : "進入"}
+              </button>
+            )}
+            {demoEnabled ? (
+              <button
+                type="button"
+                className="ghost-btn login-ghost"
+                disabled={busy || !workId}
+                onClick={() => void submitDemo()}
+              >
+                示範登入
+              </button>
+            ) : null}
           </div>
         </form>
       </div>

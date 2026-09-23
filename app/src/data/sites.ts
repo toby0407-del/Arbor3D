@@ -1,4 +1,4 @@
-import catalog from "./taiwan_sites.json";
+import catalogUrl from "./taiwan_sites.json?url&no-inline";
 import { bindingHasInventory, bindingsForPark } from "./scanBindings";
 
 export type LatLng = [number, number];
@@ -35,6 +35,12 @@ type CatalogItem = {
   center: LatLng;
   keywords: string;
 };
+
+const catalogResponse = await fetch(catalogUrl);
+if (!catalogResponse.ok) {
+  throw new Error(`無法載入地點目錄：${catalogResponse.status}`);
+}
+const catalog = await catalogResponse.json() as CatalogItem[];
 
 const emptyPath = (siteId: string): ScanPath => ({
   id: `${siteId}-pending`,
@@ -219,7 +225,7 @@ function toSite(item: CatalogItem): ParkSite {
   };
 }
 
-export const PARKS: ParkSite[] = (catalog as CatalogItem[]).map(toSite);
+export const PARKS: ParkSite[] = catalog.map(toSite);
 
 export const SITE_COUNTS = {
   total: PARKS.length,

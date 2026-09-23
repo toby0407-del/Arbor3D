@@ -1,8 +1,7 @@
 import { downloadPowerBiAnalyticsInput, sourceLabel } from "../lib/analytics";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { PathTreeMap } from "../components/PathTreeMap";
 import { QuarterlySimulation } from "../components/QuarterlySimulation";
-import { PlyViewer } from "../components/PlyViewer";
 import { InventoryAssistant } from "../components/InventoryAssistant";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import { useModalTouchScrollLock } from "../hooks/useModalTouchScrollLock";
@@ -49,6 +48,12 @@ import {
   trafficLight,
 } from "../lib/status";
 import type { ParkInventoryReport, TrafficLight, TreeRecord } from "../types";
+
+const PlyViewer = lazy(() =>
+  import("../components/PlyViewer").then((module) => ({
+    default: module.PlyViewer,
+  })),
+);
 
 type PreviewTab = "images" | "measure" | "model";
 type Filter = "all" | TrafficLight | "review";
@@ -1128,7 +1133,9 @@ export function PathInventoryDialog({
                 ) : null}
               </div>
             ) : hasModel ? (
-              <PlyViewer url={modelUrl} label="單木點雲" />
+              <Suspense fallback={<div className="viewer-loading">正在載入 3D 點雲…</div>}>
+                <PlyViewer url={modelUrl} label="單木點雲" />
+              </Suspense>
             ) : (
               <div className="path-db-empty">此樹沒有單木點雲</div>
             )}

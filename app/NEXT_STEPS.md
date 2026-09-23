@@ -1,6 +1,6 @@
 # Arbor3D 介面 — 接新掃描與進階設定
 
-> 倉庫：https://github.com/toby0407-del/arbor3d-interface  
+> 倉庫：https://github.com/toby0407-del/Arbor3D
 > 量測／演算法倉庫（Python）：https://github.com/toby0407-del/Arbor3D  
 > 主文件：[README.md](./README.md)
 
@@ -8,14 +8,14 @@
 
 ## 一、目前已完成功能
 
-1. 示範帳號登入（`src/data/staff.ts`），含角色
+1. Microsoft Entra ID／本機展示登入，含 App roles 與伺服器 Session
 2. 全台灣公園／學校選點（OSM 目錄 `src/data/taiwan_sites.json`）
 3. 關鍵字搜尋（台／臺互轉、縣市＋名稱可連打）
 4. GPS 快速定位（Wi-Fi → GPS；拖地圖停追蹤）
 5. 現場錄製路徑（≤ 10 m 起測；停止時問保存；保存後畫在地圖上）
 6. 盤點 JSON 綁定地點（`inventories/{scan_id}.json` + `scanBindings.ts`）
 7. 盤點視窗：棵數／燈號摘要、篩選、Segmentation、橫切面、原圖
-8. 量測分頁：現場手測（localStorage，不覆蓋演算法）、待複核、匯出 CSV
+8. 量測分頁：現場手測（離線 localStorage、連線同步 Cosmos DB，不覆蓋演算法）、待複核、匯出 CSV
 9. 碳匯工作表：圓周 × 高 × 係數 → CO₂ 當量
 10. 3D 點雲（Three.js，自動直立，繞鉛直軸轉）
 11. 地圖沿路徑標樹（無 GPS 時用 Local_XYZ_m 插值）
@@ -145,10 +145,9 @@ export ARBOR3D_ROOT=/path/to/Arbor3D
 | P0 | 正式 Arbor3D 新掃描驗收 | adapter、校正／姿態上傳、自動整理與發佈均已完成；仍需用下一趟真實掃描與完整 GPU 依賴跑完端到端驗收 |
 | P0 | 實際步道路線 | 23 條可顯示路線已改用 OSM pedestrian／footway 並通過建物／水域交集檢查；中山醫與弘光因無可靠公開步道而不顯示推測線。全部仍應以現場 GPX／錄製軌跡取代 |
 | P1 | 多掃描同一路徑 | 綁定已支援多 `scanId`，需多份 JSON 再測 |
-| P1 | 正式帳號 API | 現在是寫死示範帳號 |
 | P2 | 手機版 UX | 戶外單手：大按鈕、地圖全螢幕 |
 | P2 | 離線包 | 公園常沒網 |
-| P2 | 手測同步後端 | 手測目前只存 localStorage |
+| P1 | Entra／Cosmos 實際部署 | adapter、Bicep、角色與離線同步已完成；仍需租戶 App registration、Managed Identity、Cosmos 資源及正式登入／讀寫驗收 |
 
 ~~P0 接真實掃描檔~~（逢甲示範掃描已完成）  
 ~~P1 真 3D 載入 `.ply`~~（點雲直立＋繞 Z 軸）  
@@ -175,7 +174,10 @@ export ARBOR3D_ROOT=/path/to/Arbor3D
 | `src/pages/PathImportDialog.tsx` | 匯入 PLY、照片與校正／姿態資料 |
 | `../scripts/postprocess_from_inbox.py` | 正式管線輸入整理、前置檢查、執行與發佈 |
 | `src/hooks/usePathRecorder.ts` | GPS 錄製（起測門檻 10 m） |
-| `src/hooks/useFieldMeasures.ts` | 現場手測（localStorage） |
+| `src/hooks/useFieldMeasures.ts` | 現場手測（localStorage + Cosmos DB 同步） |
+| `server/accountApiPlugin.ts` | Entra token、App roles 與 HttpOnly Session |
+| `server/fieldMeasureStore.ts` | Cosmos DB／本機檔案 repository |
+| `../infra/azure/main.bicep` | Cosmos DB、container 與 Managed Identity 權限 |
 | `src/lib/carbon.ts` | 碳匯計算 |
 | `src/lib/csv.ts` | 匯出 CSV |
 | `src/lib/treePlacement.ts` | 樹上地圖點位（無 GPS 沿路徑插值） |

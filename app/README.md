@@ -19,7 +19,7 @@ AI 助理採用本機 RAG＋可選 Azure GPT：知識庫含 1,000 題 Arbor3D �
 
 **技術棧**：React 19 + TypeScript + Vite 8 + Leaflet（國土測繪底圖）+ Three.js（3D 點雲）
 
-Production build 會註冊 PWA Service Worker。使用者曾開啟的頁面、程式資產與影像可在弱網／離線時重用；畫面會顯示離線提示，人工量測繼續保存在裝置。尚未查看過的地圖區域仍需要網路，正式跨裝置同步則需後端 API。
+Production build 會註冊 PWA Service Worker。使用者曾開啟的頁面、程式資產、地點 JSON 與影像可在弱網／離線時重用；畫面會顯示離線提示，人工量測繼續保存在裝置，恢復連線後同步 Cosmos DB。尚未查看過的地圖區域仍需要網路。
 
 ---
 
@@ -37,13 +37,13 @@ Production build 會註冊 PWA Service Worker。使用者曾開啟的頁面、�
 
 | 步驟 | 操作 | 說明 |
 |------|------|------|
-| **1. 登入** | 選工作編號 → 輸密碼 → 進入；或按「示範登入」 | 帳號在 `src/data/staff.ts`，上線前換 API |
+| **1. 登入** | 正式環境使用 Microsoft 工作帳號；本機可按「示範登入」 | Entra ID + App roles + HttpOnly Session |
 | **2. 地圖選點** | 搜尋欄打「台中逢甲」、或直接點地圖上的點 | 支援台／臺互轉、縣市＋名稱連打 |
 | **3a. 已盤點路徑** | 點路徑 → 直接開盤點視窗（樹表、影像、3D、碳匯） | 旁邊有「匯入」按鈕可再上傳新一組 |
 | **3b. 尚未盤點** | 點路徑 → 開匯入對話框 | 快速預覽三項；正式盤點再加校正／姿態（見下方） |
 | **4. 錄製路徑**（可選） | 側欄展開 → 開始記錄 → 停止時問是否保存 | 精度 ≤ 10 m 才記點；可下載 GPX |
 | **5. 匯入** | 去噪 PLY、高斯濺射 PLY、原始照片；正式模式另加 `calib.json`、`cameras.json` | 編號自動跟資料夾名；可選年度 |
-| **6. 盤點視窗** | 樹表（燈號篩選）、影像分頁、量測分頁、3D 分頁、碳匯工作表 | 手測存 localStorage、匯出 CSV |
+| **6. 盤點視窗** | 樹表（燈號篩選）、影像分頁、量測分頁、3D 分頁、碳匯工作表 | 手測離線暫存並同步 Cosmos DB、匯出 CSV |
 
 沒有掃描素材時，可在匯入視窗按「一鍵載入完整模擬素材（DEMO）」測試上傳與快速盤點。既有模擬盤點使用 4 種 Segmentation、4 種橫切面與 4 種點雲側視合成素材，依掃描與樹號固定分派；不顯示逢甲實拍原圖。3D 使用 900 點示意 PLY，畫面仍保留合成展示標記。
 
@@ -111,7 +111,7 @@ arbor3d-interface/
     │
     ├── hooks/
     │   ├── usePathRecorder.ts      # GPS 錄製（起測 ≤ 10 m）
-    │   └── useFieldMeasures.ts     # 現場手測（存 localStorage）
+    │   └── useFieldMeasures.ts     # 現場手測（離線暫存 + Cosmos 同步）
     │
     ├── lib/
     │   ├── session.ts              # sessionStorage 登入狀態
@@ -137,7 +137,6 @@ arbor3d-interface/
         ├── inventory.ts            # 自動載入 inventories/*.json
         ├── inventories/
         │   └── 20260818092855.json # 8/18 逢甲 7-11 實測盤點
-        ├── staff.ts                # 示範帳號
         └── park_inventory_report.sample.json
 ```
 
@@ -189,7 +188,7 @@ calib.json + cameras.json ───────┘        │
 | **淡黃** | — | （保留，目前未使用） |
 | **淡紅** | `wide_caliper`、`gap`、`no_measurement` | 卡尺偏寬／切片缺口／量不到；**勿當正式樹圍**，進「待複核」 |
 
-現場手測欄位（`useFieldMeasures`）另存 localStorage，**不覆蓋**演算法 `DBH_cm`。
+現場手測欄位（`useFieldMeasures`）離線保存在 localStorage，連線後同步 Cosmos DB，**不覆蓋**演算法 `DBH_cm`。
 
 ---
 
@@ -236,13 +235,21 @@ calib.json + cameras.json ───────┘        │
 ## 九、啟動
 
 ```bash
-git clone https://github.com/toby0407-del/arbor3d-interface.git
-cd arbor3d-interface
+git clone https://github.com/toby0407-del/Arbor3D.git
+cd Arbor3D/app
 npm install
 npm run dev
 ```
 
 瀏覽器開 http://127.0.0.1:5173/，登入後搜尋「逢甲」即可驗證。
+
+### 帳號、Session 與人工量測同步
+
+正式登入改用 Microsoft Entra ID（原 Azure Active Directory）：前端透過 MSAL Authorization Code + PKCE 取得 App API access token，伺服器驗證租戶 issuer、audience、簽章及 App roles 後，才建立 8 小時 HttpOnly、SameSite=Strict Session Cookie。帳號密碼只交由 Microsoft 處理，App 不保存正式密碼或 client secret。
+
+人工 DBH、樹高、1.3 m 確認、日期與備註會先保存在裝置供離線使用；恢復連線後同步到 Azure Cosmos DB for NoSQL。Cosmos document 使用 `scanId` 分割鍵與 point read／upsert，伺服器以 Managed Identity 存取，不把 account key 送到瀏覽器。未設定 Entra／Cosmos 時才啟用伺服器端展示帳號與 `.runtime` 本機檔案備援。
+
+Entra App registration、App roles、Cosmos Bicep 與環境變數見 [`infra/azure/README.md`](../infra/azure/README.md)。正式模式會要求 `/api/assistant` 與匯入 API 具有效 Session；預設只有「管理者、承辦人」可寫入匯入 API，可用 `ARBOR_IMPORT_ROLES` 調整。
 
 ### 盤點 AI 助理（Copilot Studio 優先）
 
@@ -307,9 +314,12 @@ $env:ARBOR3D_CMD='python3 ...'
 | `src/lib/status.ts` | 燈號判定 |
 | `src/lib/carbon.ts` | 碳匯公式 |
 | `src/lib/treePlacement.ts` | 無 GPS 時樹位插值 |
-| `src/hooks/useFieldMeasures.ts` | 現場手測（localStorage） |
+| `src/hooks/useFieldMeasures.ts` | 現場手測（localStorage + Cosmos DB） |
 | `src/lib/csv.ts` | CSV 匯出 |
 | `server/importApiPlugin.ts` | `/api/import` 後端 |
+| `server/accountApiPlugin.ts` | Entra ID、角色與 Session API |
+| `server/fieldMeasureStore.ts` | Cosmos DB／本機 fallback repository |
+| `../infra/azure/main.bicep` | Azure Cosmos DB 基礎設施 |
 | `scripts/run-postprocess.mjs` | 管線呼叫腳本 |
 | `scripts/generate-simulated-media.mjs` | 重建 24 組明確標示的 DEMO 媒體與 PLY |
 | `../scripts/postprocess_from_inbox.py` | 正式輸入整理、前置檢查、Python 管線與 App 發佈 adapter |

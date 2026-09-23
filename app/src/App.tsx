@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { authenticate } from "./data/staff";
+import { lazy, Suspense, useEffect, useState } from "react";
 import {
   clearSession,
   readSession,
@@ -8,8 +7,14 @@ import {
 } from "./lib/session";
 import { LandscapeGate } from "./components/LandscapeGate";
 import { useOnlineStatus } from "./hooks/useOnlineStatus";
+import { currentSession, demoLogin, entraLogin, login, logout } from "./lib/authApi";
 import { LoginPage } from "./pages/LoginPage";
-import { SitePickerPage } from "./pages/SitePickerPage";
+
+const SitePickerPage = lazy(() =>
+  import("./pages/SitePickerPage").then((module) => ({
+    default: module.SitePickerPage,
+  })),
+);
 
 type Screen = "login" | "sites";
 
@@ -19,6 +24,18 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>(() =>
     readSession() ? "sites" : "login",
   );
+  const sessionWorkId = session?.workId;
+
+  useEffect(() => {
+    if (!sessionWorkId || !online) return;
+    void currentSession()
+      .then((verified) => setSession(writeSession(verified)))
+      .catch(() => {
+        clearSession();
+        setSession(null);
+        setScreen("login");
+      });
+  }, [online, sessionWorkId]);
 
   return (
     <LandscapeGate>
@@ -29,23 +46,39 @@ export default function App() {
       ) : null}
       {screen === "login" || !session ? (
         <LoginPage
-          onLogin={(workId, password) => {
-            const staff = authenticate(workId, password);
-            if (!staff) return false;
-            setSession(writeSession(staff));
-            setScreen("sites");
-            return true;
+          onMicrosoftLogin={async () => {
+            try {
+              const staff = await entraLogin();
+              setSession(writeSession(staff));
+              setScreen("sites");
+              return true;
+            } catch {
+              return false;
+            }
+          }}
+          onLogin={async (workId, password, demo) => {
+            try {
+              const staff = demo ? await demoLogin(workId) : await login(workId, password);
+              setSession(writeSession(staff));
+              setScreen("sites");
+              return true;
+            } catch {
+              return false;
+            }
           }}
         />
       ) : (
-        <SitePickerPage
-          session={session}
-          onLogout={() => {
-            clearSession();
-            setSession(null);
-            setScreen("login");
-          }}
-        />
+        <Suspense fallback={<div className="route-loading">正在載入地點資料…</div>}>
+          <SitePickerPage
+            session={session}
+            onLogout={() => {
+              void logout().catch(() => undefined);
+              clearSession();
+              setSession(null);
+              setScreen("login");
+            }}
+          />
+        </Suspense>
       )}
     </LandscapeGate>
   );

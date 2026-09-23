@@ -33,6 +33,21 @@ class IntegrationTests(unittest.TestCase):
         for rel in model['relationships']:
             self.assertIn(rel['fromColumn'],columns[rel['fromTable']]); self.assertIn(rel['toColumn'],columns[rel['toTable']])
 
+    def test_one_command_powerbi_delivery(self):
+        from powerbi.delivery import deliver
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d); bundle=root/'input.json'; output=root/'delivery'
+            row=manual(); row.pop('site_id')
+            bundle.write_text(json.dumps({'schema_version':'1.0','report':report()[2],'manual_measurements':[row]}))
+            result=deliver(bundle,'campus',output)
+            self.assertEqual(result['pages'],5)
+            self.assertEqual(result['dataset_kind'],'observed')
+            self.assertFalse(result['desktop_validated'])
+            self.assertTrue((output/'analytics/analytics.json').is_file())
+            self.assertTrue((output/'powerbi/Arbor3D.pbip').is_file())
+            self.assertTrue((output/'delivery-report.json').is_file())
+            with self.assertRaises(ValueError): deliver(bundle,'campus',output)
+
     def test_onelake_package_and_hash_guard(self):
         from analytics.core import build, export
         from fabric.package_snapshot import package

@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { importApiPlugin } from "./server/importApiPlugin.ts";
 import { assistantApiPlugin } from "./server/assistantApiPlugin.ts";
+import { accountApiPlugin } from "./server/accountApiPlugin.ts";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 
@@ -12,6 +13,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
+      accountApiPlugin(root, env),
       importApiPlugin(root),
       assistantApiPlugin(env, path.resolve(root, "..", "agents", "knowledge")),
     ],

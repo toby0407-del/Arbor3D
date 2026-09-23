@@ -1,5 +1,14 @@
 # 本機驗證紀錄
 
+## Entra／Cosmos 與效能更新（2026-09-23）
+
+- App 26 項、Analytics／AI 26 項測試通過；lint、production build、npm audit、compileall 與 diff check 通過。
+- 正式登入 adapter 使用 MSAL Authorization Code + PKCE；後端驗證 Entra v2 issuer、audience、JWKS 簽章與 App roles，再建立 HttpOnly Session。尚未取得本專案的 tenant／client ID，因此未宣稱完成真實租戶登入。
+- Cosmos DB repository 使用 Managed Identity／DefaultAzureCredential、`/scanId` 分割鍵及 point read／upsert；本機 file fallback 的寫入、讀回與登出後 401 已用 HTTP 驗證。尚未建立或寫入付費 Cosmos 資源。
+- `infra/azure/main.bicep` 已由 Azure CLI Bicep compiler 成功編譯；部署仍需資源群組、全域唯一帳號名稱、Managed Identity object ID 與預算決策。
+- 首頁主程式由約 5.2 MB 降至約 193 KB；地點 JSON、31 份盤點、MSAL 與 Three.js 均按需載入。Three.js 點雲 chunk 約 542 KB，只在使用者打開 3D 頁籤時下載。
+- App bundle 已可用 `python3 -m powerbi.delivery` 一次產生 canonical Analytics、五頁 PBIP/PBIR 與交付報告；仍不等於 Windows Desktop 的 DAX、刷新、版面或 RLS 驗收。
+
 ## Azure for Students 雲端驗證（2026-09-22）
 
 - 登入與訂閱：Azure CLI 登入成功，預設訂閱為 Azure for Students。

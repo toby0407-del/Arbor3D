@@ -44,7 +44,15 @@ python3 -m analytics --bundle /absolute/path/20260818092855-analytics-input.json
 node app/scripts/export-analytics-excel.mjs outputs/field-review/analytics.json outputs/field-review/analytics.xlsx
 ```
 
-人工資料仍存於該瀏覽器 localStorage；下載 JSON 才會交給分析程式。新增的標準高度確認預設 false，舊人工紀錄不自動視為已確認。
+也可以一個指令直接產生 canonical Analytics、五頁 PBIP/PBIR 與交付報告：
+
+```sh
+python3 -m powerbi.delivery --bundle /absolute/path/20260818092855-analytics-input.json --site-id fengchia --out outputs/fengchia-delivery
+```
+
+若已有 Microsoft schema cache，可加 `--schema-cache outputs/powerbi-schema-cache`。交付報告會維持 `desktop_validated=false`，直到 Windows Power BI Desktop 真正完成刷新、DAX、版面與 RLS 驗收。
+
+人工資料會先存於該瀏覽器 localStorage，讓現場離線時仍能輸入；登入且連線時同步到 Azure Cosmos DB for NoSQL。Cosmos 使用 `/scanId` 分割鍵、point read／upsert 與 Managed Identity；未設定 Azure 時才退回不進 Git 的 `.runtime` 本機檔案。正式帳號由 Microsoft Entra ID 與 App roles 管理，App 不保存正式密碼。新增的標準高度確認預設 false，舊人工紀錄不自動視為已確認。
 日期為必要欄位。原有「匯出 CSV」保留，增加來源欄位；Microsoft 匯入使用新分析輸出。
 單次掃描的生長曲線現在標示人工、AI 或推估；所有非基準月份均為模擬，不再因接近掃描日期而被視為實測。
 盤點視窗不再於路徑圖下方逐棵展開待複核清單；請使用樹表上方的「待確認」、「需複核」或「待複核」篩選查看相同資料，個別樹木詳情仍會顯示複核原因。
