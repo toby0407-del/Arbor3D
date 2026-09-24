@@ -1,0 +1,58 @@
+name: Deploy Arbor3D to Azure App Service
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: arbor3d-production
+  cancel-in-progress: true
+
+env:
+  AZURE_WEBAPP_NAME: arbor3d-platform-1ec69a14
+  NODE_VERSION: 22.x
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.webapp-url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install, test, and build
+        run: |
+          npm ci --prefix app
+          npm test --prefix app
+          npm run build --prefix app
+
+      - name: Assemble production package
+        run: |
+          mkdir -p deploy
+          cp app/package.json app/package-lock.json deploy/
+          cp -R app/dist app/dist-server app/public app/scripts deploy/
+          cp -R agents/knowledge deploy/knowledge
+          mkdir -p deploy/inbox
+          (cd deploy && npm ci --omit=dev)
+
+      - name: Deploy to Azure App Service
+        id: deploy
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: deploy

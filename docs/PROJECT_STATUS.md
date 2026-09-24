@@ -24,7 +24,7 @@ Arbor3D 已具備可展示的 **Physical → Digital → AI** 主流程、真實
 | 區塊 | 完成內容 | 驗證狀態 |
 |---|---|---|
 | 實體與數位盤點 | YOLO 樹幹分割、單木 ID、DBH、3DGS／PLY、JSON／CSV／HTML | 已有逢甲 2026-08-18 真實示範資料，16 棵 |
-| Web App | Microsoft Entra／展示登入、HttpOnly Session、地圖搜尋、可靠性標示路線、盤點表、燈號、影像、3D、手測、CSV、碳匯；地點、盤點、MSAL 與 3D 按需載入 | App 29 項測試與 production build 通過；正式密碼不進 App |
+| Web App | Microsoft Entra／展示登入、HttpOnly Session、地圖搜尋、可靠性標示路線、盤點表、燈號、影像、3D、手測、CSV、碳匯；地點、盤點、MSAL 與 3D 按需載入 | App 29 項測試與 production build 通過；Azure App Service 網址已建立，`main` 推送後由 GitHub Actions 自動驗證及更新；正式密碼不進 App |
 | 帳號與手測後端 | Entra ID MSAL + PKCE、JWT issuer/audience/signature、App roles、8 小時伺服器 Session；人工 DBH／樹高／日期離線保存並同步 Cosmos DB | Cosmos adapter、Bicep 與 Japan East Serverless 資源已驗證；Entra App registration 仍受學校租戶目錄權限限制，正式登入尚未啟用 |
 | 正式匯入閉環 | App 接收 PLY、照片、`calib.json`、`cameras.json`；adapter 自動整理既有資料目錄、執行 Python、發佈附件並綁定路徑；可改走 `ARBOR3D_CLOUD_DBH_URL` 雲端 DBH | adapter 測試含雲端 URL 選路；Cloud DBH FastAPI + Bicep 已就緒；完整 GPU 映像待 ACR／配額 |
 | 雲端 DBH（Microsoft） | `cloud_dbh/` HTTP API 包裝 `postprocess_from_inbox.py`；App Service `arbor3d-dbh-1ec69a14`（eastasia、F1）；App 設 `ARBOR3D_CLOUD_DBH_URL` | `/health` 已驗；prepare-only。學生訂閱無 ACR Tasks／常無 GPU；完整胸徑用本機 GPU + `ARBOR3D_ROOT` |
@@ -68,6 +68,7 @@ Azure 實際部署資訊與停止費用方式見 [Microsoft Azure 部署紀錄](
 | Copilot Studio 正式啟用 | 在 Microsoft 租戶建立並發布 Arbor3D 代理、開啟 Mobile app channel、填入 Token Endpoint，依組織政策完成 Entra／DLP／用量驗收 |
 | Entra／Cosmos 正式部署 | **主要 Cosmos 已部署** `arbor3dcos483bd05e16`（Japan East）＋`Arbor3D`／`FieldMeasures`。另有早期開發帳號 `arbor3d-d1322855`，兩者皆為 Serverless、停用 local auth；正式環境應統一使用主要帳號，再評估移除重複開發資源。Entra App registration 需租戶目錄權限（學生帳目前不足），待管理員建立後填 client id |
 | Cloud DBH 上線 | **已上線** App Service `https://arbor3d-dbh-1ec69a14.azurewebsites.net`（F1、prepare-only），`.env.local` 已填 URL；完整 GPU 胸徑仍待本機或配額 |
+| Arbor3D 網站持續部署 | **已建立** `https://arbor3d-platform-1ec69a14.azurewebsites.net`，共用既有 F1 plan；GitHub `main` 每次 push 自動測試、build、deploy，Managed Identity 連接 Cosmos 與 Azure AI |
 
 ### P2 — 場域體驗與工程優化
 

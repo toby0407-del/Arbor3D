@@ -8,6 +8,7 @@
 |--|--|
 | 開發 | Toby |
 | 倉庫 | https://github.com/toby0407-del/Arbor3D |
+| Azure 網站 | https://arbor3d-platform-1ec69a14.azurewebsites.net |
 | 前端獨立鏡像 | https://github.com/toby0407-del/arbor3d-interface |
 | 本機資料夾 | `treee_VScode`（遠端名稱 Arbor3D） |
 | 主掃描（介面示範） | `20260818092855`（逢甲 8/18，16 棵） |
@@ -24,6 +25,8 @@
 | AI | YOLO 分割 + 介面時序判定 | 樹幹分割、負樣本抑制誤檢；前期／本期／趨勢比對，標正常成長、幾乎停長、健康異常 |
 
 請不要在倉庫根目錄執行 `npm create` 或 `flutter create`。前端只開在 `app/`，才不會跟量測程式混在一起。
+
+`main` 分支已連接 GitHub Actions 與 Microsoft Azure App Service。每次推送會先執行 App 測試與 production build，全部通過後才更新上方 Azure 網站；失敗的版本不會覆蓋線上網站。部署流程位於 `.github/workflows/deploy-azure-app.yml`。
 
 研究定位是 **Physical → Digital → AI**：把現場環境資產（樹）做成可持續被 AI 分析的 Digital Representation，而不是一次性量測報告。文獻只收 **2024 年以後的 T1**（Nature 系列、ECCV、SIGGRAPH、ICLR、*Remote Sensing of Environment*）。2023 以前的論文、專案網站、ISPRS Annals、MDPI、*Urban Forestry & Urban Greening* 不列入。以下為對照入口，**不是本系統實作來源**：
 

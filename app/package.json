@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && npm run build:server",
+    "build:server": "tsc -p tsconfig.server.json",
+    "start": "node dist-server/productionServer.js",
     "lint": "oxlint",
     "preview": "vite preview",
     "postprocess": "node scripts/run-postprocess.mjs",
@@ -45,5 +47,8 @@
     "exceljs": {
       "uuid": "^11.1.1"
     }
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

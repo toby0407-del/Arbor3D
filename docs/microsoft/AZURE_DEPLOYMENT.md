@@ -19,6 +19,8 @@
 | Cosmos database／container | `Arbor3D`／`FieldMeasures`，partition key `/scanId` |
 | Development Cosmos DB | `arbor3d-d1322855`，Japan East，Serverless；非主要展示端點 |
 | Cloud DBH App Service | `arbor3d-dbh-1ec69a14`，East Asia，F1 Free，Running |
+| Arbor3D Web App | `arbor3d-platform-1ec69a14`，East Asia，共用 F1 Free plan |
+| Public URL | `https://arbor3d-platform-1ec69a14.azurewebsites.net` |
 | Cost budget | `arbor3d-100usd`，100 USD／年 |
 
 學生訂閱政策只允許 Japan East、East Asia、Malaysia West、Indonesia Central、Korea Central；模型清單顯示 Japan East 同時支援本部署與按量 `GlobalStandard`，因此選用 Japan East。
@@ -49,6 +51,20 @@
 - Primary／development Cosmos DB 均為 Succeeded，`FieldMeasures` 使用 `/scanId`；實際 Azure 身分讀寫測試通過，測試文件已清除。
 - Cloud DBH App Service 為 Running；目前 F1 prepare-only，完整 GPU 計算仍需本機 GPU 或另行取得 Azure 配額。
 - 2026-09-24 同步 `f5cb0e4` 後，App 29 項與 Cloud DBH 1 項測試通過，production build 成功。
+
+## GitHub 持續部署
+
+`.github/workflows/deploy-azure-app.yml` 監聽 `main`。每次 push 依序執行：
+
+1. 安裝鎖定版本的 Node 套件。
+2. 執行全部 App 測試。
+3. 建置 React 靜態檔與 production Node API server。
+4. 組裝不含 `.env.local` 的部署包。
+5. 使用 GitHub Actions Secret 中的 App Service publish profile 發布。
+
+Azure App Service 使用 system-assigned Managed Identity 讀寫主要 Cosmos DB，並取得 `Cognitive Services OpenAI User` 角色呼叫 Azure AI。網站設定不含 Cosmos account key 或 Azure AI API key。由於學校租戶禁止目前帳號建立 App Registration，GitHub 部署暫用 App Service 層級 publish profile；未來取得租戶權限後可改成 Microsoft 建議的 OIDC 短期憑證。
+
+線上伺服器健康檢查：`https://arbor3d-platform-1ec69a14.azurewebsites.net/healthz`。
 
 ## 費用與停止方式
 
