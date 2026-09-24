@@ -62,7 +62,7 @@
 4. 組裝不含 `.env.local` 的部署包。
 5. 使用 GitHub Actions Secret 中的 App Service publish profile 發布。
 
-Azure App Service 使用 system-assigned Managed Identity 讀寫主要 Cosmos DB，並取得 `Cognitive Services OpenAI User` 角色呼叫 Azure AI。網站設定不含 Cosmos account key 或 Azure AI API key。由於學校租戶禁止目前帳號建立 App Registration，GitHub 部署暫用 App Service 層級 publish profile；未來取得租戶權限後可改成 Microsoft 建議的 OIDC 短期憑證。
+Azure App Service 使用 system-assigned Managed Identity 讀寫主要 Cosmos DB。正式網站的 AI provider 已指定為 Copilot Studio，並移除 Azure AI endpoint/model；既有 Foundry 部署僅保留為先前技術驗證紀錄。網站設定不含 Cosmos account key 或 Azure AI API key。由於學校租戶禁止目前帳號建立 App Registration，GitHub 部署暫用 App Service 層級 publish profile；未來取得租戶權限後可改成 Microsoft 建議的 OIDC 短期憑證。
 
 線上伺服器健康檢查：`https://arbor3d-platform-1ec69a14.azurewebsites.net/healthz`。
 

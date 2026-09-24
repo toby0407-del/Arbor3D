@@ -15,7 +15,7 @@
 4. 填寫現場手測、碳匯計算、匯出 CSV
 5. 在盤點視窗詢問 AI 助理，取得待複核、精度、碳匯與下一步建議
 
-AI 助理採用本機 RAG＋可選 Azure GPT：知識庫含 1,000 題 Arbor3D 領域問答，先檢索相關證據再交給 GPT；Azure 未啟用或失敗時會回退到本機規則回答。這 1,000 題是知識與評測資料，不是 1,000 筆現場盤點。
+AI 助理採用 Microsoft Copilot Studio＋本機 RAG：知識庫含 1,000 題 Arbor3D 領域問答，先檢索相關證據再交給 Copilot；Copilot Studio 尚未發布、未設定或呼叫失敗時會回退到本機規則回答。這 1,000 題是知識與評測資料，不是 1,000 筆現場盤點。
 
 **技術棧**：React 19 + TypeScript + Vite 8 + Leaflet（國土測繪底圖）+ Three.js（3D 點雲）
 
@@ -263,7 +263,7 @@ cp .env.example .env.local
 
 先在 Copilot Studio 建立並發布代理，到 **Channels → Mobile app** 複製 Token Endpoint。在 `.env.local` 填入 `COPILOT_STUDIO_TOKEN_ENDPOINT`、`COPILOT_STUDIO_AGENT_NAME`，把 `ARBOR_AI_PROVIDER` 設為 `copilot`，並把 `ARBOR_ALLOW_BILLABLE_CLOUD` 設為 `YES_I_ACCEPT_COSTS` 後重啟。`copilot` 模式失敗時只退回本機證據模式，不會呼叫 GPT。Token Endpoint 不要改成 `VITE_` 前綴，也不要提交 `.env.local`。
 
-`ARBOR_AI_PROVIDER=auto` 則依序使用 Copilot Studio、既有 Azure AI、最後退回本機證據模式。舊的 `AZURE_AI_ENDPOINT`／`AZURE_AI_MODEL` 設定保留為可選備援；若要完全排除 GPT，使用 `copilot` 模式即可。所有 Direct Line token 與 Azure 憑證只在伺服器端處理。
+正式網站固定使用 `ARBOR_AI_PROVIDER=copilot`，不設定 `AZURE_AI_ENDPOINT`／`AZURE_AI_MODEL`，因此不會直接呼叫 Azure GPT。所有 Direct Line token 只在伺服器端處理。
 
 ### 接量測管線（可選）
 

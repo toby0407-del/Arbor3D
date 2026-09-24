@@ -33,8 +33,8 @@ Arbor3D 已具備可展示的 **Physical → Digital → AI** 主流程、真實
 | DEMO 完整度 | 30 組模擬檔（18 個啟用公園場景、12 個停用學校歷史檔）使用 12 張新合成素材：4 種分割圖、4 種胸高橫切面、4 種點雲側視，獨立分派後形成最多 64 種組合；另附 900 點示意 PLY | 31 組目前發布資料共 481 棵皆有可載入橫切面；新匯入只要包含橫切面，就強制同批每棵樹完整，否則拒絕發布 |
 | 分析資料層 | Analytics JSON／CSV、資料契約、誤差與跨期規則；Excel 僅作資料快照與交叉核對 | Python 26 項測試通過；真實／模擬資料分離 |
 | Power BI／Fabric | Power BI 作為主要分析輔助；App 可匯出分析輸入 JSON、**圖表 CSV 包**（燈號／胸徑／KPI）與盤內圖表預覽；另可產生五頁 PBIP | 圖表匯出測試通過；Desktop 畫面驗收仍待 |
-| App AI 助理 | Copilot Studio 優先、Azure AI 可選備援、本機證據模式兜底；1,000 題 Markdown／JSONL RAG 以盤點證據回答待複核、精度、碳匯限制與行動建議 | Direct Line adapter 與無端點退回行為通過測試；Top-1 97.4%、Top-3 100%、MRR 98.7%；待發布租戶代理與專家抽查生成答案 |
-| Azure Foundry | Azure for Students 資源、project、`gpt-4.1-mini` deployment、Entra 無金鑰認證 | 資源／project／deployment 均為 Succeeded；App API 回傳 `provider=azure` |
+| App AI 助理 | Copilot Studio＋本機證據模式兜底；1,000 題 Markdown／JSONL RAG 以盤點證據回答待複核、精度、碳匯限制與行動建議 | 正式站已指定 `provider=copilot`；Direct Line adapter 與無端點退回行為通過測試；待發布租戶代理與填入 Token Endpoint |
+| Azure Foundry | 曾完成 Azure for Students 資源、project 與 `gpt-4.1-mini` deployment 驗證 | 保留為技術驗證紀錄；正式網站已移除 Azure AI endpoint/model，不直接呼叫 GPT |
 | 安全與依賴 | `.env.local` 不進 Git、瀏覽器拿不到金鑰、Node 依賴稽核 | `npm audit` 0 vulnerabilities |
 
 Azure 實際部署資訊與停止費用方式見 [Microsoft Azure 部署紀錄](microsoft/AZURE_DEPLOYMENT.md)。
@@ -68,7 +68,7 @@ Azure 實際部署資訊與停止費用方式見 [Microsoft Azure 部署紀錄](
 | Copilot Studio 正式啟用 | 在 Microsoft 租戶建立並發布 Arbor3D 代理、開啟 Mobile app channel、填入 Token Endpoint，依組織政策完成 Entra／DLP／用量驗收 |
 | Entra／Cosmos 正式部署 | **主要 Cosmos 已部署** `arbor3dcos483bd05e16`（Japan East）＋`Arbor3D`／`FieldMeasures`。另有早期開發帳號 `arbor3d-d1322855`，兩者皆為 Serverless、停用 local auth；正式環境應統一使用主要帳號，再評估移除重複開發資源。Entra App registration 需租戶目錄權限（學生帳目前不足），待管理員建立後填 client id |
 | Cloud DBH 上線 | **已上線** App Service `https://arbor3d-dbh-1ec69a14.azurewebsites.net`（F1、prepare-only），`.env.local` 已填 URL；完整 GPU 胸徑仍待本機或配額 |
-| Arbor3D 網站持續部署 | **已建立** `https://arbor3d-platform-1ec69a14.azurewebsites.net`，共用既有 F1 plan；GitHub `main` 每次 push 自動測試、build、deploy，Managed Identity 連接 Cosmos 與 Azure AI |
+| Arbor3D 網站持續部署 | **已建立** `https://arbor3d-platform-1ec69a14.azurewebsites.net`，共用既有 F1 plan；GitHub `main` 每次 push 自動測試、build、deploy，Managed Identity 連接 Cosmos；AI 指定使用 Copilot Studio |
 
 ### P2 — 場域體驗與工程優化
 
@@ -92,7 +92,7 @@ npm run dev -- --host 127.0.0.1 --port 5324 --strictPort
 
 開啟 `http://127.0.0.1:5324/`，按「示範登入」，搜尋「逢甲大學」，選擇「校園掃描路徑（8/18 · 7-11）」。也可使用示範帳號 `E-1027`／`arbor1027`。
 
-若 `.env.local` 已填入 Copilot Studio Mobile app Token Endpoint 並開啟費用鎖，AI 助理會優先使用 Copilot；`copilot` 模式失敗時只退回本機證據模式。`auto` 模式才會再嘗試既有 Azure AI deployment。
+若 `.env.local` 已填入 Copilot Studio Mobile app Token Endpoint 並開啟費用鎖，AI 助理會使用 Copilot；`copilot` 模式失敗時只退回本機證據模式。正式網站不設定 Azure AI endpoint/model。
 
 ## 驗收界線
 

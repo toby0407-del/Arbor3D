@@ -15,7 +15,7 @@
 ## Copilot 設定步驟
 
 1. 開啟 [Microsoft Copilot Studio](https://copilotstudio.microsoft.com/)，建立代理「Arbor3D」。
-2. 知識／主題：以「待複核、精度限制、碳匯非碳權、下一步」為主；可上傳 `agents/` RAG 摘要。
+2. 執行 `cd app && npm run rag:copilot-pack`，到代理的 **Knowledge → Add knowledge → Files** 上傳 `agents/copilot-upload/Arbor3D-RAG-1000.md`。這是 20 類、1,000 題的受控 RAG 知識，不是 fine-tuning。
 3. **Channels → Mobile app**：複製 **Token Endpoint**（HTTPS）。
 4. 填入 `app/.env.local`（勿提交 Git）：
 
@@ -29,6 +29,10 @@ ARBOR_ALLOW_BILLABLE_CLOUD=YES_I_ACCEPT_COSTS
 
 5. 重啟 `npm run dev`。助理面板會顯示「Microsoft Copilot Studio（已就緒）」；否則維持本機證據模式並列出缺項。
 6. 健康檢查：`GET /api/assistant/status`。
+
+## Azure Copilot 與 App Copilot 的差別
+
+[Azure Copilot](https://azure.microsoft.com/zh-tw/products/copilot) 用於 Azure 資源的設計、部署、營運、最佳化與疑難排解；它不是提供給 Arbor3D 前端呼叫的對話模型 API。Arbor3D 內嵌助理使用 **Microsoft Copilot Studio**，Azure Copilot 則可協助管理承載網站的 App Service、Cosmos DB、成本與健康狀態。
 
 ## 費用
 
