@@ -68,7 +68,9 @@ export function InventoryAssistant({
   };
 
   const modeLabel =
-    status?.activeMode === "phi4"
+    status?.activeMode === "phi4-cloud"
+      ? "Microsoft Phi-4 Azure 雲端模型（已就緒）"
+      : status?.activeMode === "phi4"
       ? "Microsoft Phi-4 本機模型（已就緒）"
       : status?.activeMode === "copilot"
       ? "Microsoft Copilot Studio（已就緒）"
@@ -87,7 +89,7 @@ export function InventoryAssistant({
       >
         <header className="assistant-head">
           <div>
-            <p>{status?.activeMode === "phi4" ? "Microsoft Phi-4 × Arbor3D" : "Microsoft Copilot × Arbor3D"}</p>
+            <p>{status?.activeMode === "phi4" || status?.activeMode === "phi4-cloud" ? "Microsoft Phi-4 × Arbor3D" : "Microsoft Copilot × Arbor3D"}</p>
             <h2 id="assistant-title">盤點 AI 助理</h2>
             <p className="assistant-mode" role="status">
               目前：{modeLabel}

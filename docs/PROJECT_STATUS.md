@@ -11,7 +11,7 @@
 - 逢甲原始掃描 JSON 未修改；真實人工胸徑與第二期真實掃描仍未取得。來源照片／橫切面／點雲預覽僅供參考，不宣稱是其他公園實拍。
 - 全部欄位與假設、重建方式見 [公園模擬資料說明](../app/scenarios/parks/README.md)。本機分析輸出位於 `outputs/parks-simulated-20260923/analytics`，未進 Git。
 
-本次驗證：2026-09-24 同步 `main` 的 `f5cb0e4` 後，App 29 項與 Cloud DBH 1 項測試通過，production build 成功；Analytics／AI 既有 26 項、正式匯入 4 項、Lint、npm audit 與 Azure Bicep 編譯紀錄仍保留。展示登入、HttpOnly Session、人工量測寫入／讀回與登出失效另有 API 端到端驗證。首頁主程式約 194 KB，10,462 筆地點為獨立 JSON，31 份盤點、MSAL 與 3D 點雲引擎均按需載入。
+本次驗證：2026-09-24 最新版本 App 32 項測試、production build 與 Lint 通過；包含 Foundry Local Phi-4、Azure Phi-4 HTTPS adapter、Copilot Studio、Power BI 圖表匯出與退回行為。Power BI 五頁 PBIP/PBIR 共 50 個定義檔通過 Microsoft schema cache 驗證，但仍未完成 Desktop 刷新、DAX 執行與版面驗收。展示登入、HttpOnly Session、人工量測寫入／讀回與登出失效另有 API 端到端驗證。首頁主程式約 194 KB，10,462 筆地點為獨立 JSON，31 份盤點、MSAL 與 3D 點雲引擎均按需載入。
 
 ## 目前結論
 
@@ -24,7 +24,7 @@ Arbor3D 已具備可展示的 **Physical → Digital → AI** 主流程、真實
 | 區塊 | 完成內容 | 驗證狀態 |
 |---|---|---|
 | 實體與數位盤點 | YOLO 樹幹分割、單木 ID、DBH、3DGS／PLY、JSON／CSV／HTML | 已有逢甲 2026-08-18 真實示範資料，16 棵 |
-| Web App | Microsoft Entra／展示登入、HttpOnly Session、地圖搜尋、可靠性標示路線、盤點表、燈號、影像、3D、手測、CSV、碳匯；地點、盤點、MSAL 與 3D 按需載入 | App 29 項測試與 production build 通過；Azure App Service 網址已建立，`main` 推送後由 GitHub Actions 自動驗證及更新；正式密碼不進 App |
+| Web App | Microsoft Entra／展示登入、HttpOnly Session、地圖搜尋、可靠性標示路線、盤點表、燈號、影像、3D、手測、CSV、碳匯；地點、盤點、MSAL 與 3D 按需載入 | App 32 項測試、production build 與 Lint 通過；Azure App Service 網址已建立，`main` 推送後由 GitHub Actions 自動驗證及更新；正式密碼不進 App |
 | 帳號與手測後端 | Entra ID MSAL + PKCE、JWT issuer/audience/signature、App roles、8 小時伺服器 Session；人工 DBH／樹高／日期離線保存並同步 Cosmos DB | Cosmos adapter、Bicep 與 Japan East Serverless 資源已驗證；Entra App registration 仍受學校租戶目錄權限限制，正式登入尚未啟用 |
 | 正式匯入閉環 | App 接收 PLY、照片、`calib.json`、`cameras.json`；adapter 自動整理既有資料目錄、執行 Python、發佈附件並綁定路徑；可改走 `ARBOR3D_CLOUD_DBH_URL` 雲端 DBH | adapter 測試含雲端 URL 選路；Cloud DBH FastAPI + Bicep 已就緒；完整 GPU 映像待 ACR／配額 |
 | 雲端 DBH（Microsoft） | `cloud_dbh/` HTTP API 包裝 `postprocess_from_inbox.py`；App Service `arbor3d-dbh-1ec69a14`（eastasia、F1）；App 設 `ARBOR3D_CLOUD_DBH_URL` | `/health` 已驗；prepare-only。學生訂閱無 ACR Tasks／常無 GPU；完整胸徑用本機 GPU + `ARBOR3D_ROOT` |
@@ -33,7 +33,7 @@ Arbor3D 已具備可展示的 **Physical → Digital → AI** 主流程、真實
 | DEMO 完整度 | 30 組模擬檔（18 個啟用公園場景、12 個停用學校歷史檔）使用 12 張新合成素材：4 種分割圖、4 種胸高橫切面、4 種點雲側視，獨立分派後形成最多 64 種組合；另附 900 點示意 PLY | 31 組目前發布資料共 481 棵皆有可載入橫切面；新匯入只要包含橫切面，就強制同批每棵樹完整，否則拒絕發布 |
 | 分析資料層 | Analytics JSON／CSV、資料契約、誤差與跨期規則；Excel 僅作資料快照與交叉核對 | Python 26 項測試通過；真實／模擬資料分離 |
 | Power BI／Fabric | Power BI 作為主要分析輔助；App 可匯出分析輸入 JSON、**圖表 CSV 包**（燈號／胸徑／KPI）與盤內圖表預覽；另可產生五頁 PBIP | 圖表匯出測試通過；Desktop 畫面驗收仍待 |
-| App AI 助理 | Windows Foundry Local Phi-4／Copilot Studio＋本機證據模式兜底；1,000 題 RAG | Phi-4 loopback adapter、Direct Line adapter 與退回行為通過測試；已產生 900 訓練／100 保留評測的 QLoRA 資料，實際訓練待 Windows NVIDIA GPU |
+| App AI 助理 | Foundry Local Phi-4／Azure Phi-4 Managed Compute／Copilot Studio＋本機證據模式兜底；1,000 題 RAG | 本機與雲端 Phi-4 adapter、Direct Line adapter 及退回行為通過測試；已產生 900 訓練／100 保留評測的 QLoRA 資料；實際微調與雲端 GPU deployment 待配額、硬體及成本確認 |
 | Azure Foundry | 曾完成 Azure for Students 資源、project 與 `gpt-4.1-mini` deployment 驗證 | 保留為技術驗證紀錄；正式網站已移除 Azure AI endpoint/model，不直接呼叫 GPT |
 | 安全與依賴 | `.env.local` 不進 Git、瀏覽器拿不到金鑰、Node 依賴稽核 | `npm audit` 0 vulnerabilities |
 

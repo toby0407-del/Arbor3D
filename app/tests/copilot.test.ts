@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { askCopilotStudio, askPhi4Local } from "../server/assistantApiPlugin.ts";
+import { askCopilotStudio, askPhi4Cloud, askPhi4Local } from "../server/assistantApiPlugin.ts";
 import type { AssistantContext } from "../server/assistantCore.ts";
 
 const context: AssistantContext = {
@@ -96,6 +96,35 @@ test("Phi-4 adapter rejects non-loopback endpoints", async () => {
   );
 });
 
+test("Phi-4 cloud adapter uses HTTPS, RAG and a server-side key", { concurrency: false }, async () => {
+  const originalFetch = globalThis.fetch;
+  let calledUrl = "";
+  let requestBody = "";
+  let requestHeaders: HeadersInit | undefined;
+  globalThis.fetch = async (input, init) => {
+    calledUrl = String(input);
+    requestBody = typeof init?.body === "string" ? init.body : "";
+    requestHeaders = init?.headers;
+    return Response.json({ choices: [{ message: { content: "雲端 Phi-4 回答" } }] });
+  };
+  try {
+    const reply = await askPhi4Cloud("下一步？", context, {
+      PHI4_CLOUD_ENDPOINT: "https://arbor3d.services.ai.azure.com/openai/v1",
+      PHI4_CLOUD_MODEL: "Phi-4-mini-instruct",
+      PHI4_CLOUD_API_KEY: "server-only-test-key",
+      ARBOR_ALLOW_BILLABLE_CLOUD: "YES_I_ACCEPT_COSTS",
+    }, [{ source: "measurement-policy.md", line: 3, text: "胸高 1.3 公尺" }]);
+    assert.equal(reply?.provider, "phi4");
+    assert.match(reply?.model ?? "", /Azure/);
+    assert.equal(calledUrl, "https://arbor3d.services.ai.azure.com/openai/v1/chat/completions");
+    assert.match(requestBody, /measurement-policy\.md/);
+    assert.equal((requestHeaders as Record<string, string>)["api-key"], "server-only-test-key");
+    assert.doesNotMatch(requestBody, /server-only-test-key/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("assistant status stays local until token and billable lock are set", async () => {
   const { assistantProviderStatus } = await import("../server/assistantApiPlugin.ts");
   const locked = assistantProviderStatus({
@@ -117,4 +146,12 @@ test("assistant status stays local until token and billable lock are set", async
   });
   assert.equal(phi4.activeMode, "phi4");
   assert.equal(phi4.phi4Configured, true);
+  const phi4Cloud = assistantProviderStatus({
+    ARBOR_AI_PROVIDER: "phi4-cloud",
+    PHI4_CLOUD_ENDPOINT: "https://example.services.ai.azure.com/openai/v1",
+    PHI4_CLOUD_MODEL: "Phi-4-mini-instruct",
+    ARBOR_ALLOW_BILLABLE_CLOUD: "YES_I_ACCEPT_COSTS",
+  });
+  assert.equal(phi4Cloud.activeMode, "phi4-cloud");
+  assert.equal(phi4Cloud.phi4CloudConfigured, true);
 });

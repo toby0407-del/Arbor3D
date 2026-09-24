@@ -72,6 +72,18 @@ function foundryLocalUrl(endpoint: string) {
     : `${base}/v1/chat/completions`;
 }
 
+function foundryCloudUrl(endpoint: string) {
+  const url = new URL(endpoint);
+  if (url.protocol !== "https:") {
+    throw new Error("Phi-4 雲端 endpoint 必須使用 HTTPS");
+  }
+  const base = url.toString().replace(/\/+$/, "");
+  if (base.endsWith("/chat/completions")) return base;
+  return base.endsWith("/openai/v1") || base.endsWith("/v1")
+    ? `${base}/chat/completions`
+    : `${base}/openai/v1/chat/completions`;
+}
+
 type DirectLineToken = {
   token?: string;
   conversationId?: string;
@@ -123,6 +135,60 @@ export async function askPhi4Local(
   return {
     provider: "phi4",
     model,
+    answer,
+    evidence: assistantEvidence(context),
+    ragSources: ragHits.map((hit) => `${hit.source}:${hit.line}`),
+  };
+}
+
+export async function askPhi4Cloud(
+  question: string,
+  context: AssistantContext,
+  env: Record<string, string | undefined>,
+  ragHits: RagHit[],
+): Promise<AssistantReply | null> {
+  const endpoint = env.PHI4_CLOUD_ENDPOINT?.trim();
+  const model = env.PHI4_CLOUD_MODEL?.trim();
+  const allowed = env.ARBOR_ALLOW_BILLABLE_CLOUD === "YES_I_ACCEPT_COSTS";
+  if (!endpoint || !model || !allowed) return null;
+
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const apiKey = env.PHI4_CLOUD_API_KEY?.trim();
+  if (apiKey) {
+    headers["api-key"] = apiKey;
+  } else {
+    const { DefaultAzureCredential } = await import("@azure/identity");
+    const token = await new DefaultAzureCredential().getToken("https://ai.azure.com/.default");
+    if (!token?.token) throw new Error("無法取得 Phi-4 雲端身分權杖");
+    headers.Authorization = `Bearer ${token.token}`;
+  }
+
+  const response = await fetch(foundryCloudUrl(endpoint), {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      model,
+      temperature: 0.2,
+      max_tokens: 500,
+      messages: [
+        { role: "system", content: assistantSystemPrompt(context, ragPrompt(ragHits)) },
+        { role: "user", content: question },
+      ],
+    }),
+    signal: AbortSignal.timeout(120_000),
+  });
+  if (!response.ok) {
+    const detail = (await response.text()).slice(0, 400);
+    throw new Error(`Phi-4 雲端模型回應 ${response.status}：${detail}`);
+  }
+  const data = (await response.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  const answer = data.choices?.[0]?.message?.content?.trim();
+  if (!answer) throw new Error("Phi-4 雲端模型沒有回傳文字");
+  return {
+    provider: "phi4",
+    model: `${model}（Azure）`,
     answer,
     evidence: assistantEvidence(context),
     ragSources: ragHits.map((hit) => `${hit.source}:${hit.line}`),
@@ -289,17 +355,19 @@ async function askAzure(
 
 export function assistantProviderStatus(env: Record<string, string | undefined> = process.env) {
   const configured = (env.ARBOR_AI_PROVIDER?.trim().toLowerCase() || "phi4") as string;
-  const provider = ["auto", "phi4", "copilot", "azure", "local"].includes(configured)
+  const provider = ["auto", "phi4", "phi4-cloud", "copilot", "azure", "local"].includes(configured)
     ? configured
     : "phi4";
   const billable = env.ARBOR_ALLOW_BILLABLE_CLOUD === "YES_I_ACCEPT_COSTS";
   const phi4Ready = Boolean(env.FOUNDRY_LOCAL_ENDPOINT?.trim());
+  const phi4CloudReady = Boolean(env.PHI4_CLOUD_ENDPOINT?.trim() && env.PHI4_CLOUD_MODEL?.trim());
   const copilotEndpoint = Boolean(env.COPILOT_STUDIO_TOKEN_ENDPOINT?.trim());
   const azureReady = Boolean(env.AZURE_AI_ENDPOINT?.trim() && env.AZURE_AI_MODEL?.trim());
   return {
     provider,
     billableAllowed: billable,
     phi4Configured: phi4Ready,
+    phi4CloudConfigured: phi4CloudReady,
     copilotConfigured: copilotEndpoint,
     azureConfigured: azureReady,
     activeMode:
@@ -307,12 +375,16 @@ export function assistantProviderStatus(env: Record<string, string | undefined> 
         ? "local"
         : provider === "phi4" && phi4Ready
           ? "phi4"
+        : provider === "phi4-cloud" && phi4CloudReady && billable
+          ? "phi4-cloud"
         : provider === "copilot" && copilotEndpoint && billable
           ? "copilot"
           : provider === "azure" && azureReady && billable
             ? "azure"
             : provider === "auto" && phi4Ready
               ? "phi4"
+              : provider === "auto" && phi4CloudReady && billable
+                ? "phi4-cloud"
               : provider === "auto" && copilotEndpoint && billable
               ? "copilot"
               : provider === "auto" && azureReady && billable
@@ -321,6 +393,9 @@ export function assistantProviderStatus(env: Record<string, string | undefined> 
     hints: [
       provider === "phi4" && !phi4Ready
         ? "尚未填 FOUNDRY_LOCAL_ENDPOINT；請先在 Windows 啟動 Foundry Local 與 Phi-4"
+        : null,
+      provider === "phi4-cloud" && !phi4CloudReady
+        ? "尚未填 PHI4_CLOUD_ENDPOINT／PHI4_CLOUD_MODEL；請先部署 Microsoft Foundry Managed Compute"
         : null,
       !copilotEndpoint
         ? "尚未填 COPILOT_STUDIO_TOKEN_ENDPOINT（Copilot Studio → Channels → Mobile app）"
@@ -364,7 +439,7 @@ export function assistantApiPlugin(
           const ragHits = folder ? retrieveKnowledge(question, folder) : [];
           const ragQuestionCount = folder ? countKnowledgeQuestions(folder) : 0;
           const configuredProvider = env.ARBOR_AI_PROVIDER?.trim().toLowerCase();
-          const provider = ["auto", "phi4", "copilot", "azure", "local"].includes(configuredProvider ?? "")
+          const provider = ["auto", "phi4", "phi4-cloud", "copilot", "azure", "local"].includes(configuredProvider ?? "")
             ? configuredProvider
             : "phi4";
           let reply: AssistantReply | null = null;
@@ -375,6 +450,13 @@ export function assistantApiPlugin(
               reply = await askPhi4Local(question, context, env, ragHits);
             } catch {
               localModelFailed = true;
+            }
+          }
+          if (!reply && (provider === "auto" || provider === "phi4-cloud")) {
+            try {
+              reply = await askPhi4Cloud(question, context, env, ragHits);
+            } catch {
+              cloudFailed = true;
             }
           }
           if (provider === "auto" || provider === "copilot") {
