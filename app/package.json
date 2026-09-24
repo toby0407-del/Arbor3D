@@ -18,7 +18,8 @@
     "simulate:parks": "node scripts/generate-demo-inventories.mjs",
     "rag:generate": "node ../agents/generate_qa_1000.mjs",
     "rag:copilot-pack": "node ../agents/build_copilot_knowledge.mjs",
-    "phi4:sft-data": "node ../agents/build_phi4_sft.mjs"
+    "phi4:sft-data": "node ../agents/build_phi4_sft.mjs",
+    "phi4:setup:windows": "powershell -ExecutionPolicy Bypass -File ../scripts/setup-phi4-local.ps1"
   },
   "dependencies": {
     "@azure/cosmos": "^4.10.1",

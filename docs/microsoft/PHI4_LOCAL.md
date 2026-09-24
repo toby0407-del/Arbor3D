@@ -8,6 +8,15 @@ Azure 公開網站不能存取使用者 Windows 的 localhost，因此此模式�
 
 ## Windows 安裝與啟動
 
+在新電腦 clone GitHub 專案後，可一鍵安裝 runtime、下載模型、啟動本機服務並更新 `app/.env.local`：
+
+```powershell
+cd Arbor3D\app
+npm run phi4:setup:windows
+```
+
+腳本固定使用 `phi-4-mini` alias；Foundry Local 會依該電腦的 CPU／GPU／NPU 選擇相容的量化版本並快取在裝置上。若要手動執行，等效步驟如下：
+
 ```powershell
 winget install Microsoft.FoundryLocal
 foundry model list
@@ -25,6 +34,12 @@ FOUNDRY_LOCAL_MODEL=phi-4-mini
 ```
 
 Arbor3D 只接受 loopback endpoint，不會把提示傳送到區網中的其他主機。啟動 App 後以 `GET /api/assistant/status` 確認 `activeMode` 為 `phi4`。
+
+## 為什麼不把模型權重提交一般 Git
+
+Phi-4-mini 原始模型約數 GB，遠超一般 GitHub 單檔限制，也會讓每次 clone 都下載巨量歷史資料。GitHub 保存的是可重現的模型名稱、安裝腳本、RAG、訓練資料與訓練程式；模型由 Microsoft Foundry Local catalog 依版本下載。如此換裝置仍能重建，同時不把模型權重塞進程式碼歷史。
+
+微調後的 LoRA adapter 尚未產生。完成訓練與評測後，應使用 GitHub Release／Git LFS 或模型登錄庫發佈有版本與雜湊的 adapter，再由安裝腳本下載；不得把未驗證 checkpoint 直接推進 `main`。
 
 ## RAG 與 fine-tuning 不同
 

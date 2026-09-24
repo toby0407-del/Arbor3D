@@ -223,6 +223,8 @@ RANSAC 找地面，把樹擺正，切離地 **1.2–1.4 m**。若這段沒點（
 | P11 | App 內盤點 AI 助理：Windows 可用 Foundry Local Phi-4＋1,000 題 RAG；雲端可接 Copilot Studio | ✅ |
 | P12 | DEMO 盤點使用多變體合成分割圖、橫切面與點雲側視，不顯示逢甲實拍原圖；另附可旋轉 PLY，並標示來源與模擬界線 | ✅ |
 
+新 Windows 裝置 clone 後，可在 `app` 執行 `npm run phi4:setup:windows`，自動安裝 Foundry Local、下載 `phi-4-mini`、啟動模型服務並建立本機設定。模型權重不提交一般 Git；完整說明見 `docs/microsoft/PHI4_LOCAL.md`。
+
 盤點視窗左側只保留路徑圖；原本會逐棵列出的待複核清單已移除，避免在 16 棵以上資料時占滿畫面。待確認、需複核與全部待複核仍可由樹表上方的篩選頁籤查看。
 
 ### 碳匯公式（介面欄位順序）
