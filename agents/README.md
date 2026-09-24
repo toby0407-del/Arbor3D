@@ -1,13 +1,15 @@
-# Copilot Studio RAG 與本機檢索
+# Phi-4／Copilot Studio RAG 與本機檢索
 
 預設完全離線。`python3 -m agents.rag 'DBH 誤差'` 從 `knowledge/*.md` 與 `knowledge/*.jsonl` 擷取相符文件片段，回傳文件／行號／SHA-256。沒有匹配時明確回覆無依據。
 支援英文詞與中文雙字切分；此輕量檢索不需要向量資料庫或付費 embedding。它不是完整語意搜尋，近義詞可能無法匹配。
 
 `knowledge/arbor3d-qa-1000.jsonl` 是 20 類、每類 50 題的 Arbor3D 領域問答庫，共 1,000 題。它用於 RAG 參考與迴歸評測，不代表 1,000 筆現場觀測，也不是 fine-tuning。執行 `cd app && npm run rag:generate` 可依受控規則重新產生；`npm run rag:copilot-pack` 會同步產生可上傳至 Copilot Studio Knowledge 的 `copilot-upload/Arbor3D-RAG-1000.md`。
 
+`npm run phi4:sft-data` 會把同一批受控問答轉為 Phi-4 chat messages JSONL，固定切成 900 題訓練與 100 題保留評測。RAG 與 fine-tuning 會並存：微調負責回答行為，RAG 負責可更新知識與來源。
+
 `python3 -m agents.evaluate_rag --out outputs/rag-evaluation.json` 會執行零費用的 leave-one-out 檢索評測：逐題排除原題，再檢查前 1／前 3 筆是否仍命中同分類。這只評估 retrieval，不取代 GPT 答案正確性與領域專家人工審核。
 
-App 的 `/api/assistant` 已使用同一個 `knowledge/`：先在本機擷取最多三段，再把盤點證據與檢索片段交給 Copilot Studio；回答會顯示 `+ RAG` 並列出來源檔名與行號。Copilot 尚未連線或失敗時仍使用本機規則回答，檢索本身不產生模型費用。可用 `ARBOR_RAG_KNOWLEDGE` 指向另一個受控知識資料夾。
+App 的 `/api/assistant` 已使用同一個 `knowledge/`：先在本機擷取最多三段，再把盤點證據與檢索片段交給 Foundry Local Phi-4 或 Copilot Studio；回答會顯示 `+ RAG` 並列出來源檔名與行號。模型尚未連線或失敗時仍使用本機規則回答，檢索本身不產生模型費用。可用 `ARBOR_RAG_KNOWLEDGE` 指向另一個受控知識資料夾。
 
 `python3 -m agents.foundry 'DBH 誤差'` 產生 agent definition 預覽及同一批檢索來源。
 `config.env.example` 無任何密鑰，程式不自動載入 env 檔。使用者未來可透過環境變數配置已存在的專案與模型。

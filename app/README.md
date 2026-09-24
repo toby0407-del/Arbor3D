@@ -15,7 +15,7 @@
 4. 填寫現場手測、碳匯計算、匯出 CSV
 5. 在盤點視窗詢問 AI 助理，取得待複核、精度、碳匯與下一步建議
 
-AI 助理採用 Microsoft Copilot Studio＋本機 RAG：知識庫含 1,000 題 Arbor3D 領域問答，先檢索相關證據再交給 Copilot；Copilot Studio 尚未發布、未設定或呼叫失敗時會回退到本機規則回答。這 1,000 題是知識與評測資料，不是 1,000 筆現場盤點。
+AI 助理採用 Microsoft Foundry Local Phi-4／Copilot Studio＋本機 RAG：知識庫含 1,000 題 Arbor3D 領域問答，先檢索相關證據再交給模型；模型未設定或呼叫失敗時會回退到本機規則回答。這 1,000 題是知識與評測資料，不是 1,000 筆現場盤點。
 
 **技術棧**：React 19 + TypeScript + Vite 8 + Leaflet（國土測繪底圖）+ Three.js（3D 點雲）
 
@@ -251,11 +251,11 @@ npm run dev
 
 Entra App registration、App roles、Cosmos Bicep 與環境變數見 [`infra/azure/README.md`](../infra/azure/README.md)。正式模式會要求 `/api/assistant` 與匯入 API 具有效 Session；預設只有「管理者、承辦人」可寫入匯入 API，可用 `ARBOR_IMPORT_ROLES` 調整。
 
-### 盤點 AI 助理（Copilot Studio 優先）
+### 盤點 AI 助理（Windows 本機 Phi-4＋雲端 Copilot Studio）
 
-Copilot 不是可直接取代 `gpt-4.1-mini` 的模型名稱，而是 Microsoft 的代理服務。App 已使用 Copilot Studio 的 Mobile app／Direct Line 通道作為第一順位；未設定雲端服務時，助理會使用本機證據規則回答，不產生雲端費用。
+Windows 本機版使用 Foundry Local `Phi-4-mini`；Azure 公開站可使用 Copilot Studio 的 Mobile app／Direct Line 通道。兩種模式未設定時，助理會使用本機證據規則回答。
 
-助理會先從 `../agents/knowledge/*.md` 執行本機 RAG，再把當次盤點證據與命中的規範片段送給 Copilot Studio。回答畫面會顯示代理名稱及 `+ RAG`；RAG 檢索本身不呼叫付費 embedding 或搜尋服務。
+助理會先從 `../agents/knowledge/` 執行本機 RAG，再把當次盤點證據與命中的規範片段送給 Phi-4 或 Copilot Studio。回答畫面會顯示模型名稱及 `+ RAG`；RAG 檢索本身不呼叫付費 embedding 或搜尋服務。Phi-4 安裝與微調資料見 `docs/microsoft/PHI4_LOCAL.md`。
 
 ```bash
 cp .env.example .env.local

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { askCopilotStudio } from "../server/assistantApiPlugin.ts";
+import { askCopilotStudio, askPhi4Local } from "../server/assistantApiPlugin.ts";
 import type { AssistantContext } from "../server/assistantCore.ts";
 
 const context: AssistantContext = {
@@ -65,6 +65,37 @@ test("Copilot Studio adapter stays disabled without an endpoint", async () => {
   assert.equal(reply, null);
 });
 
+test("Phi-4 adapter sends RAG-grounded requests only to loopback", { concurrency: false }, async () => {
+  const originalFetch = globalThis.fetch;
+  let requestBody = "";
+  globalThis.fetch = async (_input, init) => {
+    requestBody = typeof init?.body === "string" ? init.body : "";
+    return Response.json({
+      choices: [{ message: { content: "請先完成標準胸高人工量測。" } }],
+    });
+  };
+  try {
+    const reply = await askPhi4Local("下一步？", context, {
+      FOUNDRY_LOCAL_ENDPOINT: "http://127.0.0.1:5272",
+      FOUNDRY_LOCAL_MODEL: "phi-4-mini",
+    }, [{ source: "measurement-policy.md", line: 3, text: "胸高 1.3 公尺" }]);
+    assert.equal(reply?.provider, "phi4");
+    assert.equal(reply?.model, "phi-4-mini");
+    assert.match(requestBody, /measurement-policy\.md/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("Phi-4 adapter rejects non-loopback endpoints", async () => {
+  await assert.rejects(
+    askPhi4Local("測試", context, {
+      FOUNDRY_LOCAL_ENDPOINT: "https://untrusted.example.test",
+    }, []),
+    /只允許本機 loopback/,
+  );
+});
+
 test("assistant status stays local until token and billable lock are set", async () => {
   const { assistantProviderStatus } = await import("../server/assistantApiPlugin.ts");
   const locked = assistantProviderStatus({
@@ -80,4 +111,10 @@ test("assistant status stays local until token and billable lock are set", async
   });
   assert.equal(ready.activeMode, "copilot");
   assert.equal(ready.copilotConfigured, true);
+  const phi4 = assistantProviderStatus({
+    ARBOR_AI_PROVIDER: "phi4",
+    FOUNDRY_LOCAL_ENDPOINT: "http://127.0.0.1:5272",
+  });
+  assert.equal(phi4.activeMode, "phi4");
+  assert.equal(phi4.phi4Configured, true);
 });

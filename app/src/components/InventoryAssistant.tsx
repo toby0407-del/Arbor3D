@@ -68,7 +68,9 @@ export function InventoryAssistant({
   };
 
   const modeLabel =
-    status?.activeMode === "copilot"
+    status?.activeMode === "phi4"
+      ? "Microsoft Phi-4 本機模型（已就緒）"
+      : status?.activeMode === "copilot"
       ? "Microsoft Copilot Studio（已就緒）"
       : status?.activeMode === "azure"
         ? "Azure AI（已就緒）"
@@ -85,7 +87,7 @@ export function InventoryAssistant({
       >
         <header className="assistant-head">
           <div>
-            <p>Microsoft Copilot × Arbor3D</p>
+            <p>{status?.activeMode === "phi4" ? "Microsoft Phi-4 × Arbor3D" : "Microsoft Copilot × Arbor3D"}</p>
             <h2 id="assistant-title">盤點 AI 助理</h2>
             <p className="assistant-mode" role="status">
               目前：{modeLabel}
@@ -152,7 +154,9 @@ export function InventoryAssistant({
             <div className="assistant-answer-label">
               <strong>回答</strong>
               <span>
-                {reply.provider === "copilot"
+                {reply.provider === "phi4"
+                  ? `Microsoft Phi-4 · ${reply.model || "本機模型"}`
+                  : reply.provider === "copilot"
                   ? `Microsoft Copilot · ${reply.model || "Copilot Studio"}`
                   : reply.provider === "azure"
                     ? `Azure AI · ${reply.model || "模型部署"}`
@@ -176,8 +180,8 @@ export function InventoryAssistant({
           </article>
         ) : (
           <p className="assistant-empty">
-            回答只使用目前盤點資料；資料不足時會明確說明。未設定 Copilot Studio
-            Token 或未開啟費用鎖時，自動使用本機證據模式（見 docs/microsoft/COPILOT_SETUP.md）。
+            回答只使用目前盤點資料與 RAG；資料不足時會明確說明。Phi-4／Copilot
+            未設定或無法使用時，自動切換成本機證據模式。
           </p>
         )}
       </section>

@@ -58,6 +58,20 @@ function azureUrl(endpoint: string) {
     : `${base}/openai/v1/chat/completions`;
 }
 
+function foundryLocalUrl(endpoint: string) {
+  const url = new URL(endpoint);
+  if (!["localhost", "127.0.0.1", "::1"].includes(url.hostname)) {
+    throw new Error("Foundry Local endpoint 只允許本機 loopback 位址");
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error("Foundry Local endpoint 必須使用 HTTP 或 HTTPS");
+  }
+  const base = url.toString().replace(/\/+$/, "");
+  return base.endsWith("/v1")
+    ? `${base}/chat/completions`
+    : `${base}/v1/chat/completions`;
+}
+
 type DirectLineToken = {
   token?: string;
   conversationId?: string;
@@ -73,6 +87,47 @@ const assistantEvidence = (context: AssistantContext) => [
   `掃描 ${context.scanId}，${context.summary.total} 棵`,
   `較可信 ${context.summary.reliable}、待確認 ${context.summary.pending}、需複核 ${context.summary.review}`,
 ];
+
+export async function askPhi4Local(
+  question: string,
+  context: AssistantContext,
+  env: Record<string, string | undefined>,
+  ragHits: RagHit[],
+): Promise<AssistantReply | null> {
+  const endpoint = env.FOUNDRY_LOCAL_ENDPOINT?.trim();
+  if (!endpoint) return null;
+  const model = env.FOUNDRY_LOCAL_MODEL?.trim() || "phi-4-mini";
+  const response = await fetch(foundryLocalUrl(endpoint), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model,
+      temperature: 0.2,
+      max_tokens: 500,
+      messages: [
+        { role: "system", content: assistantSystemPrompt(context, ragPrompt(ragHits)) },
+        { role: "user", content: question },
+      ],
+    }),
+    signal: AbortSignal.timeout(60_000),
+  });
+  if (!response.ok) {
+    const detail = (await response.text()).slice(0, 400);
+    throw new Error(`Phi-4 本機模型回應 ${response.status}：${detail}`);
+  }
+  const data = (await response.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  const answer = data.choices?.[0]?.message?.content?.trim();
+  if (!answer) throw new Error("Phi-4 本機模型沒有回傳文字");
+  return {
+    provider: "phi4",
+    model,
+    answer,
+    evidence: assistantEvidence(context),
+    ragSources: ragHits.map((hit) => `${hit.source}:${hit.line}`),
+  };
+}
 
 export async function askCopilotStudio(
   question: string,
@@ -233,31 +288,40 @@ async function askAzure(
 }
 
 export function assistantProviderStatus(env: Record<string, string | undefined> = process.env) {
-  const configured = (env.ARBOR_AI_PROVIDER?.trim().toLowerCase() || "copilot") as string;
-  const provider = ["auto", "copilot", "azure", "local"].includes(configured)
+  const configured = (env.ARBOR_AI_PROVIDER?.trim().toLowerCase() || "phi4") as string;
+  const provider = ["auto", "phi4", "copilot", "azure", "local"].includes(configured)
     ? configured
-    : "copilot";
+    : "phi4";
   const billable = env.ARBOR_ALLOW_BILLABLE_CLOUD === "YES_I_ACCEPT_COSTS";
+  const phi4Ready = Boolean(env.FOUNDRY_LOCAL_ENDPOINT?.trim());
   const copilotEndpoint = Boolean(env.COPILOT_STUDIO_TOKEN_ENDPOINT?.trim());
   const azureReady = Boolean(env.AZURE_AI_ENDPOINT?.trim() && env.AZURE_AI_MODEL?.trim());
   return {
     provider,
     billableAllowed: billable,
+    phi4Configured: phi4Ready,
     copilotConfigured: copilotEndpoint,
     azureConfigured: azureReady,
     activeMode:
       provider === "local"
         ? "local"
+        : provider === "phi4" && phi4Ready
+          ? "phi4"
         : provider === "copilot" && copilotEndpoint && billable
           ? "copilot"
           : provider === "azure" && azureReady && billable
             ? "azure"
-            : provider === "auto" && copilotEndpoint && billable
+            : provider === "auto" && phi4Ready
+              ? "phi4"
+              : provider === "auto" && copilotEndpoint && billable
               ? "copilot"
               : provider === "auto" && azureReady && billable
                 ? "azure"
                 : "local",
     hints: [
+      provider === "phi4" && !phi4Ready
+        ? "尚未填 FOUNDRY_LOCAL_ENDPOINT；請先在 Windows 啟動 Foundry Local 與 Phi-4"
+        : null,
       !copilotEndpoint
         ? "尚未填 COPILOT_STUDIO_TOKEN_ENDPOINT（Copilot Studio → Channels → Mobile app）"
         : null,
@@ -300,11 +364,19 @@ export function assistantApiPlugin(
           const ragHits = folder ? retrieveKnowledge(question, folder) : [];
           const ragQuestionCount = folder ? countKnowledgeQuestions(folder) : 0;
           const configuredProvider = env.ARBOR_AI_PROVIDER?.trim().toLowerCase();
-          const provider = ["auto", "copilot", "azure", "local"].includes(configuredProvider ?? "")
+          const provider = ["auto", "phi4", "copilot", "azure", "local"].includes(configuredProvider ?? "")
             ? configuredProvider
-            : "copilot";
+            : "phi4";
           let reply: AssistantReply | null = null;
           let cloudFailed = false;
+          let localModelFailed = false;
+          if (provider === "auto" || provider === "phi4") {
+            try {
+              reply = await askPhi4Local(question, context, env, ragHits);
+            } catch {
+              localModelFailed = true;
+            }
+          }
           if (provider === "auto" || provider === "copilot") {
             try {
               reply = await askCopilotStudio(question, context, env, ragHits);
@@ -321,7 +393,9 @@ export function assistantApiPlugin(
           }
           if (!reply) {
             reply = localAssistantReply(question, context);
-            if (cloudFailed) {
+            if (localModelFailed) {
+              reply.answer += "\n\n（Phi-4 本機模型暫時無法使用，已切換成本機證據回答。）";
+            } else if (cloudFailed) {
               reply.answer += "\n\n（Microsoft 雲端 AI 暫時無法使用，已切換成本機證據回答。）";
             } else if (provider === "copilot") {
               reply.answer += "\n\n（Copilot Studio 尚未設定或費用鎖未開啟，已使用本機證據回答。）";

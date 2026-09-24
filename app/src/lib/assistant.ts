@@ -30,7 +30,7 @@ export type AssistantContext = {
 export type AssistantReply = {
   answer: string;
   evidence: string[];
-  provider: "local" | "azure" | "copilot";
+  provider: "local" | "azure" | "copilot" | "phi4";
   model?: string;
   ragSources?: string[];
   ragQuestionCount?: number;
@@ -99,7 +99,8 @@ export type AssistantStatus = {
   billableAllowed: boolean;
   copilotConfigured: boolean;
   azureConfigured: boolean;
-  activeMode: "local" | "copilot" | "azure" | string;
+  phi4Configured: boolean;
+  activeMode: "local" | "copilot" | "azure" | "phi4" | string;
   hints: string[];
 };
 
@@ -113,6 +114,7 @@ export async function fetchAssistantStatus(): Promise<AssistantStatus> {
       billableAllowed: false,
       copilotConfigured: false,
       azureConfigured: false,
+      phi4Configured: false,
       activeMode: "local",
       hints: ["無法讀取助理狀態，使用本機證據模式"],
     };

@@ -70,3 +70,7 @@ Thumbs.db
 /outputs/
 .venv/
 .pbi/
+# Phi-4／LoRA 模型權重與訓練輸出不得提交。
+agents/fine-tuning/output/
+agents/fine-tuning/checkpoints/
+*.safetensors

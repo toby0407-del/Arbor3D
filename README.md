@@ -220,7 +220,7 @@ RANSAC 找地面，把樹擺正，切離地 **1.2–1.4 m**。若這段沒點（
 | P8 | 現場手測＋待複核篩選＋CSV 匯出 | ✅ |
 | P9 | 碳匯工作表 | ✅ |
 | P10 | Microsoft AI/Data 分析層：DBH 誤差、Analytics CSV/Excel、Power BI/Fabric/Agent 樣板 | ✅ |
-| P11 | App 內盤點 AI 助理：Copilot Studio＋1,000 題 RAG；未接 Token Endpoint 時使用本機 RAG | ✅ |
+| P11 | App 內盤點 AI 助理：Windows 可用 Foundry Local Phi-4＋1,000 題 RAG；雲端可接 Copilot Studio | ✅ |
 | P12 | DEMO 盤點使用多變體合成分割圖、橫切面與點雲側視，不顯示逢甲實拍原圖；另附可旋轉 PLY，並標示來源與模擬界線 | ✅ |
 
 盤點視窗左側只保留路徑圖；原本會逐棵列出的待複核清單已移除，避免在 16 棵以上資料時占滿畫面。待確認、需複核與全部待複核仍可由樹表上方的篩選頁籤查看。

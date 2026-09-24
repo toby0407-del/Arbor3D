@@ -33,7 +33,7 @@ Arbor3D 已具備可展示的 **Physical → Digital → AI** 主流程、真實
 | DEMO 完整度 | 30 組模擬檔（18 個啟用公園場景、12 個停用學校歷史檔）使用 12 張新合成素材：4 種分割圖、4 種胸高橫切面、4 種點雲側視，獨立分派後形成最多 64 種組合；另附 900 點示意 PLY | 31 組目前發布資料共 481 棵皆有可載入橫切面；新匯入只要包含橫切面，就強制同批每棵樹完整，否則拒絕發布 |
 | 分析資料層 | Analytics JSON／CSV、資料契約、誤差與跨期規則；Excel 僅作資料快照與交叉核對 | Python 26 項測試通過；真實／模擬資料分離 |
 | Power BI／Fabric | Power BI 作為主要分析輔助；App 可匯出分析輸入 JSON、**圖表 CSV 包**（燈號／胸徑／KPI）與盤內圖表預覽；另可產生五頁 PBIP | 圖表匯出測試通過；Desktop 畫面驗收仍待 |
-| App AI 助理 | Copilot Studio＋本機證據模式兜底；1,000 題 Markdown／JSONL RAG 以盤點證據回答待複核、精度、碳匯限制與行動建議 | 正式站已指定 `provider=copilot`；Direct Line adapter 與無端點退回行為通過測試；待發布租戶代理與填入 Token Endpoint |
+| App AI 助理 | Windows Foundry Local Phi-4／Copilot Studio＋本機證據模式兜底；1,000 題 RAG | Phi-4 loopback adapter、Direct Line adapter 與退回行為通過測試；已產生 900 訓練／100 保留評測的 QLoRA 資料，實際訓練待 Windows NVIDIA GPU |
 | Azure Foundry | 曾完成 Azure for Students 資源、project 與 `gpt-4.1-mini` deployment 驗證 | 保留為技術驗證紀錄；正式網站已移除 Azure AI endpoint/model，不直接呼叫 GPT |
 | 安全與依賴 | `.env.local` 不進 Git、瀏覽器拿不到金鑰、Node 依賴稽核 | `npm audit` 0 vulnerabilities |
 
