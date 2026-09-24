@@ -1,5 +1,42 @@
 # Windows 接續與四年季度模擬
 
+## 2026-09-24 最新接續狀態
+
+GitHub `main` 目前基準為 `f5cb0e4`。新電腦第一次使用：
+
+```powershell
+git clone https://github.com/toby0407-del/Arbor3D.git
+cd Arbor3D
+npm ci --prefix app
+az login
+```
+
+已經 Clone 過的電腦，在沒有未提交變更時執行：
+
+```powershell
+git switch main
+git pull --ff-only origin main
+npm ci --prefix app
+```
+
+建立不進 Git 的 `app\.env.local`，至少填入主要 Cosmos DB：
+
+```env
+AZURE_COSMOS_ENDPOINT=https://arbor3dcos483bd05e16.documents.azure.com:443/
+AZURE_COSMOS_DATABASE=Arbor3D
+AZURE_COSMOS_CONTAINER=FieldMeasures
+ARBOR_COSMOS_AUTO_CREATE=NO
+ARBOR_ALLOW_BILLABLE_CLOUD=NO
+```
+
+使用同一個 Azure for Students 帳號執行 `az login`。不要把 access token、Cosmos key、Client Secret 或 `.env.local` 提交到 Git。Entra App registration 仍需學校租戶管理員開放應用程式註冊或指派 Application Developer；在此之前 App 使用展示登入＋Cosmos。
+
+```powershell
+npm test --prefix app
+npm run build --prefix app
+npm run dev --prefix app -- --host 127.0.0.1 --port 5174
+```
+
 既有 `feat/microsoft-ai-data` 已經由 PR #1 合併至 `main`（1624ee9）。
 本次接續加入 Windows 測試支援、明確的模擬資料契約及五頁 PBIP/PBIR 專案產生器。
 不變更核心 YOLO／DBH／3DGS 演算法，不開通付費服務。

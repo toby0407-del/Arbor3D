@@ -1,11 +1,19 @@
 # 本機驗證紀錄
 
+## 最新 GitHub／Azure 驗證（2026-09-24）
+
+- GitHub `main` 已同步至 `f5cb0e4`，工作樹乾淨；`app/.env.local` 保持在 Git 忽略範圍。
+- App 29 項測試全部通過，production build 成功；約 542 KB 的 Three.js 點雲 chunk 警告仍屬按需載入，不阻擋建置。
+- Cloud DBH worker 狀態測試 1 項通過。
+- API 狀態回報 `storage=cosmos`；主要 Cosmos `arbor3dcos483bd05e16` 與早期開發帳號 `arbor3d-d1322855` 均為 Japan East Serverless、`Arbor3D`／`FieldMeasures`、`/scanId`，且停用 local auth。
+- Azure 訂閱 spending limit 為 On；年度預算 `arbor3d-100usd` 為 100 USD。Entra App registration 仍因學校租戶目錄權限不足而未完成。
+
 ## Entra／Cosmos 與效能更新（2026-09-23）
 
 - App 26 項、Analytics／AI 26 項測試通過；lint、production build、npm audit、compileall 與 diff check 通過。
 - 正式登入 adapter 使用 MSAL Authorization Code + PKCE；後端驗證 Entra v2 issuer、audience、JWKS 簽章與 App roles，再建立 HttpOnly Session。尚未取得本專案的 tenant／client ID，因此未宣稱完成真實租戶登入。
-- Cosmos DB repository 使用 Managed Identity／DefaultAzureCredential、`/scanId` 分割鍵及 point read／upsert；本機 file fallback 的寫入、讀回與登出後 401 已用 HTTP 驗證。尚未建立或寫入付費 Cosmos 資源。
-- `infra/azure/main.bicep` 已由 Azure CLI Bicep compiler 成功編譯；部署仍需資源群組、全域唯一帳號名稱、Managed Identity object ID 與預算決策。
+- Cosmos DB repository 使用 Managed Identity／DefaultAzureCredential、`/scanId` 分割鍵及 point read／upsert；本機 file fallback 的寫入、讀回與登出後 401 已用 HTTP 驗證。其後已完成 Azure Serverless Cosmos 部署與實際身分讀寫煙測，見上方最新紀錄。
+- `infra/azure/main.bicep` 已由 Azure CLI Bicep compiler 成功編譯並完成實際部署；正式 App 主機的 Managed Identity assignment 仍待正式主機方案確定。
 - 首頁主程式由約 5.2 MB 降至約 193 KB；地點 JSON、31 份盤點、MSAL 與 Three.js 均按需載入。Three.js 點雲 chunk 約 542 KB，只在使用者打開 3D 頁籤時下載。
 - App bundle 已可用 `python3 -m powerbi.delivery` 一次產生 canonical Analytics、五頁 PBIP/PBIR 與交付報告；仍不等於 Windows Desktop 的 DAX、刷新、版面或 RLS 驗收。
 

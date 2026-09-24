@@ -42,3 +42,13 @@ AZURE_COSMOS_CONTAINER=FieldMeasures
 部署在 Azure 時使用 Managed Identity。只有本機開發才由 `DefaultAzureCredential` 沿用 `az login`；Cosmos endpoint 可以出現在設定中，但 Cosmos account key、Entra client secret 與 access token 都不得提交 Git 或放進 `VITE_` 變數。
 
 尚未設定 Entra／Cosmos 時，App 保留伺服器端展示登入與 `.runtime` 檔案存放，僅供本機展示。
+
+## 4. 目前訂閱中的資源（2026-09-24）
+
+- 主要展示帳號：`arbor3dcos483bd05e16`，Japan East，Serverless，`Arbor3D`／`FieldMeasures`，分割鍵 `/scanId`。
+- 早期開發帳號：`arbor3d-d1322855`，設定相同；它不是主要展示端點。確認沒有需要保留的資料後再決定是否刪除，避免同時維護兩份資源。
+- 兩個帳號皆停用 local/key authentication；本機用 `az login`，Azure 主機用 Managed Identity。
+- Entra App registration 尚未完成，原因是學校租戶未授權目前學生帳號註冊應用程式；不可用 Client Secret 或共用密碼繞過。
+- Azure for Students spending limit 目前為 On，另有年度 100 USD 預算 `arbor3d-100usd`；仍應持續查看 Cost Management。
+
+不要重跑範本建立第三個 Cosmos 帳號。Windows 接續請直接使用主要 endpoint，操作見 [Windows 指南](../../docs/microsoft/WINDOWS.md)。
