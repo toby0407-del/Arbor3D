@@ -45,7 +45,6 @@ jobs:
             sleep 2
           done
           node docker/smoke-test.mjs http://127.0.0.1:8080 --write
-          docker compose --env-file .env.docker exec -T arbor3d python3 - < docker/publish-smoke.py
           docker restart arbor3d-web
           sleep 3
           node docker/smoke-test.mjs http://127.0.0.1:8080
@@ -66,6 +65,7 @@ jobs:
         run: |
           docker run --rm -w /opt/arbor3d -e PYTHONPATH=/opt/arbor3d -v "$PWD/tests:/tmp/arbor3d-tests:ro" arbor3d:full python3 -m unittest discover -s /tmp/arbor3d-tests -p 'test_best_view_paths.py'
           node docker/smoke-test.mjs http://127.0.0.1:8080 --write
+          docker compose --env-file .env.docker exec -T arbor3d python3 - < docker/publish-smoke.py
           docker compose --env-file .env.docker exec -T arbor3d python3 -c "import open3d, cv2, transformers; import numpy as np; from ultralytics import YOLO; m=YOLO('/opt/arbor3d/yolo_seg/runs/v3/weights/best.pt'); r=m.predict(np.zeros((64,64,3), dtype=np.uint8), imgsz=64, device='cpu', verbose=False); assert len(r)==1; print('CPU YOLO inference passed')"
           test -s /tmp/arbor3d-storage/runtime/field-measures.json
           docker compose --env-file .env.docker down
