@@ -69,6 +69,9 @@ Thumbs.db
 # Reproducible local analytics outputs
 /outputs/
 .venv/
+docker-data/
+app/dist-server/
+app/.runtime/
 .pbi/
 # Phi-4／LoRA 模型權重與訓練輸出不得提交。
 agents/fine-tuning/output/
