@@ -55,5 +55,7 @@ COPY --chown=node:node gaussian_prune /opt/arbor3d/gaussian_prune
 COPY --chown=node:node semantic_seg /opt/arbor3d/semantic_seg
 COPY --chown=node:node yolo_seg /opt/arbor3d/yolo_seg
 ENV ARBOR3D_ROOT=/opt/arbor3d ARBOR3D_DATA_ROOT=/data
+RUN mkdir -p /opt/arbor3d/app/src/data/inventories \
+    && chown -R node:node /opt/arbor3d/app/src
 USER node
 # Default docker build includes the complete measurement pipeline.

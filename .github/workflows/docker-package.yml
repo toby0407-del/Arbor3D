@@ -45,6 +45,7 @@ jobs:
             sleep 2
           done
           node docker/smoke-test.mjs http://127.0.0.1:8080 --write
+          docker compose --env-file .env.docker exec -T arbor3d python3 - < docker/publish-smoke.py
           docker restart arbor3d-web
           sleep 3
           node docker/smoke-test.mjs http://127.0.0.1:8080
@@ -71,6 +72,8 @@ jobs:
           docker compose --env-file .env.docker up -d --no-build --wait
           node docker/smoke-test.mjs http://127.0.0.1:8080
           test -s /tmp/arbor3d-storage/runtime/field-measures.json
+          test -s /tmp/arbor3d-storage/scans/sim-docker-publish/inventory.json
+          node -e "fetch('http://127.0.0.1:8080/api/inventories/sim-docker-publish').then(async r=>{if(!r.ok || (await r.json()).report.trees[0].DBH_cm !== 20) process.exit(1)})"
       - name: Export verified Docker images
         run: |
           docker save arbor3d:full arbor3d:web | gzip -1 > arbor3d-images.tar.gz
