@@ -100,8 +100,7 @@ export type AssistantStatus = {
   copilotConfigured: boolean;
   azureConfigured: boolean;
   phi4Configured: boolean;
-  phi4CloudConfigured: boolean;
-  activeMode: "local" | "copilot" | "azure" | "phi4" | "phi4-cloud" | string;
+  activeMode: "local" | "copilot" | "azure" | "phi4" | string;
   hints: string[];
 };
 
@@ -116,7 +115,6 @@ export async function fetchAssistantStatus(): Promise<AssistantStatus> {
       copilotConfigured: false,
       azureConfigured: false,
       phi4Configured: false,
-      phi4CloudConfigured: false,
       activeMode: "local",
       hints: ["無法讀取助理狀態，使用本機證據模式"],
     };

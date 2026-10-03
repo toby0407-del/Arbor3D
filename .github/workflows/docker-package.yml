@@ -1,0 +1,83 @@
+name: Build and verify Docker package
+
+on:
+  pull_request:
+    paths:
+      - Dockerfile
+      - compose.yaml
+      - .dockerignore
+      - .gitattributes
+      - docker/**
+      - app/**
+      - dbh_seg/**
+      - scripts/postprocess_from_inbox.py
+      - .github/workflows/docker-package.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - name: Test source
+        run: |
+          npm ci --prefix app
+          npm test --prefix app
+          python3 -m unittest discover -s tests -p 'test_postprocess_from_inbox.py'
+      - name: Build web image
+        run: docker build --target web -t arbor3d:web .
+      - name: Smoke test web runtime
+        run: |
+          docker run -d --name arbor3d-web -p 127.0.0.1:8080:8080 arbor3d:web
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8080/healthz; then break; fi
+            sleep 2
+          done
+          node docker/smoke-test.mjs http://127.0.0.1:8080 --write
+          docker restart arbor3d-web
+          sleep 3
+          node docker/smoke-test.mjs http://127.0.0.1:8080
+          docker rm -f arbor3d-web
+      - name: Build full CPU image
+        run: docker build --target full -t arbor3d:full .
+      - name: Initialize Compose storage
+        run: |
+          cp docker/env.example .env.docker
+          echo 'ARBOR3D_STORAGE_ROOT=/tmp/arbor3d-storage' >> .env.docker
+          echo 'ARBOR3D_IMAGE_TAG=full' >> .env.docker
+          mkdir -p /tmp/arbor3d-storage/{inbox,scans,data,cache,runtime}
+          cp -a app/public/scans/. /tmp/arbor3d-storage/scans/
+          sudo chown -R 1000:1000 /tmp/arbor3d-storage
+          docker compose --env-file .env.docker config --quiet
+          docker compose --env-file .env.docker up -d --no-build --wait
+      - name: Verify full runtime, YOLO and persistent mounts
+        run: |
+          node docker/smoke-test.mjs http://127.0.0.1:8080 --write
+          docker compose --env-file .env.docker exec -T arbor3d python3 -c "import open3d, cv2, transformers; import numpy as np; from ultralytics import YOLO; m=YOLO('/opt/arbor3d/yolo_seg/runs/v3/weights/best.pt'); r=m.predict(np.zeros((64,64,3), dtype=np.uint8), imgsz=64, device='cpu', verbose=False); assert len(r)==1; print('CPU YOLO inference passed')"
+          test -s /tmp/arbor3d-storage/runtime/field-measures.json
+          docker compose --env-file .env.docker down
+          docker compose --env-file .env.docker up -d --no-build --wait
+          node docker/smoke-test.mjs http://127.0.0.1:8080
+          test -s /tmp/arbor3d-storage/runtime/field-measures.json
+      - name: Export verified Docker images
+        run: |
+          docker save arbor3d:full arbor3d:web | gzip -1 > arbor3d-images.tar.gz
+          sha256sum arbor3d-images.tar.gz > arbor3d-images.tar.gz.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arbor3d-docker-images
+          path: |
+            arbor3d-images.tar.gz
+            arbor3d-images.tar.gz.sha256
+          compression-level: 0
+          retention-days: 1
+      - name: Runtime logs
+        if: always()
+        run: docker compose --env-file .env.docker logs --no-color || true

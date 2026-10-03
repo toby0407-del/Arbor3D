@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -17,6 +18,21 @@ PLY = b"ply\nformat ascii 1.0\nelement vertex 0\nend_header\n"
 
 
 class PostprocessFromInboxTests(unittest.TestCase):
+    def test_container_data_root_environment_stages_outside_repo(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            job = self.make_job(root)
+            data = root / "persistent-volume"
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--job-dir", str(job),
+                 "--scan-id", "test-scan", "--prepare-only"],
+                env={**os.environ, "ARBOR3D_DATA_ROOT": str(data)},
+                capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue((data / "3D_treedata_Denoised_Trees/test-scan.ply").is_file())
+            self.assertTrue((data / "3D_treedata/test-scan/calibration/calib.json").is_file())
+
     def make_job(self, root: Path, with_metadata: bool = True) -> Path:
         job = root / "job"
         (job / "denoised").mkdir(parents=True)

@@ -36,7 +36,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--data-root",
         type=Path,
-        default=None,
+        default=Path(os.environ["ARBOR3D_DATA_ROOT"]) if os.environ.get("ARBOR3D_DATA_ROOT") else None,
         help="3D_treedata 等資料夾的上層；預設沿用既有設定（倉庫上一層）",
     )
     parser.add_argument("--prepare-only", action="store_true")
@@ -267,7 +267,8 @@ def main() -> int:
         str(output_dir),
     ]
     print("正式 Arbor3D 管線開始")
-    subprocess.run(command, cwd=repo_root, check=True)
+    pipeline_env = {**os.environ, "ARBOR3D_DATA_ROOT": str(data_root)}
+    subprocess.run(command, cwd=repo_root, check=True, env=pipeline_env)
     report_path = output_dir / "park_inventory_report.json"
     if not report_path.is_file():
         raise FileNotFoundError(f"管線完成但找不到報告：{report_path}")
