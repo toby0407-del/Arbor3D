@@ -20,7 +20,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && python3 -m venv /opt/venv
 COPY docker/requirements-web.txt /tmp/requirements-web.txt
-RUN pip install --no-cache-dir -r /tmp/requirements-web.txt
+RUN pip install --no-cache-dir --upgrade pip==25.3 \
+    && pip install --no-cache-dir -r /tmp/requirements-web.txt
 WORKDIR /opt/arbor3d/app
 COPY --from=build --chown=node:node /opt/arbor3d/app/node_modules ./node_modules
 COPY --from=build --chown=node:node /opt/arbor3d/app/dist ./dist
@@ -42,7 +43,7 @@ USER root
 RUN apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 # CPU wheels avoid downloading CUDA libraries on machines without a GPU runtime.
-RUN pip install --no-cache-dir torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir torch==2.6.0+cpu torchvision==0.21.0+cpu --extra-index-url https://download.pytorch.org/whl/cpu
 COPY docker/requirements-full.txt /tmp/requirements-full.txt
 RUN pip install --no-cache-dir -r /tmp/requirements-full.txt
 COPY --chown=node:node *.py /opt/arbor3d/
