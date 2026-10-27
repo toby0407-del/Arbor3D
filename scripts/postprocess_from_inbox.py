@@ -270,6 +270,7 @@ def main() -> int:
     ]
     print("正式 Arbor3D 管線開始")
     env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
     env["ARBOR3D_DATA_ROOT"] = str(data_root)
     subprocess.run(command, cwd=repo_root, check=True, env=env)
     report_path = output_dir / "park_inventory_report.json"
@@ -292,6 +293,9 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    # Redirected Windows streams may default to a code page without Chinese support.
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(encoding="utf-8")
     try:
         raise SystemExit(main())
     except Exception as exc:
