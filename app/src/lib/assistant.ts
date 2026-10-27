@@ -57,7 +57,7 @@ export function inventoryAssistantContext(
       total: stats.total,
       reliable: stats.green,
       pending: stats.yellow,
-      review: stats.review,
+      review: stats.red,
       co2Ton: totalCo2Ton(report.trees, measures, report.created_at),
     },
     trees: report.trees.map((tree) => {
@@ -74,7 +74,9 @@ export function inventoryAssistantContext(
         status: trafficLight(tree),
         reviewReason: reviewReason(tree),
         confidence: tree.YOLO_confidence,
-        manualDbhCm: positive(measures[tree.Tree_ID]?.dbhCm),
+        manualDbhCm: measures[tree.Tree_ID]?.strict13m === true && tree.dbh_is_strict_breast_height === true &&
+          measures[tree.Tree_ID]?.measuredAt === report.created_at.slice(0,10)
+          ? positive(measures[tree.Tree_ID]?.dbhCm) : null,
       };
     }),
   };
@@ -95,6 +97,7 @@ export async function askInventoryAssistant(
 }
 
 export type AssistantStatus = {
+  requireProvider?: boolean;
   provider: string;
   billableAllowed: boolean;
   copilotConfigured: boolean;
@@ -103,11 +106,14 @@ export type AssistantStatus = {
   phi4CloudConfigured: boolean;
   activeMode: "local" | "copilot" | "azure" | "phi4" | "phi4-cloud" | string;
   hints: string[];
+  connection?: { state: string; models: string[] } | null;
+  lastInference?: { provider: string; model?: string; verifiedAt: string } | null;
 };
 
 export async function fetchAssistantStatus(): Promise<AssistantStatus> {
   const response = await fetch("/api/assistant/status", {
     credentials: "same-origin",
+    signal: AbortSignal.timeout(12000),
   });
   if (!response.ok) {
     return {
@@ -117,8 +123,8 @@ export async function fetchAssistantStatus(): Promise<AssistantStatus> {
       azureConfigured: false,
       phi4Configured: false,
       phi4CloudConfigured: false,
-      activeMode: "local",
-      hints: ["無法讀取助理狀態，使用本機證據模式"],
+      activeMode: "unavailable",
+      hints: ["無法讀取助理狀態，請確認服務與登入狀態。"],
     };
   }
   return (await response.json()) as AssistantStatus;

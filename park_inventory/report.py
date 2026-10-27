@@ -62,6 +62,10 @@ def build_park_inventory_report(
             {
                 "Tree_ID": tree_id,
                 "DBH_cm": dbh.get("dbh_cm"),
+                "candidate_dbh_cm": dbh.get("candidate_dbh_cm"),
+                "measurement_quality": dbh.get("measurement_quality"),
+                "quality_candidates": dbh.get("quality_candidates"),
+                "execution": dbh.get("execution"),
                 "DBH_method": dbh.get("method"),
                 "DBH_note": _dbh_note(dbh),
                 "arc_coverage_deg": dbh.get("arc_coverage_deg"),
@@ -102,6 +106,10 @@ def write_park_inventory_report(report: dict, output_dir: Path) -> tuple[Path, P
     fieldnames = [
         "Tree_ID",
         "DBH_cm",
+        "candidate_dbh_cm",
+        "measurement_quality",
+        "quality_candidates",
+        "execution",
         "DBH_method",
         "DBH_note",
         "arc_coverage_deg",
@@ -124,6 +132,8 @@ def write_park_inventory_report(report: dict, output_dir: Path) -> tuple[Path, P
         writer.writeheader()
         for row in report["trees"]:
             flat = dict(row)
+            for key in ("measurement_quality", "quality_candidates", "execution"):
+                flat[key] = json.dumps(flat.get(key), ensure_ascii=False)
             xyz = flat.get("Local_XYZ_m")
             if isinstance(xyz, list):
                 flat["Local_XYZ_m"] = ",".join(str(x) for x in xyz)

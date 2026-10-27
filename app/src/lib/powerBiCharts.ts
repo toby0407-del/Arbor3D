@@ -37,7 +37,9 @@ export function powerBiChartTables(
     const carbon = carbonForTree(tree, field, report.created_at);
     const manual = positive(field?.dbhCm);
     const ai = positive(tree.DBH_cm);
-    const error = manual != null && ai != null ? ai - manual : null;
+    const comparable = manual != null && ai != null && field?.strict13m === true &&
+      tree.dbh_is_strict_breast_height === true && field?.measuredAt === report.created_at.slice(0,10);
+    const error = comparable ? ai! - manual! : null;
     return {
       scan_id: report.scan_id,
       local_tree_id: tree.Tree_ID,
@@ -55,7 +57,7 @@ export function powerBiChartTables(
     };
   });
 
-  const paired = trees.filter((row) => row.manual_dbh_cm != null && row.auto_dbh_cm != null);
+  const paired = trees.filter((row) => row.error_cm != null);
   const mae =
     paired.length === 0
       ? null

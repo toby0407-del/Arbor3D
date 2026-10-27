@@ -9,7 +9,7 @@ const read = p => JSON.parse(fs.readFileSync(path.join(root, p), 'utf8'));
 const templatePath = 'src/data/inventories/20260818092855.json';
 const template = read(templatePath);
 const sites = read('scripts/park-simulation-sites.json');
-const sha = createHash('sha256').update(fs.readFileSync(path.join(root, templatePath))).digest('hex');
+const sha = createHash('sha256').update(fs.readFileSync(path.join(root, templatePath), 'utf8').replaceAll('\r\n', '\n')).digest('hex');
 const round = (v, n = 2) => Number(v.toFixed(n));
 const write = (p, data) => {
   const target = path.join(root, p);

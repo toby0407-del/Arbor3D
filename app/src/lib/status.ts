@@ -1,4 +1,5 @@
 import type { TrafficLight, TreeRecord } from "../types";
+import { qualityAccepted, qualityReasons } from "./measurementQuality";
 
 export type InventoryStats = {
   total: number;
@@ -12,6 +13,7 @@ export type InventoryStats = {
 export function trafficLight(input: TreeRecord | string | null | undefined): TrafficLight {
   const tree = typeof input === "object" && input !== null ? input : null;
   const value = tree ? tree.DBH_note ?? "" : typeof input === "string" ? input : "";
+  if (tree?.measurement_quality && !qualityAccepted(tree.measurement_quality)) return "red";
   if (tree && (tree.DBH_cm == null || !Number.isFinite(tree.DBH_cm) || tree.DBH_cm <= 0 ||
     (tree.DBH_method === "caliper" && tree.DBH_cm >= 45))) return "red";
   if (
@@ -40,13 +42,14 @@ export function lightShort(light: TrafficLight): string {
 export function reviewReason(tree: TreeRecord): string {
   const notes = (tree.DBH_note || "").split(",").filter(Boolean);
   const parts: string[] = [];
+  if (tree.measurement_quality && !qualityAccepted(tree.measurement_quality)) {
+    parts.push(...(tree.measurement_quality.reasons ?? []).map(r => qualityReasons[r] ?? "品質條件待複核"));
+  }
   if (!tree.dbh_is_strict_breast_height) parts.push("非標準 1.3 m，需現場確認");
   if (notes.includes("wide_caliper") || (tree.DBH_method === "caliper" && (tree.DBH_cm ?? 0) >= 45)) parts.push("卡尺偏寬");
   if (notes.includes("gap")) parts.push("切片有缺口");
   if (notes.includes("no_measurement") || tree.DBH_cm == null || !(tree.DBH_cm > 0)) parts.push("量不到");
-  if (tree.arc_coverage_deg != null && tree.arc_coverage_deg < 120) {
-    parts.push(`弧度僅 ${tree.arc_coverage_deg.toFixed(1)}°`);
-  }
+  if (tree.arc_coverage_deg != null) parts.push(`弧度 ${tree.arc_coverage_deg.toFixed(1)}°（需聯合其他品質特徵）`);
   return parts.join(" · ") || "需現場再量";
 }
 

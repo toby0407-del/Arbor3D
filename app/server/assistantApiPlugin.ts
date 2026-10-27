@@ -60,7 +60,7 @@ function azureUrl(endpoint: string) {
 
 function foundryLocalUrl(endpoint: string) {
   const url = new URL(endpoint);
-  if (!["localhost", "127.0.0.1", "::1"].includes(url.hostname)) {
+  if (!["localhost", "127.0.0.1", "::1", "[::1]"].includes(url.hostname)) {
     throw new Error("Foundry Local endpoint 只允許本機 loopback 位址");
   }
   if (url.protocol !== "http:" && url.protocol !== "https:") {
@@ -366,6 +366,7 @@ export function assistantProviderStatus(env: Record<string, string | undefined> 
   return {
     provider,
     billableAllowed: billable,
+    requireProvider: env.ARBOR_AI_REQUIRE_PROVIDER === "YES",
     phi4Configured: phi4Ready,
     phi4CloudConfigured: phi4CloudReady,
     copilotConfigured: copilotEndpoint,
@@ -408,17 +409,38 @@ export function assistantProviderStatus(env: Record<string, string | undefined> 
   };
 }
 
+export async function probePhi4(env: Record<string,string|undefined>, request: typeof fetch = fetch) {
+  const endpoint=env.FOUNDRY_LOCAL_ENDPOINT?.trim();
+  if(!endpoint)return {state:"unconfigured",models:[] as string[]};
+  try {
+    const url=foundryLocalUrl(endpoint).replace(/chat\/completions$/, "models");
+    const response=await request(url,{signal:AbortSignal.timeout(8000)});
+    if(!response.ok)return {state:"unavailable",models:[] as string[]};
+    const body=await response.json() as {data?:Array<{id?:string}>};
+    const models=(body.data??[]).flatMap(m=>typeof m.id==="string"?[m.id]:[]);
+    const target=env.FOUNDRY_LOCAL_MODEL?.trim()||"phi-4-mini";
+    // The SDK's HTTP catalog omits its numeric artifact revision suffix.
+    const modelName = (name: string) => name.replace(/:\d+$/, "");
+    return {state:models.some(name=>modelName(name)===modelName(target))?"reachable":"model_unavailable",models};
+  }catch{return {state:"unavailable",models:[] as string[]};}
+}
+
 export function assistantApiPlugin(
   env: Record<string, string | undefined> = process.env,
   knowledgeFolder = "",
 ): Plugin {
+  let lastInference: { provider: string; model?: string; verifiedAt: string } | null = null;
   return {
     name: "arbor3d-assistant-api",
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const url = req.url?.split("?")[0] ?? "";
         if (url === "/api/assistant/status" && req.method === "GET") {
-          sendJson(res, 200, assistantProviderStatus(env));
+          const status = assistantProviderStatus(env);
+          const connection = status.activeMode === "phi4" ? await probePhi4(env) : null;
+          sendJson(res, 200, { ...status, connection, lastInference,
+            activeMode: connection && connection.state !== "reachable"
+              ? env.ARBOR_AI_REQUIRE_PROVIDER === "YES" ? "unavailable" : "local" : status.activeMode });
           return;
         }
         if (url !== "/api/assistant") return next();
@@ -459,7 +481,7 @@ export function assistantApiPlugin(
               cloudFailed = true;
             }
           }
-          if (provider === "auto" || provider === "copilot") {
+          if (!reply && (provider === "auto" || provider === "copilot")) {
             try {
               reply = await askCopilotStudio(question, context, env, ragHits);
             } catch {
@@ -474,6 +496,10 @@ export function assistantApiPlugin(
             }
           }
           if (!reply) {
+            if (env.ARBOR_AI_REQUIRE_PROVIDER === "YES" && provider !== "local") {
+              sendJson(res, 503, { error: "Microsoft 模型未完成回覆，請確認模型服務已啟動後重試。" });
+              return;
+            }
             reply = localAssistantReply(question, context);
             if (localModelFailed) {
               reply.answer += "\n\n（Phi-4 本機模型暫時無法使用，已切換成本機證據回答。）";
@@ -488,6 +514,9 @@ export function assistantApiPlugin(
             reply.evidence.push(...reply.ragSources.map((source) => `本機 RAG：${source}`));
           }
           if (ragQuestionCount) reply.ragQuestionCount = ragQuestionCount;
+          if (reply.provider !== "local") {
+            lastInference = { provider: reply.provider, model: reply.model, verifiedAt: new Date().toISOString() };
+          }
           sendJson(res, 200, reply);
         } catch (error) {
           sendJson(res, 400, {

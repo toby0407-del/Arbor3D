@@ -19,7 +19,8 @@ test('only Feng Chia retains campus routes; new parks have no invented mapped ro
 });
 
 test('all park scenarios preserve source lineage, identities, 16 quarters and published parity', () => {
-  const template = fs.readFileSync(path.join(root, 'src/data/inventories/20260818092855.json'));
+  // Git on Windows may convert line endings; provenance compares canonical LF bytes.
+  const template = fs.readFileSync(path.join(root, 'src/data/inventories/20260818092855.json'), 'utf8').replaceAll('\r\n', '\n');
   assert.equal(createHash('sha256').update(template).digest('hex'), manifest.template_sha256);
   assert.equal(manifest.sites.length, 18);
   const persistent = new Set();

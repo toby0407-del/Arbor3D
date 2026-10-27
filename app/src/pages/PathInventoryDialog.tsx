@@ -5,6 +5,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { PathTreeMap } from "../components/PathTreeMap";
 import { QuarterlySimulation } from "../components/QuarterlySimulation";
 import { InventoryAssistant } from "../components/InventoryAssistant";
+import { MeasurementQualityPanel } from "../components/MeasurementQualityPanel";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import { useModalTouchScrollLock } from "../hooks/useModalTouchScrollLock";
 import { useFieldMeasures } from "../hooks/useFieldMeasures";
@@ -56,7 +57,7 @@ const PlyViewer = lazy(() =>
   })),
 );
 
-type PreviewTab = "images" | "measure" | "model";
+type PreviewTab = "images" | "measure" | "model" | "quality";
 type Filter = "all" | TrafficLight | "review";
 
 function TreeGlyph() {
@@ -473,6 +474,7 @@ type Props = {
   parkName: string;
   pathName: string;
   report: ParkInventoryReport;
+  initialTab?: PreviewTab;
   previewTreeId: string | null;
   onPreviewTree: (treeId: string) => void;
   onClose: () => void;
@@ -509,6 +511,7 @@ export function PathInventoryDialog({
   parkName,
   pathName,
   report,
+  initialTab = "images",
   previewTreeId,
   onPreviewTree,
   onClose,
@@ -523,9 +526,9 @@ export function PathInventoryDialog({
   const [showFormula, setShowFormula] = useState(false);
   const [showAssistant, setShowAssistant] = useState(false);
   const [growthTreeId, setGrowthTreeId] = useState<string | null>(null);
-  const [tab, setTab] = useState<PreviewTab>("images");
+  const [tab, setTab] = useState<PreviewTab>(initialTab);
   const [filter, setFilter] = useState<Filter>("all");
-  const { measures, update, storage } = useFieldMeasures(report.scan_id);
+  const { measures, update, storage, syncState, error: syncError, retrySync } = useFieldMeasures(report.scan_id);
   const stats = useMemo(() => inventoryStats(report.trees), [report.trees]);
   const co2Total = useMemo(
     () => totalCo2Ton(report.trees, measures, report.created_at),
@@ -606,6 +609,7 @@ export function PathInventoryDialog({
         return;
       }
       if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+      if (event.target instanceof HTMLElement && (event.target.closest("input, textarea, select, button") || event.target.isContentEditable)) return;
       event.preventDefault();
       if (visible.length === 0) return;
       const current = preview?.Tree_ID ?? visible[0].Tree_ID;
@@ -653,7 +657,7 @@ export function PathInventoryDialog({
   return (
     <div className="path-db-backdrop" role="presentation" onClick={onClose}>
       <div
-        className="path-db-panel is-wide"
+        className={`path-db-panel is-wide${tab === "quality" ? " is-quality" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="path-db-title"
@@ -685,7 +689,7 @@ export function PathInventoryDialog({
                 平均信心 {formatConfidence(stats.avgConfidence)}
               </span>
               <span className="pill is-green">
-                估算 CO₂ 當量 {co2Total.toFixed(2)} ton
+                候選 CO₂ 試算 {co2Total.toFixed(2)} ton
               </span>
               <span
                 className="pill"
@@ -695,8 +699,13 @@ export function PathInventoryDialog({
                     : "現場手測暫存本機（localStorage + .runtime）；設定 AZURE_COSMOS_ENDPOINT 後改走 Cosmos"
                 }
               >
-                手測庫：{storage === "cosmos" ? "Cosmos DB" : storage === "file" ? "本機檔案" : "同步中…"}
+                手測庫：{storage === "cosmos" ? "Cosmos DB" : storage === "file" ? "本機檔案" : "尚未連通"}
               </span>
+              <span className={`pill ${syncState === "error" ? "is-red" : syncState === "saved" ? "is-green" : "is-yellow"}`} role="status">
+                {syncState === "saved" ? "已同步" : syncState === "saving" ? "儲存中…" : syncState === "pending" ? "修改待同步" : syncState === "loading" ? "讀取中…" : "尚未同步"}
+              </span>
+              {syncError && <span className="field-sync-error" role="alert">{syncError}</span>}
+              {syncState === "error" && <button type="button" className="ghost-btn" onClick={() => void retrySync()}>重試同步</button>}
             </div>
           </div>
           <div className="path-db-head-actions">
@@ -806,7 +815,7 @@ export function PathInventoryDialog({
                     <th>{isSimulated ? "模擬 AI 胸徑" : "AI 胸徑"}</th>
                     <th>樹高</th>
                     <th>估算 CO₂ 當量</th>
-                    <th className="growth-col">{isSimulated ? "模擬成長狀態" : "健康度"}</th>
+                    <th className="growth-col">{isSimulated ? "模擬成長狀態" : "變化提示"}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -890,6 +899,7 @@ export function PathInventoryDialog({
                 [
                   ["images", "影像"],
                   ["measure", "量測"],
+                  ["quality", "品質與補掃"],
                   ["model", "3D"],
                 ] as const
               )
@@ -980,6 +990,8 @@ export function PathInventoryDialog({
                   <div className="path-db-empty">尚無點雲側視</div>
                 )}
               </>
+            ) : tab === "quality" ? (
+              <MeasurementQualityPanel key={`${report.scan_id}:${preview.Tree_ID}`} tree={preview} report={report} measures={measures} update={update} onImport={onImport} />
             ) : tab === "measure" ? (
               <div className="measure-panel">
                 <div className={`dbh-hero is-${light}`}>
@@ -1062,7 +1074,7 @@ export function PathInventoryDialog({
                         </dd>
                       </div>
                       <div>
-                        <dt>估算 CO₂ 當量</dt>
+                        <dt>候選 CO₂ 當量試算</dt>
                         <dd>
                           {carbon.co2Ton != null
                             ? `${carbon.co2Ton.toFixed(3)} ton`

@@ -573,6 +573,11 @@ export function OsmSiteMap({
       map.off("dragstart", onDragStart);
       map.off("zoomstart", onDragStart);
       stopWatch();
+      // Remove vector paths while their canvas renderer still exists. Otherwise
+      // StrictMode teardown can queue a redraw after Leaflet destroys its context.
+      map.stop();
+      for (const layer of [layerRef.current, liveLayerRef.current, overlayLayerRef.current,
+        treeLayerRef.current, userLayerRef.current]) layer?.clearLayers();
       map.remove();
       mapRef.current = null;
       layerRef.current = null;

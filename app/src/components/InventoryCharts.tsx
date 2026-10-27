@@ -24,11 +24,12 @@ export function InventoryCharts({ report, measures }: Props) {
         <h3>圖表預覽（可匯出至 Power BI）</h3>
         <p>
           KPI：{kpi.observations} 棵 · 配對 {kpi.paired_count} · MAE{" "}
-          {kpi.mae_cm == null ? "—" : `${kpi.mae_cm.toFixed(2)} cm`} · CO₂{" "}
+          {kpi.mae_cm == null ? "—" : `${kpi.mae_cm.toFixed(2)} cm`} · 候選 CO₂ 試算{" "}
           {kpi.co2_ton_total.toFixed(2)} t
           {kpi.dataset_kind === "simulated" ? " · DEMO 模擬" : ""}
         </p>
       </header>
+      <p className="quality-summary-note">碳量試算含待複核候選與可能推估的樹高，非已驗證總碳量。MAE 僅統計同日且雙方確認標準胸高的配對。</p>
       <div className="inv-charts-grid">
         <figure className="inv-chart-card">
           <figcaption>燈號分布</figcaption>

@@ -3,8 +3,30 @@ import test from 'node:test';
 import { temporalGrowth } from '../src/lib/growth.ts';
 import { analyticsInput, positive } from '../src/lib/analytics.ts';
 import { inventoryToCsv } from '../src/lib/csv.ts';
+import { powerBiChartTables } from '../src/lib/powerBiCharts.ts';
+import { inventoryAssistantContext } from '../src/lib/assistant.ts';
 import type { ParkInventoryReport } from '../src/types.ts';
 const options = {dbhCm:20, heightM:null, heightEstimated:true, scanIso:'2026-07-20T10:00:00'};
+
+test('assistant counts partition the inventory and only uses comparable manual references',()=>{
+  const r={scan_id:'s',created_at:'2026-10-27',trees:[
+    {Tree_ID:'T1',DBH_cm:20,DBH_method:'circle',DBH_note:'ok',dbh_is_strict_breast_height:true},
+    {Tree_ID:'T2',DBH_cm:null,DBH_method:'circle',DBH_note:'no_measurement',dbh_is_strict_breast_height:false},
+  ]} as ParkInventoryReport;
+  const f={dbhCm:'21',heightM:'',coeff:'',note:'',measuredAt:'2026-10-26',strict13m:true};
+  const c=inventoryAssistantContext('site','path',r,{T1:f});
+  assert.equal(c.summary.reliable+c.summary.pending+c.summary.review,2);
+  assert.equal(c.trees[0].manualDbhCm,null);
+  assert.equal(inventoryAssistantContext('site','path',r,{T1:{...f,measuredAt:'2026-10-27'}}).trees[0].manualDbhCm,21);
+});
+
+test('chart MAE rejects mismatched dates and nonstandard manual references',()=>{
+  const r={scan_id:'test',created_at:'2026-10-27',trees:[{Tree_ID:'T',DBH_cm:20,DBH_method:'circle',DBH_note:'ok',dbh_is_strict_breast_height:true}]} as ParkInventoryReport;
+  const f={dbhCm:'21',heightM:'',coeff:'',note:'',measuredAt:'2026-10-27',strict13m:true};
+  assert.equal(powerBiChartTables(r,{T:f}).summary[0].paired_count,1);
+  assert.equal(powerBiChartTables(r,{T:{...f,strict13m:false}}).summary[0].mae_cm,null);
+  assert.equal(powerBiChartTables(r,{T:{...f,measuredAt:'2026-10-26'}}).summary[0].mae_cm,null);
+});
 test('nearby survey date remains simulated, exact observation is AI by default', () => {
   const t=temporalGrowth(options);
   assert.equal(t.current.source,'ai');

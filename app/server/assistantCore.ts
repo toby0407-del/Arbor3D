@@ -77,7 +77,7 @@ export function localAssistantReply(
   if (/碳|co2|co₂|碳匯|排放/.test(q)) {
     return {
       provider: "local",
-      answer: `本次盤點估算 CO₂ 當量合計約 ${fmt(context.summary.co2Ton)} ton。這是由胸徑、樹高與係數推估的管理指標；樹高或係數尚未實測時，不應作為正式碳權或查證數字。`,
+      answer: `本次候選 CO₂ 當量試算合計約 ${fmt(context.summary.co2Ton)} ton，包含待複核尺寸與可能推估的樹高。這是由胸徑、樹高與係數估算的管理指標，不是已驗證總碳量；樹高或係數尚未實測時，不應作為正式碳權或查證數字。`,
       evidence: [...evidence, `估算 CO₂ 當量 ${fmt(context.summary.co2Ton)} ton`],
     };
   }
@@ -118,12 +118,16 @@ export function localAssistantReply(
 }
 
 export function assistantSystemPrompt(context: AssistantContext, ragContext = "") {
+  const pairs = context.trees.filter(tree => tree.manualDbhCm != null && tree.dbhCm != null).length;
   return [
     "你是 Arbor3D 校園樹木盤點助理。請使用繁體中文，回答精簡、可行動。",
     "只能根據下方 JSON 證據回答；不得捏造樹種、健康診斷、跨期實測、模型精度或碳權結論。",
     "若資料不足，明確說明缺少什麼。將推估 CO2 稱為管理估算，不稱為正式查證碳權。",
     "回答最後加一行「依據：」，列出 1–3 個使用到的樹號或統計值。",
     ragContext,
+    `系統已核對的有效人工胸徑配對：${pairs} 筆。若為 0，不能宣稱已驗證精度，也不能自行計算或編造 MAE。`,
+    "燈號與分割信心只是複核提示，不是人工真值或精度驗證依據。不能以紅黃綠燈推斷配對是否合格。",
+    "回答使用一般管理者能理解的語句，不輸出 JSON 欄位名稱、程式碼或 status、manualDbhCm 等內部標記。控制在 200 個中文字以內。",
     JSON.stringify(context),
   ].filter(Boolean).join("\n");
 }

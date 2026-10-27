@@ -33,6 +33,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--scan-id", required=True)
     parser.add_argument("--path-id", default="")
     parser.add_argument("--repo-root", type=Path, default=repo_root)
+    parser.add_argument("--publish-root", type=Path, default=None, help="Optional isolated output root for cloud jobs")
     parser.add_argument(
         "--data-root",
         type=Path,
@@ -243,6 +244,7 @@ def main() -> int:
     job_dir = args.job_dir.resolve()
     repo_root = args.repo_root.resolve()
     data_root = (args.data_root or repo_root.parent).resolve()
+    publish_root = (args.publish_root or repo_root).resolve()
     scan_id = args.scan_id.strip()
     if not SAFE_SCAN_ID.fullmatch(scan_id) or scan_id in {".", ".."}:
         raise ValueError("scan-id 只能包含文字、數字、底線、連字號與句點")
@@ -267,12 +269,14 @@ def main() -> int:
         str(output_dir),
     ]
     print("正式 Arbor3D 管線開始")
-    subprocess.run(command, cwd=repo_root, check=True)
+    env = os.environ.copy()
+    env["ARBOR3D_DATA_ROOT"] = str(data_root)
+    subprocess.run(command, cwd=repo_root, check=True, env=env)
     report_path = output_dir / "park_inventory_report.json"
     if not report_path.is_file():
         raise FileNotFoundError(f"管線完成但找不到報告：{report_path}")
     report = publish_report(
-        report_path, output_dir, repo_root, data_root, scan_id, args.path_id.strip()
+        report_path, output_dir, publish_root, data_root, scan_id, args.path_id.strip()
     )
     count = int(report.get("num_trees") or len(report.get("trees") or []))
     message = f"正式 Arbor3D 盤點與發佈完成：{count} 棵"
@@ -281,7 +285,7 @@ def main() -> int:
         "done",
         message,
         prepared=prepared,
-        inventory=str(repo_root / "app" / "public" / "scans" / scan_id / "inventory.json"),
+        inventory=str(publish_root / "app" / "public" / "scans" / scan_id / "inventory.json"),
     )
     print(message)
     return 0

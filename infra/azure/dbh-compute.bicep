@@ -20,7 +20,10 @@ param location string = resourceGroup().location
 param namePrefix string = 'arbor3d'
 
 @description('Container image (ACR or public). Build: docker build -f cloud_dbh/Dockerfile …')
-param containerImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+param containerImage string
+
+@description('Existing private ACR in this resource group; images are pulled using managed identity')
+param registryName string
 
 @description('CPU cores for the worker')
 param cpu string = '2.0'
@@ -29,20 +32,20 @@ param cpu string = '2.0'
 param memory string = '4Gi'
 
 @description('Min replicas (0 = scale to zero when idle)')
-param minReplicas int = 0
+param minReplicas int = 1
 
 @description('Max replicas')
 param maxReplicas int = 1
 
-@description('Optional API key; leave empty to rely on network controls only')
+@description('Required server-side API key; never place it in frontend configuration')
 @secure()
-param apiKey string = ''
+@minLength(32)
+param apiKey string
 
 @description('When true, worker only prepares inbox (no PyTorch DBH)')
-param prepareOnly bool = true
+param prepareOnly bool = false
 
 var unique = uniqueString(resourceGroup().id, namePrefix)
-var storageName = take('st${namePrefix}${unique}', 24)
 var envName = '${namePrefix}-cae-${unique}'
 var appName = '${namePrefix}-dbh-${unique}'
 var lawName = '${namePrefix}-law-${unique}'
@@ -58,17 +61,22 @@ resource law 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   }
 }
 
-resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
-  name: storageName
+resource registry 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
+  name: registryName
+}
+
+resource workerIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: '${namePrefix}-dbh-pull-${unique}'
   location: location
-  sku: {
-    name: 'Standard_LRS'
-  }
-  kind: 'StorageV2'
+}
+
+resource pullRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(registry.id, workerIdentity.id, 'AcrPull')
+  scope: registry
   properties: {
-    allowBlobPublicAccess: false
-    minimumTlsVersion: 'TLS1_2'
-    supportsHttpsTrafficOnly: true
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
+    principalId: workerIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 
@@ -107,9 +115,22 @@ var secretEnv = empty(apiKey) ? [] : [
 resource dbhApp 'Microsoft.App/containerApps@2024-03-01' = {
   name: appName
   location: location
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${workerIdentity.id}': {}
+    }
+  }
+  dependsOn: [pullRole]
   properties: {
     managedEnvironmentId: cae.id
     configuration: {
+      registries: [
+        {
+          server: registry.properties.loginServer
+          identity: workerIdentity.id
+        }
+      ]
       ingress: {
         external: true
         targetPort: 8080
@@ -163,6 +184,5 @@ resource dbhApp 'Microsoft.App/containerApps@2024-03-01' = {
 
 output containerAppFqdn string = dbhApp.properties.configuration.ingress.fqdn
 output containerAppName string = dbhApp.name
-output storageAccountName string = storage.name
 output cloudDbhBaseUrl string = 'https://${dbhApp.properties.configuration.ingress.fqdn}'
 output setAppEnvHint string = 'ARBOR3D_CLOUD_DBH_URL=https://${dbhApp.properties.configuration.ingress.fqdn}'

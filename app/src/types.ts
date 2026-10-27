@@ -1,5 +1,19 @@
 export type DbhMethod = "circle" | "caliper" | string;
 
+export type MeasurementQuality = {
+  schema_version: string;
+  method: string;
+  decision: "accepted" | "review";
+  identifiable: boolean;
+  probability: number | null;
+  target_probability: number;
+  tolerance_cm: number | null;
+  model_id: string | null;
+  reasons: string[];
+  features: Record<string, number | null>;
+  context?: Record<string, unknown>;
+};
+
 export type QuarterlyObservation = {
   dataset_kind: "simulated";
   persistent_tree_id: string;
@@ -15,6 +29,12 @@ export type QuarterlyObservation = {
 
 export type TreeRecord = {
   Tree_ID: string;
+  persistent_tree_id?: string;
+  candidate_dbh_cm?: number | null;
+  execution?: { platform: string; stage: string; id?: string; completed_at?: string; input_sha256?: string; point_count?: number } | null;
+  num_slice_points?: number | null;
+  measurement_quality?: MeasurementQuality | null;
+  quality_candidates?: (MeasurementQuality & { candidate_dbh_cm: number })[] | null;
   dataset_kind?: "observed" | "simulated";
   quarterly_observations?: QuarterlyObservation[];
   DBH_cm: number | null;

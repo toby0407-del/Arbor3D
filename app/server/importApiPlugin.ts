@@ -247,6 +247,9 @@ export function importApiPlugin(projectRoot: string): Plugin {
               num_trees?: number;
               trees?: unknown[];
             } | null;
+            if (pipeline.mode === "arbor3d" && (!report || !report.trees?.length)) {
+              throw new Error("量測管線尚未提供可查看的正式盤點成果");
+            }
             job.report = report;
             job.treeCount = report?.num_trees ?? report?.trees?.length ?? null;
             setStage(job, "measure", "done");
@@ -270,6 +273,13 @@ export function importApiPlugin(projectRoot: string): Plugin {
             job.message = statusMessage || `處理失敗（結束碼 ${code}）`;
             pushLog(job, job.message);
           }
+          await persistJob(job);
+        } catch (error) {
+          setStage(job, "measure", "error");
+          setStage(job, "publish", "error");
+          job.status = "error";
+          job.message = error instanceof Error ? error.message : "正式成果發佈失敗";
+          pushLog(job, job.message);
           await persistJob(job);
         } finally {
           resolve();

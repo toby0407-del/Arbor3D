@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { BrandMark } from "../components/BrandMark";
 import { ColorLegend } from "../components/ColorLegend";
+import { MicrosoftServices } from "../components/MicrosoftServices";
 import { OsmSiteMap } from "../components/OsmSiteMap";
 import {
   SITE_COUNTS,
@@ -75,6 +76,7 @@ export function SitePickerPage({ session, onLogout }: Props) {
   const [userPos, setUserPos] = useState<LatLng | null>(null);
   const [showPathDb, setShowPathDb] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showServices, setShowServices] = useState(false);
   const [previewTreeId, setPreviewTreeId] = useState<string | null>(null);
   const [overlays, setOverlays] = useState<MapOverlay[]>(() => readOverlays());
   const [liveReports, setLiveReports] = useState<Record<string, ParkInventoryReport>>({});
@@ -282,9 +284,10 @@ export function SitePickerPage({ session, onLogout }: Props) {
             </div>
           </div>
         </div>
+        <div className="service-actions"><button type="button" className="ghost-btn" onClick={() => setShowServices(true)}>服務連線</button>
         <button type="button" className="ghost-btn" onClick={onLogout}>
           登出
-        </button>
+        </button></div>
       </header>
 
       <div className="picker-body">
@@ -617,6 +620,7 @@ export function SitePickerPage({ session, onLogout }: Props) {
         ) : null}
       </Suspense>
 
+      {showServices && <MicrosoftServices onClose={() => setShowServices(false)} />}
       {saveDraft ? (
         <div
           className="save-path-backdrop"

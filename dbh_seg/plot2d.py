@@ -35,7 +35,7 @@ def save_slice_plot(slice_pts, result, out_path=None):
             edgecolor="green", linewidth=2.5, zorder=1,
         ))
         ax.plot(result.xc, result.yc, "g+", markersize=16, markeredgewidth=2, zorder=3)
-        method_label = "RANSAC 圓形擬合"
+        method_label = "圓擬合候選（品質決策另列）"
     else:
         if result.r is not None:
             # 淡灰色虛線圓：畫出原本病態、不可靠的圓擬合，方便對照「為什麼改用卡尺法」
@@ -52,7 +52,7 @@ def save_slice_plot(slice_pts, result, out_path=None):
         mid = (p1 + p2) / 2
         ax.text(mid[0], mid[1], f"  {result.dbh_m * 100:.1f} cm",
                  color="blue", fontsize=12, fontweight="bold", zorder=3)
-        method_label = "PCA 可見寬度法 (虛擬卡尺)"
+        method_label = "可見寬度候選（非直接等同 DBH）"
 
     if result.caliper_kept_mask is not None:
         kept = result.caliper_kept_mask
@@ -78,7 +78,7 @@ def save_slice_plot(slice_pts, result, out_path=None):
     ax.set_ylabel("Y (m)")
     ax.set_title(
         f"胸高切片俯視圖 (由上往下看) - {method_label}\n"
-        f"DBH = {result.dbh_m * 100:.1f} 公分，涵蓋角度 = {result.arc_deg:.0f}°"
+        f"候選尺寸 = {result.dbh_m * 100:.1f} 公分，涵蓋角度 = {result.arc_deg:.0f}°"
     )
     ax.legend(loc="upper right")
     ax.grid(True, linestyle="--", alpha=0.4)
