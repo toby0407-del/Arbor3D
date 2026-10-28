@@ -36,7 +36,7 @@ test('all displayed technical previews use upright plots and discrete points, pr
       assert.ok(!points.includes('<image')&&!points.includes('<filter')&&!points.includes('<path'));
     }
   }
-  assert.equal(uniqueClouds.size,465);
+  assert.equal(uniqueClouds.size,450);
 });
 
 test("every currently published tree has a loadable cross-section image", () => {
@@ -53,12 +53,12 @@ test("every currently published tree has a loadable cross-section image", () => 
       );
     }
   }
-  assert.equal(treeCount, 481);
+  assert.equal(treeCount, 466);
 });
 
 test("every simulated inventory uses labelled, varied and loadable synthetic media", () => {
   const files = fs.readdirSync(inventoryRoot).filter((name) => /^sim.*\.json$/i.test(name));
-  assert.equal(files.length, 30);
+  assert.equal(files.length, 29);
   const masks = new Set<string>();
   const slices = new Set<string>();
   const clouds = new Set<string>();
@@ -102,8 +102,8 @@ test("every enabled synthetic route has a published inventory and all three evid
   const bound = [...bindingSource.matchAll(/scanId:\s*"(sim[^"]+)"/g)].map((match) => match[1]);
   const extra = JSON.parse(fs.readFileSync(path.join(appRoot, "src/data/extraParkBindings.json"), "utf8"));
   const scanIds = [...bound, ...extra.map((item: { scanId: string }) => item.scanId)];
-  assert.equal(scanIds.length, 18);
-  assert.equal(new Set(scanIds).size, 18);
+  assert.equal(scanIds.length, 17);
+  assert.equal(new Set(scanIds).size, 17);
   for (const scanId of scanIds) {
     const reportPath = path.join(inventoryRoot, `${scanId}.json`);
     assert.ok(fs.existsSync(reportPath), scanId);

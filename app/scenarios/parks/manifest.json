@@ -5,7 +5,7 @@
   "start": "2022-09-30",
   "end": "2026-06-30",
   "quarters": 16,
-  "observations": 4720,
+  "observations": 4480,
   "sites": [
     {
       "parkName": "臺中公園",
@@ -190,38 +190,6 @@
       "siteId": "park-8b808a155e",
       "seed": 20260926,
       "observations": 320
-    },
-    {
-      "parkName": "惠來公園",
-      "pathId": "huilai-demo-20260331",
-      "pathName": "惠來路側綠帶",
-      "scanId": "sim20260331hlp001",
-      "polyline": [
-        [
-          24.1549221,
-          120.6389911
-        ],
-        [
-          24.154924,
-          120.639422
-        ],
-        [
-          24.1549244,
-          120.6395033
-        ],
-        [
-          24.1551117,
-          120.6403102
-        ]
-      ],
-      "trees": 15,
-      "center": [
-        24.155249,
-        120.639601
-      ],
-      "siteId": "park-1e7e21b624",
-      "seed": 20260927,
-      "observations": 240
     },
     {
       "parkName": "臺中都會公園",
@@ -616,8 +584,8 @@
   ],
   "review_scenario": {
     "target_fraction": 0.1,
-    "trees": 30,
-    "total": 295,
+    "trees": 28,
+    "total": 280,
     "kind": "synthetic demonstration, not calibrated accuracy"
   },
   "assumptions": [

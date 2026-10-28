@@ -104,19 +104,6 @@ export const SCAN_BINDINGS: ScanBinding[] = [
     ],
   },
   {
-    parkName: "惠來公園",
-    pathId: "huilai-demo-20260331",
-    pathName: "惠來路側綠帶",
-    scanId: "sim20260331hlp001",
-    // OSM footway 272604159
-    polyline: [
-      [24.1549221, 120.6389911],
-      [24.154924, 120.639422],
-      [24.1549244, 120.6395033],
-      [24.1551117, 120.6403102],
-    ],
-  },
-  {
     parkName: "臺中都會公園",
     pathId: "tc-metro-demo-20260401",
     pathName: "東側主園道",

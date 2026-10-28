@@ -14,7 +14,7 @@ test('only Feng Chia retains campus routes; new parks have no invented mapped ro
   const source = fs.readFileSync(path.join(root, 'src/data/scanBindings.ts'), 'utf8');
   const names = [...source.matchAll(/parkName: "([^"]+)"/g)].map(m => m[1]);
   assert.deepEqual(names.filter(n => /大學|學校/.test(n)), ['逢甲大學']);
-  assert.equal((source.match(/OSM (?:footway|pedestrian) \d+/g) ?? []).length, 13);
+  assert.equal((source.match(/OSM (?:footway|pedestrian) \d+/g) ?? []).length, 12);
   const extra = read('src/data/extraParkBindings.json');
   assert.equal(extra.length, 6);
   for (const park of extra) assert.deepEqual(park.polyline, []);
@@ -24,7 +24,7 @@ test('all park scenarios preserve source lineage, identities, 16 quarters and pu
   // Git on Windows may convert line endings; provenance compares canonical LF bytes.
   const template = fs.readFileSync(path.join(root, 'src/data/inventories/20260818092855.json'), 'utf8').replaceAll('\r\n', '\n');
   assert.equal(createHash('sha256').update(template).digest('hex'), manifest.template_sha256);
-  assert.equal(manifest.sites.length, 18);
+  assert.equal(manifest.sites.length, 17);
   const persistent = new Set();
   let total = 0;
   for (const site of manifest.sites) {
@@ -58,7 +58,7 @@ test('all park scenarios preserve source lineage, identities, 16 quarters and pu
       total += rows.length;
     }
   }
-  assert.equal(total, 4720);
+  assert.equal(total, 4480);
   assert.equal(total, manifest.observations);
 });
 
@@ -71,8 +71,16 @@ test('park review scenarios total the requested nearest ten percent without chan
     assert.equal(stats.yellow,0);
     assert.equal(stats.red,report.trees.filter((t:TreeRecord)=>t.scenario_review_required).length);
   }
-  assert.equal(review,Math.round(total*0.1));
+  assert.equal(review,manifest.review_scenario.trees);
+  assert.equal(total,manifest.review_scenario.total);
+  assert.ok(Math.abs(review / total - 0.1) < 0.01);
   const actual=read('src/data/inventories/20260818092855.json');
   assert.equal(inventoryStats(actual.trees).review,16);
   assert.equal(trafficLight({...actual.trees[0],scenario_review_required:false}),trafficLight(actual.trees[0]));
+});
+
+test('Huilai is reserved for actual scans with no seeded inventory',()=>{
+  assert.ok(!manifest.sites.some((s:{parkName:string})=>s.parkName==='惠來公園'));
+  assert.ok(!fs.existsSync(path.join(root,'src/data/inventories/sim20260331hlp001.json')));
+  assert.ok(!fs.readFileSync(path.join(root,'src/data/scanBindings.ts'),'utf8').includes('sim20260331hlp001'));
 });
