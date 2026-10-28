@@ -38,7 +38,7 @@ export function MicrosoftServices({ onClose }: { onClose: () => void }) {
         <div><dt>Azure Cosmos DB</dt><dd>{!services ? "檢查中…" : services.storage.provider !== "cosmos" ? "目前使用本機檔案" : services.storage.state === "reachable" ? "已實際連通資料庫" : "資料庫無法連線"}</dd><dd>儲存人工量測及複核紀錄。</dd></div>
         <div><dt>Azure 樹木量測運算</dt><dd>{!services ? "檢查中…" : services.compute?.state === "hybrid_ready" ? "混合運算已就緒：本機處理影像與點雲，Azure 計算截面幾何與品質" : services.compute?.state === "ready" ? "正式量測依賴與成果下載已就緒，待批次驗收" : services.compute?.state === "prepare_only" ? "目前只能整理資料，尚不能正式量測" : services.compute?.state === "authentication_required" ? "雲端驗證尚未完成" : services.compute?.state === "unavailable" ? "雲端運算服務無法連線" : "尚未接通，匯入目前使用快速預覽"}</dd></div>
         <div><dt>Microsoft Entra ID</dt><dd>{!services ? "檢查中…" : services.identity.configured ? "目前使用 Microsoft 登入" : "尚未設定組織登入，目前使用本機帳號"}</dd></div>
-        <div><dt>Power BI</dt><dd>{services?.powerBi.reportUrl ? <a href={services.powerBi.reportUrl} target="_blank" rel="noreferrer">開啟 Power BI 報表</a> : "尚未連結線上報表"}</dd><dd>校方授權問題已記錄，待開通後連結報表。</dd></div>
+        <div><dt>Power BI Desktop</dt><dd>目前使用本機分析，結果在各盤點的圖表區查看。</dd><dd>不需登入線上 Power BI；更新量測後須重新整理 Desktop 並匯入結果。</dd>{services?.powerBi.reportUrl && <dd><a href={services.powerBi.reportUrl} target="_blank" rel="noreferrer">開啟線上報表</a></dd>}</div>
       </dl>
       <button className="primary-btn" disabled={busy} onClick={()=>void refresh()}>{busy ? "檢查中…" : "重新檢查"}</button>
       {services && <p className="muted">檢查時間：{new Date(services.checkedAt).toLocaleString("zh-TW")}</p>}

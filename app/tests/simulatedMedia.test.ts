@@ -2,9 +2,42 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import { technicalPreviewUrl } from '../src/lib/scanMedia.ts';
+import type { ParkInventoryReport } from '../src/types.ts';
 
 const appRoot = path.resolve(import.meta.dirname, "..");
 const inventoryRoot = path.join(appRoot, "src", "data", "inventories");
+
+test('all displayed technical previews use upright plots and discrete points, preserving observed media',()=>{
+  const uniqueClouds=new Set<string>();
+  for(const file of fs.readdirSync(inventoryRoot).filter(n=>n.endsWith('.json'))){
+    const report=JSON.parse(fs.readFileSync(path.join(inventoryRoot,file),'utf8')) as ParkInventoryReport;
+    for(const tree of report.trees){
+      const section=technicalPreviewUrl(report,tree,'section')!;
+      const cloud=technicalPreviewUrl(report,tree,'cloud')!;
+      if(report.dataset_kind!=='simulated'){
+        assert.equal(section,`/scans/${report.scan_id}/${tree.Cross_Section_Image}`);
+        assert.equal(cloud,`/scans/${report.scan_id}/${tree.PointCloud_Preview}`);
+        continue;
+      }
+      assert.ok(!section.includes('synthetic-tree-evidence'));
+      assert.ok(!cloud.includes('synthetic-tree-evidence'));
+      const read=(url:string)=>fs.readFileSync(path.join(appRoot,'public',url),'utf8');
+      const slice=read(section),points=read(cloud);
+      assert.match(slice,/胸高切片俯視圖/);
+      assert.match(slice,/fill="#dc2626"/);
+      if(tree.DBH_cm!=null)assert.ok(slice.includes(`DBH = ${tree.DBH_cm.toFixed(1)} 公分`));
+      assert.ok(!slice.includes('<image')&&!slice.includes('<filter'));
+      assert.ok(!slice.includes('<g transform='));
+      assert.ok(!uniqueClouds.has(points), `Repeated cloud for ${report.scan_id}:${tree.Tree_ID}`);
+      uniqueClouds.add(points);
+      assert.match(points,/data-renderer="discrete-point-cloud"/);
+      assert.ok((points.match(/<circle /g)||[]).length>3000);
+      assert.ok(!points.includes('<image')&&!points.includes('<filter')&&!points.includes('<path'));
+    }
+  }
+  assert.equal(uniqueClouds.size,465);
+});
 
 test("every currently published tree has a loadable cross-section image", () => {
   const files = fs.readdirSync(inventoryRoot).filter((name) => name.endsWith(".json"));

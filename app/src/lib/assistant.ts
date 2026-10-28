@@ -4,6 +4,7 @@ import { carbonForTree, totalCo2Ton } from "./carbon";
 import { inventoryStats, reviewReason, trafficLight } from "./status";
 
 export type AssistantContext = {
+  datasetKind?: 'observed' | 'simulated';
   parkName: string;
   pathName: string;
   scanId: string;
@@ -28,6 +29,7 @@ export type AssistantContext = {
 };
 
 export type AssistantReply = {
+  verifiedSteps?: string[];
   answer: string;
   evidence: string[];
   provider: "local" | "azure" | "copilot" | "phi4";
@@ -49,6 +51,7 @@ export function inventoryAssistantContext(
 ): AssistantContext {
   const stats = inventoryStats(report.trees);
   return {
+    datasetKind:report.dataset_kind==='simulated'?'simulated':'observed',
     parkName,
     pathName,
     scanId: report.scan_id,
@@ -74,7 +77,7 @@ export function inventoryAssistantContext(
         status: trafficLight(tree),
         reviewReason: reviewReason(tree),
         confidence: tree.YOLO_confidence,
-        manualDbhCm: measures[tree.Tree_ID]?.strict13m === true && tree.dbh_is_strict_breast_height === true &&
+        manualDbhCm: report.dataset_kind !== 'simulated' && measures[tree.Tree_ID]?.strict13m === true && tree.dbh_is_strict_breast_height === true &&
           measures[tree.Tree_ID]?.measuredAt === report.created_at.slice(0,10)
           ? positive(measures[tree.Tree_ID]?.dbhCm) : null,
       };

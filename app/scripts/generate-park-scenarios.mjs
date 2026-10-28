@@ -19,6 +19,9 @@ const write = (p, data) => {
 const json = (p, data) => write(p, JSON.stringify(data, null, 2) + '\n');
 const allRows = [];
 const manifest = [];
+const totalTrees = sites.reduce((sum, site) => sum + site.trees, 0);
+const reviewTrees = Math.round(totalTrees * 0.10);
+let treeOffset = 0;
 for (const [siteIndex, site] of sites.entries()) {
   if (!site.scanId.startsWith('sim') || /大學|學校|高中|國中|國小/.test(site.parkName)) throw Error('Park-only simulations required');
   const [latitude, longitude] = site.center;
@@ -39,7 +42,9 @@ for (const [siteIndex, site] of sites.entries()) {
     const persistent = `SIM-${site.siteId}-${id}`;
     const anchor = (ref.DBH_cm || 30) * (0.85 + random() * 0.3);
     const annual = 0.35 + random() * 0.8;
-    const scenario = ['steady', 'slow', 'stalled', 'negative_review'][i % 4];
+    const globalIndex = treeOffset + i;
+    const needsReview = Math.floor((globalIndex + 1) * reviewTrees / totalTrees) > Math.floor(globalIndex * reviewTrees / totalTrees);
+    const scenario = needsReview ? 'negative_review' : ['steady', 'slow', 'stalled'][i % 3];
     const fraction = i / Math.max(1, site.trees - 1) * (track.length - 1);
     const a = Math.min(track.length - 2, Math.floor(fraction));
     const gps = track[a].map((v, axis) => round(v + (track[a + 1][axis] - v) * (fraction - a), 7));
@@ -53,6 +58,7 @@ for (const [siteIndex, site] of sites.entries()) {
         dataset_kind: 'simulated', site_id: site.siteId, park_name: site.parkName,
         scan_id: `${site.scanId}-${year}Q${quarter}`, local_tree_id: id, persistent_tree_id: persistent,
         quarter: `${year}Q${quarter}`, date, scenario,
+        scenario_review_required: needsReview,
         simulated_manual_dbh_cm: round(latent + normal() * 0.04),
         simulated_ai_dbh_cm: round(latent + 0.12 + normal() * 0.32),
         simulated_height_m: round(1.3 + 1.8 * Math.sqrt(latent)),
@@ -69,6 +75,7 @@ for (const [siteIndex, site] of sites.entries()) {
       reference_scan_id: template.scan_id, reference_tree_id: ref.Tree_ID,
       DBH_cm: last.simulated_ai_dbh_cm, previous_DBH_cm: quarterly.at(-2).simulated_ai_dbh_cm,
       DBH_method: 'simulated_circle', DBH_note: `模擬資料,${scenario}`,
+      scenario_review_required: needsReview,
       dbh_is_strict_breast_height: true, Height_m: last.simulated_height_m,
       GPS_Location: gps, position_kind: 'simulated',
       Local_XYZ_m: [round((gps[1] - site.center[1]) * 101500, 3), round((gps[0] - site.center[0]) * 111320, 3), 1.3],
@@ -86,6 +93,7 @@ for (const [siteIndex, site] of sites.entries()) {
   const gpx = `<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="Arbor3D SIMULATED" xmlns="http://www.topografix.com/GPX/1/1"><metadata><name>SIMULATED ${site.parkName}</name><desc>合成示範軌跡，非現場 GPS；不可作為導航或現勘證據。</desc></metadata><trk><name>SIMULATED</name><trkseg>${track.map(([lat, lon]) => `<trkpt lat="${lat}" lon="${lon}"/>`).join('')}</trkseg></trk></gpx>`;
   write(`scenarios/parks/${site.scanId}-SIMULATED.gpx`, gpx);
   manifest.push({ ...site, seed, observations: trees.length * 16 });
+  treeOffset += site.trees;
 }
 const columns = Object.keys(allRows[0]);
 const csv = '\ufeff' + [columns, ...allRows.map(r => columns.map(k => r[k]))].map(r => r.map(v => `"${String(v).replaceAll('"', '""')}"`).join(',')).join('\n') + '\n';
@@ -93,6 +101,7 @@ write('scenarios/parks/quarterly-SIMULATED.csv', csv);
 json('scenarios/parks/manifest.json', {
   dataset_kind: 'simulated', reference_scan_id: template.scan_id, template_sha256: sha,
   start: '2022-09-30', end: '2026-06-30', quarters: 16, observations: allRows.length, sites: manifest,
+  review_scenario: {target_fraction:0.10, trees:reviewTrees, total:totalTrees, kind:'synthetic demonstration, not calibrated accuracy'},
   assumptions: ['DBH anchor = FCU source value × U(0.85,1.15); not calibrated truth.',
     'Annual growth U(0.35,1.15) cm; scripted slow/stalled/negative scenarios; not health diagnoses.',
     'Manual noise SD=0.04 cm; AI noise bias=0.12 cm, SD=0.32 cm; assumed, not validated accuracy.',

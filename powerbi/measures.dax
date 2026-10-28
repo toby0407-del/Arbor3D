@@ -42,3 +42,12 @@ COALESCE(COUNTROWS(FactGrowth), 0)
 
 Average DBH cm =
 AVERAGE(FactObservation[auto_dbh_cm])
+
+Latest Review Trees =
+SUMX(VALUES(DimTree[tree_key]), VAR SnapshotDate = CALCULATE(MAX(FactObservation[observed_at])) RETURN IF(CALCULATE(COUNTROWS(FactObservation), FactObservation[observed_at] = SnapshotDate, FactObservation[review_required] = TRUE()) > 0, 1, 0))
+
+Latest Review Rate =
+DIVIDE([Latest Review Trees], [Observed Trees])
+
+Latest CO2 Snapshot ton =
+SUMX(VALUES(DimTree[tree_key]), VAR SnapshotDate = CALCULATE(MAX(FactObservation[observed_at])) VAR LastScans = CALCULATETABLE(VALUES(FactObservation[scan_key]), FactObservation[observed_at] = SnapshotDate) RETURN CALCULATE(SUM(FactEstimate[co2_equivalent_ton]), TREATAS(LastScans, FactEstimate[scan_key])))

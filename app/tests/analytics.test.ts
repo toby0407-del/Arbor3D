@@ -80,3 +80,16 @@ test('empty notes cannot turn nonstandard measurements green', async()=>{
   assert.equal(inventoryStats([base]).review,1);
   assert.equal(trafficLight({...base,dbh_is_strict_breast_height:true}),'green');
 });
+
+
+test('chart summary review includes yellow and red; scenario pairs never become real accuracy',()=>{
+  const r={scan_id:'s',created_at:'2026-10-28',trees:[
+    {Tree_ID:'T1',DBH_cm:20,DBH_method:'circle',DBH_note:'not_1.3m',dbh_is_strict_breast_height:false},
+    {Tree_ID:'T2',DBH_cm:60,DBH_method:'caliper',DBH_note:'wide_caliper',dbh_is_strict_breast_height:false},
+  ]} as ParkInventoryReport;
+  assert.equal(powerBiChartTables(r,{}).summary[0].review_count,2);
+  const scenario={...r,dataset_kind:'simulated',trees:[{...r.trees[0],dbh_is_strict_breast_height:true}]} as ParkInventoryReport;
+  const f={dbhCm:'21',heightM:'',coeff:'',note:'',measuredAt:'2026-10-28',strict13m:true};
+  assert.equal(powerBiChartTables(scenario,{T1:f}).summary[0].paired_count,0);
+  assert.equal(powerBiChartTables(scenario,{T1:f}).summary[0].mae_cm,null);
+});

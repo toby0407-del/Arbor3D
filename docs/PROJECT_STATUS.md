@@ -1,5 +1,17 @@
 # Arbor3D 專案現況與後續路線圖
 
+## 最新：統一技術影像與本機交付
+
+2026-10-28：465 棵展示樹的橫切面切換至固定正向座標圖；點雲預覽採深底離散散點，排除旋轉、調色與照片式替代。真實掃描附件未修改，展示圖仍保留來源識別。App 正式建置與 57 項測試通過；Python 一般／分析／雲端共 52 項通過。Desktop 三組報表可重新開啟、刷新及唯讀核對後更新 App。GitHub 使用 competition-quality-workflow 分支；本機交付與資料副本另存使用者指定桌面資料夾，未部署 Azure 前端。
+
+## 最新：Power BI 報表複核與 AI 助理修正
+
+2026-10-28：三組 Desktop 已實際刷新及核對 DAX，更新 19 份 App 快照；季度樹木數 295、觀測 4,720、最新需核對 30（10.17%，情境設定）。修正註記誤判、跨季碳存量重複累加、App／Desktop 碳量取值差異及圖表標題。真實逢甲仍 16 棵待人工核對，無有效實測配對。Phi-4 加強檢索與資料約束，七項實際問答通過。App 56 項及分析 Python 28 項通過。詳細範圍見 [Power BI 本機驗收](microsoft/POWERBI_LOCAL.md)。
+
+## 歷史：Power BI Desktop 本機分析回到 App
+
+2026-10-28 改用未登入的 Power BI Desktop；真實 16 棵與 18 座模擬公園 295 棵分別刷新與執行 DAX，再核對後匯出到 App 的分析區。App 顯示來源、計算時間與資料版本，資料變動會提醒重跑。這是當期分析快照，未開通線上 Power BI/Fabric，未更新 Azure 前端網站。操作及驗收範圍見 [本機 Power BI 流程](microsoft/POWERBI_LOCAL.md)。
+
 ## 最新：既有免費 Azure 混合運算已驗證
 
 依使用者要求不新增付費資源。既有 DBH App Service 已更新，方案仍是 F1。真實 Tree_001 已跑通本機投影、地面扶正與截面擷取，再由 Azure 計算幾何／品質，回本機輸出紀錄與圖。App 已設定混合運算，沒有啟用全雲端 YOLO／Open3D 或 Copilot Studio；品質未校準及非標準胸高結果仍待複核。App 50、Python 50 項測試通過。詳見 [雲端最新狀態](microsoft/CLOUD_DBH.md)。

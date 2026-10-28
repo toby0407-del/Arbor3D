@@ -614,6 +614,12 @@
       "observations": 256
     }
   ],
+  "review_scenario": {
+    "target_fraction": 0.1,
+    "trees": 30,
+    "total": 295,
+    "kind": "synthetic demonstration, not calibrated accuracy"
+  },
   "assumptions": [
     "DBH anchor = FCU source value × U(0.85,1.15); not calibrated truth.",
     "Annual growth U(0.35,1.15) cm; scripted slow/stalled/negative scenarios; not health diagnoses.",

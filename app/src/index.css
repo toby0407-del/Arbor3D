@@ -1241,16 +1241,9 @@ h1 { margin: 0; font-size: 32px; font-weight: 650; letter-spacing: -0.03em; }
   font-size: 13px;
   color: var(--ink-soft);
 }
-.path-db-head .simulation-notice {
-  display: inline-block;
-  margin-top: 8px;
-  padding: 6px 10px;
-  border: 1px solid #c66d16;
-  border-radius: 8px;
-  background: #fff2d8;
-  color: #7a3f08;
-  font-weight: 700;
-}
+.path-db-head .source-details { margin-top: 6px; font-size: 12px; color: var(--ink-soft); }
+.path-db-head .source-details summary { cursor: pointer; width: fit-content; }
+.path-db-head .source-details p { margin: 5px 0; max-width: 420px; }
 .path-db-table-wrap {
   overflow-x: hidden;
   overflow-y: auto;
@@ -2971,3 +2964,14 @@ h1 { margin: 0; font-size: 32px; font-weight: 650; letter-spacing: -0.03em; }
 .services-list > div { padding: 14px 0; border-bottom: 1px solid #dce5df; }
 .services-list dt { font-weight: 700; margin-bottom: 6px; }
 .services-list dd { margin: 3px 0; color: #496052; }
+/* Published Desktop results remain readable without an online Power BI session. */
+.local-pbi { margin-bottom: 22px; padding: 20px; border: 1px solid #c6dfd4; border-radius: 16px; background: #f2f8f5; color: #183c30; }
+.local-pbi > header { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.local-pbi h3 { margin:0 0 6px; }
+.local-pbi header p { margin:0; font-size:13px; }
+.local-pbi-status { font-size:13px; padding:10px 12px; background:#fff; border-radius:8px; }
+.local-pbi-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:10px; margin:14px 0; }
+.local-pbi-cards > div { padding:14px; background:#fff; border-radius:10px; }
+.local-pbi-cards span { display:block; font-size:12px; color:#4a685b; margin-bottom:8px; }
+.local-pbi-cards strong { font-size:22px; font-variant-numeric:tabular-nums; }
+.local-pbi small { display:block; color:#4a685b; line-height:1.6; }

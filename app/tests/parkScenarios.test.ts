@@ -4,6 +4,8 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import test from 'node:test';
 import { quarterlyGrowth } from '../src/lib/growth';
+import { inventoryStats, trafficLight } from '../src/lib/status';
+import type { TreeRecord } from '../src/types';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (p: string) => JSON.parse(fs.readFileSync(path.join(root, p), 'utf8'));
@@ -58,4 +60,19 @@ test('all park scenarios preserve source lineage, identities, 16 quarters and pu
   }
   assert.equal(total, 4720);
   assert.equal(total, manifest.observations);
+});
+
+test('park review scenarios total the requested nearest ten percent without changing observed status',()=>{
+  let total=0, review=0;
+  for(const site of manifest.sites){
+    const report=read(`src/data/inventories/${site.scanId}.json`);
+    const stats=inventoryStats(report.trees);
+    total+=stats.total; review+=stats.review;
+    assert.equal(stats.yellow,0);
+    assert.equal(stats.red,report.trees.filter((t:TreeRecord)=>t.scenario_review_required).length);
+  }
+  assert.equal(review,Math.round(total*0.1));
+  const actual=read('src/data/inventories/20260818092855.json');
+  assert.equal(inventoryStats(actual.trees).review,16);
+  assert.equal(trafficLight({...actual.trees[0],scenario_review_required:false}),trafficLight(actual.trees[0]));
 });

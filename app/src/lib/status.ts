@@ -23,7 +23,10 @@ export function trafficLight(input: TreeRecord | string | null | undefined): Tra
   ) {
     return "red";
   }
-  if ((tree && tree.dbh_is_strict_breast_height !== true) || (value && value !== "ok")) return "yellow";
+  if (tree?.dataset_kind === 'simulated' && (tree.scenario_review_required === true || value.includes('negative_review'))) return 'red';
+  const notes = value.split(',').filter(Boolean).filter(note => note !== 'ok' &&
+    !(tree?.dataset_kind === 'simulated' && ['模擬資料','steady','slow','stalled','simulated_steady','simulated_slow','simulated_stalled'].includes(note)));
+  if ((tree && tree.dbh_is_strict_breast_height !== true) || notes.length) return "yellow";
   return "green";
 }
 
@@ -42,6 +45,7 @@ export function lightShort(light: TrafficLight): string {
 export function reviewReason(tree: TreeRecord): string {
   const notes = (tree.DBH_note || "").split(",").filter(Boolean);
   const parts: string[] = [];
+  if (tree.dataset_kind === 'simulated' && (tree.scenario_review_required === true || notes.some(n=>n.includes('negative_review')))) parts.push('跨期變化異常，需核對');
   if (tree.measurement_quality && !qualityAccepted(tree.measurement_quality)) {
     parts.push(...(tree.measurement_quality.reasons ?? []).map(r => qualityReasons[r] ?? "品質條件待複核"));
   }

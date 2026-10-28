@@ -37,7 +37,7 @@ export function powerBiChartTables(
     const carbon = carbonForTree(tree, field, report.created_at);
     const manual = positive(field?.dbhCm);
     const ai = positive(tree.DBH_cm);
-    const comparable = manual != null && ai != null && field?.strict13m === true &&
+    const comparable = datasetKind === "observed" && manual != null && ai != null && field?.strict13m === true &&
       tree.dbh_is_strict_breast_height === true && field?.measuredAt === report.created_at.slice(0,10);
     const error = comparable ? ai! - manual! : null;
     return {
@@ -76,7 +76,7 @@ export function powerBiChartTables(
       observations: trees.length,
       paired_count: paired.length,
       mae_cm: mae,
-      review_count: statusCounts.red,
+      review_count: statusCounts.red + statusCounts.yellow,
       reliable_count: statusCounts.green,
       pending_count: statusCounts.yellow,
       co2_ton_total: trees.reduce((sum, row) => sum + (row.co2_ton ?? 0), 0),

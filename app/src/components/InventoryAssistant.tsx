@@ -176,6 +176,7 @@ export function InventoryAssistant({
             {reply.answer.split("\n").map((line, index) => (
               <p key={`${index}-${line}`}>{line || " "}</p>
             ))}
+            {reply.verifiedSteps?.length ? <><h3>系統操作步驟</h3><ol>{reply.verifiedSteps.map(step=><li key={step}>{step}</li>)}</ol></>:null}
             <h3>資料依據</h3>
             <ul>
               {reply.evidence.map((item) => (

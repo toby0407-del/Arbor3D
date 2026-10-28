@@ -28,6 +28,7 @@ export type QuarterlyObservation = {
 };
 
 export type TreeRecord = {
+  scenario_review_required?: boolean;
   Tree_ID: string;
   persistent_tree_id?: string;
   candidate_dbh_cm?: number | null;

@@ -1,4 +1,4 @@
-const VERSION = "arbor3d-v2";
+const VERSION = "arbor3d-v3";
 const SHELL_CACHE = `${VERSION}-shell`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 const SHELL = ["/", "/manifest.webmanifest", "/favicon.svg"];
@@ -39,6 +39,25 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   const url = new URL(request.url);
   if (url.pathname.startsWith("/api/")) return;
+
+  // Published analysis changes without rebuilding the App. Prefer the new result,
+  // retaining the most recently fetched snapshot only for an offline visit.
+  if (url.origin === self.location.origin && url.pathname.startsWith('/analysis/')) {
+    event.respondWith((async () => {
+      const cache = await caches.open(RUNTIME_CACHE);
+      const key = url.origin + url.pathname;
+      try {
+        const response = await fetch(request);
+        if (response.ok) await cache.put(key, response.clone());
+        return response;
+      } catch (error) {
+        const cached = await cache.match(key);
+        if (cached) return cached;
+        throw error;
+      }
+    })());
+    return;
+  }
 
   if (request.mode === "navigate") {
     event.respondWith(

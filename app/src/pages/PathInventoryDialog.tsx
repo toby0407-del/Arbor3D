@@ -26,7 +26,7 @@ import {
   formatXyz,
   methodLabel,
 } from "../lib/format";
-import { scanAssetUrl } from "../lib/scanMedia";
+import { scanAssetUrl, technicalPreviewUrl } from "../lib/scanMedia";
 import {  availableYears,
   defaultGrowthRange,
   filterPointsByRange,
@@ -629,13 +629,13 @@ export function PathInventoryDialog({
     ? scanAssetUrl(report.scan_id, preview.Mask_Path, cacheBust)
     : null;
   const sliceUrl = preview
-    ? scanAssetUrl(report.scan_id, preview.Cross_Section_Image, cacheBust)
+    ? technicalPreviewUrl(report, preview, 'section', cacheBust)
     : null;
   const photoUrl = preview
     ? scanAssetUrl(report.scan_id, preview.Best_Photo, cacheBust)
     : null;
   const cloudPreviewUrl = preview
-    ? scanAssetUrl(report.scan_id, preview.PointCloud_Preview, cacheBust)
+    ? technicalPreviewUrl(report, preview, 'cloud', cacheBust)
     : null;
   const hasModel = Boolean(preview?.Single_Tree_Ply);
   const modelUrl =
@@ -670,9 +670,10 @@ export function PathInventoryDialog({
             <h2 id="path-db-title">{pathName}</h2>
             <p>{formatScanTime(report.created_at)}</p>
             {isSimulated ? (
-              <p className="simulation-notice" role="note">
-                DEMO 模擬資料 · {report.simulation_notice || "僅供介面展示，不可作為現場量測、路線或精度證據。"}
-              </p>
+              <details className="source-details">
+                <summary>資料來源</summary>
+                <p>本頁使用合成情境資料與參考影像，非現地實測。</p>
+              </details>
             ) : null}
             <div className="inv-summary" aria-label="盤點摘要">
               <span className="pill">{stats.total} 棵</span>
@@ -812,10 +813,10 @@ export function PathInventoryDialog({
                 <thead>
                   <tr>
                     <th>樹號</th>
-                    <th>{isSimulated ? "模擬 AI 胸徑" : "AI 胸徑"}</th>
+                    <th>AI 胸徑</th>
                     <th>樹高</th>
                     <th>估算 CO₂ 當量</th>
-                    <th className="growth-col">{isSimulated ? "模擬成長狀態" : "變化提示"}</th>
+                    <th className="growth-col">變化提示</th>
                   </tr>
                 </thead>
                 <tbody>
