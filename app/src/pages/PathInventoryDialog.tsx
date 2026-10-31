@@ -3,6 +3,7 @@ import { downloadPowerBiChartCsvPack } from "../lib/powerBiCharts";
 import { InventoryCharts } from "../components/InventoryCharts";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { PathTreeMap } from "../components/PathTreeMap";
+import { compareTreeIds } from "../lib/treeOrder";
 import { QuarterlySimulation } from "../components/QuarterlySimulation";
 import { InventoryAssistant } from "../components/InventoryAssistant";
 import { MeasurementQualityPanel } from "../components/MeasurementQualityPanel";
@@ -547,7 +548,7 @@ export function PathInventoryDialog({
       if (filter === "rescan") return tree.rescan_plan?.required === true;
       if (filter === "review") return isReviewTree(tree);
       return trafficLight(tree) === filter;
-    });
+    }).sort(compareTreeIds);
   }, [filter, report.trees]);
 
   const growthById = useMemo(() => {

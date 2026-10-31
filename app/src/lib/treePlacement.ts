@@ -1,6 +1,7 @@
 import type { LatLng } from "../data/sites";
 import { haversineMeters } from "./gpx";
 import { trafficLight } from "./status";
+import { compareTreeIds } from "./treeOrder";
 import type { TrafficLight, TreeRecord } from "../types";
 
 export type MapTreeMarker = {
@@ -46,6 +47,7 @@ export function treesAlongPolyline(
   trees: TreeRecord[],
 ): MapTreeMarker[] {
   if (polyline.length < 2 || trees.length === 0) return [];
+  trees = [...trees].sort(compareTreeIds);
 
   const withGps = trees.filter(
     (tree) =>
