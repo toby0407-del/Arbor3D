@@ -6,6 +6,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import zlib from "node:zlib";
+import { partitionMeasuredRecords } from "./measured-records.mjs";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -283,7 +284,7 @@ function clusterTrees(xyz, count, up) {
     merged.push(tree);
   }
   merged.sort((a, b) => b.n - a.n);
-  const keep = merged.slice(0, 30).sort((a, b) => a.along - b.along);
+  const keep = merged.sort((a, b) => a.along - b.along);
   return { ground, trees: keep };
 }
 
@@ -367,21 +368,6 @@ function drawDot(img, x, y, radius, r, g, b) {
   }
 }
 
-function drawCircle(img, cx, cy, radius, r, g, b) {
-  const steps = Math.max(24, Math.round(radius * 6));
-  for (let i = 0; i < steps; i += 1) {
-    const a = (i / steps) * Math.PI * 2;
-    setPx(
-      img,
-      Math.round(cx + Math.cos(a) * radius),
-      Math.round(cy + Math.sin(a) * radius),
-      r,
-      g,
-      b,
-    );
-  }
-}
-
 const FONT_5X7 = {
   "0": ["01110", "10001", "10001", "10001", "10001", "10001", "01110"],
   "1": ["00100", "01100", "00100", "00100", "00100", "00100", "01110"],
@@ -454,9 +440,11 @@ function project(bounds, x, y, width, height, margin = 36) {
   const sx = (width - margin * 2) / (bounds.maxX - bounds.minX);
   const sy = (height - margin * 2) / (bounds.maxY - bounds.minY);
   const s = Math.min(sx, sy);
+  const offsetX = (width - (bounds.maxX - bounds.minX) * s) / 2;
+  const offsetY = (height - (bounds.maxY - bounds.minY) * s) / 2;
   return {
-    x: Math.round(margin + (x - bounds.minX) * s),
-    y: Math.round(height - margin - (y - bounds.minY) * s),
+    x: Math.round(offsetX + (x - bounds.minX) * s),
+    y: Math.round(height - offsetY - (y - bounds.minY) * s),
   };
 }
 
@@ -507,19 +495,12 @@ function drawMask(tree) {
 
 function drawSlice(tree) {
   const img = makeRgb(640, 560, 255, 255, 255);
-  const pts = tree.pts.length ? tree.pts : [[tree.x, tree.y]];
+  const pts = tree.pts;
   const bounds = fitBounds(pts, 0.45);
-  const c = project(bounds, tree.x, tree.y, img.width, img.height, 48);
-  const radiusPx = Math.max(18, Math.min(110, tree.dbh * 1.1));
-  for (let r = radiusPx; r >= 0; r -= 1) {
-    drawCircle(img, c.x, c.y, r, 159, 212, 138);
-  }
-  drawCircle(img, c.x, c.y, radiusPx, 61, 140, 64);
   for (const [x, y] of pts) {
     const p = project(bounds, x, y, img.width, img.height, 48);
     drawDot(img, p.x, p.y, 3, 214, 39, 40);
   }
-  drawDot(img, c.x, c.y, 4, 46, 125, 50);
   return img;
 }
 
@@ -540,7 +521,7 @@ function drawPreview(xyz, count, tree, up, hx, hy) {
   if (near.length < 500) near = collect(6.0);
   if (!near.length) return img;
   const pts = near.map((p) => [p[0], p[1]]);
-  const bounds = fitBounds(pts, 0.12);
+  const bounds = fitBounds(pts, 0.06);
   for (const [x, h, side] of near) {
     const p = project(bounds, x, h, img.width, img.height, 24);
     const shade = Math.max(70, Math.min(180, 110 + side * 40));
@@ -614,8 +595,7 @@ async function writeBindings(nextPathId, nextScanId) {
 
 function treeNotes(tree) {
   const notes = [];
-  if (tree.arc < 120) notes.push("gap");
-  if (tree.dbh >= 55) notes.push("wide_caliper");
+  if (!tree.section?.supported) notes.push("no_measurement");
   return notes.join(",");
 }
 
@@ -699,6 +679,10 @@ async function renderOfficialFigures(outScan, trees, only = "") {
       outScan,
     ]);
     if (out) log(out);
+    if (only !== "masks") {
+      const diagnostics = JSON.parse(await fs.readFile(path.join(outScan, "_section_diagnostics.json"), "utf8"));
+      for (let i=0; i<trees.length; i+=1) trees[i].section = diagnostics[trees[i].id || padId(i+1)] ?? null;
+    }
   } catch (err) {
     log(`Python 繪圖失敗，改用後備圖：${err instanceof Error ? err.message : err}`);
     await writePngFile(path.join(outScan, "maps", "tree_id_map_dbh.png"), drawPathMap(trees));
@@ -730,12 +714,29 @@ async function main() {
   const hx = up === 0 ? 1 : 0;
   const hy = up === 2 ? 1 : 2;
   log("切 1.3 m 高度、分出樹幹…");
-  const { trees } = clusterTrees(xyz, count, up);
+  const { trees, ground } = clusterTrees(xyz, count, up);
   if (trees.length === 0) {
     throw new Error("沒有切出樹幹。請確認去噪 PLY 是路邊樹列點雲。");
   }
   log(`找到 ${trees.length} 棵樹身分`);
   attachColumns(xyz, count, trees, up, hx, hy);
+  // Detection uses a broad band; measurement images use a separate thin section.
+  // Display decimation must never erase the geometric support used for measurement.
+  const fullSectionCloud = await loadXyz(ply, Number.MAX_SAFE_INTEGER);
+  const sectionXyz = fullSectionCloud.xyz;
+  log(`胸高截面使用完整去噪點雲 ${fullSectionCloud.count.toLocaleString("zh-TW")} 點；預覽抽樣不參與截面取點`);
+  for (const tree of trees) tree.pts = [];
+  for (let i=0; i<fullSectionCloud.count; i+=1) {
+    const h = sectionXyz[i*3+up]-ground;
+    if (Math.abs(h-1.3) > .06) continue;
+    const x=sectionXyz[i*3+hx], y=sectionXyz[i*3+hy];
+    let nearest=null, distance=Infinity;
+    for (const tree of trees) {
+      const d=Math.hypot(x-tree.x,y-tree.y);
+      if(d < Math.max(.25,tree.dbh/200+.1) && d < distance){ nearest=tree;distance=d; }
+    }
+    if(nearest)nearest.pts.push([x,y]);
+  }
 
   const outScan = path.join(root, "public", "scans", scanId);
   const photoDir = path.join(outScan, "photos");
@@ -784,7 +785,7 @@ async function main() {
     path.join(modelDir, "scene_gaussian.ply"),
   );
 
-  const records = [];
+  let records = [];
   for (let i = 0; i < trees.length; i += 1) {
     const tree = trees[i];
     const id = padId(i + 1);
@@ -806,10 +807,13 @@ async function main() {
     const notes = treeNotes(tree);
     records.push({
       Tree_ID: id,
-      DBH_cm: Number(tree.dbh.toFixed(1)),
-      DBH_method: tree.dbh > 55 ? "caliper" : "circle",
+      measurement_state: "pending_evidence",
+      DBH_cm: tree.section?.supported ? Number(tree.section.candidate_dbh_cm.toFixed(1)) : null,
+      candidate_dbh_cm: tree.section?.candidate_dbh_cm ?? null,
+      DBH_method: tree.section?.supported ? "circle" : "unresolved",
       DBH_note: notes,
-      arc_coverage_deg: Number(tree.arc.toFixed(1)),
+      arc_coverage_deg: tree.section?.arc_deg ?? null,
+      num_slice_points: tree.pts.length,
       dbh_is_strict_breast_height: false,
       GPS_Location: null,
       Local_XYZ_m: [
@@ -821,6 +825,7 @@ async function main() {
       PointCloud_Preview: previewRel,
       Mask_Path: maskRel,
       Cross_Section_Image: sliceRel,
+      Raw_Cross_Section_Image: await fs.access(path.join(outScan, `dbh/dbh_slice_top_down_${id}_raw.png`)).then(()=>`dbh/dbh_slice_top_down_${id}_raw.png`).catch(()=>null),
       "3D_Model_Path": hasGaussian ? "models/scene_gaussian.ply" : null,
       Single_Tree_Ply: null,
       YOLO_confidence: Number(Math.min(0.95, 0.25 + Math.log10(tree.n) / 8).toFixed(4)),
@@ -828,7 +833,14 @@ async function main() {
     });
   }
 
+  const { measured, excluded } = partitionMeasuredRecords(records);
+  records = measured;
+  await fs.writeFile(path.join(outScan, "_excluded_candidates.json"), JSON.stringify({
+    scan_id:scanId, reason:"insufficient_section_support", count:excluded.length, trees:excluded,
+  }, null, 2), "utf8");
+  log(`偵測候選 ${trees.length} 筆；有胸徑候選值 ${records.length} 筆；另存未量測候選 ${excluded.length} 筆`);
   const report = {
+    candidate_summary: { detected:trees.length, included:records.length, excluded:excluded.length },
     created_at: new Date().toISOString().slice(0, 19),
     scan_id: scanId,
     analysis_mode: "preview_point_cloud",

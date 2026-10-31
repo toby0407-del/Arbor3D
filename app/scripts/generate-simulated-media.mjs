@@ -2,6 +2,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { generateTechnicalPreviews } from './generate-technical-previews.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(here, "..");
@@ -73,3 +74,4 @@ for (const file of files) {
   await fs.writeFile(path.join(mediaRoot, "tree-demo.ply"), demoPly(scanId), "utf8");
 }
 console.log(`Generated explicitly labelled simulated media for ${files.length} inventories.`);
+await generateTechnicalPreviews();

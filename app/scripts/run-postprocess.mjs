@@ -9,6 +9,7 @@
  * 用法：node scripts/run-postprocess.mjs <jobDir> <scanId> [pathId]
  */
 import { spawn } from "node:child_process";
+import { runCloudDbh } from "./cloud-dbh-client.mjs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -54,107 +55,6 @@ async function runCmd(command, args, cwd, shell = false) {
   });
 }
 
-function sleep(ms) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-/** Minimal zip (store) without extra deps — enough for cloud upload. */
-async function zipDirectory(sourceDir, zipPath) {
-  const { execFile } = await import("node:child_process");
-  const { promisify } = await import("node:util");
-  const execFileAsync = promisify(execFile);
-  // Prefer PowerShell Compress-Archive on Windows; zip on Unix.
-  if (process.platform === "win32") {
-    const ps = [
-      "Compress-Archive",
-      "-Path",
-      `"${sourceDir}\\*"`,
-      "-DestinationPath",
-      `"${zipPath}"`,
-      "-Force",
-    ].join(" ");
-    await execFileAsync("powershell.exe", ["-NoProfile", "-Command", ps]);
-    return;
-  }
-  try {
-    await execFileAsync("zip", ["-r", zipPath, "."], { cwd: sourceDir });
-  } catch {
-    // Fallback: tar.gz renamed — cloud worker expects zip; fail clearly.
-    throw new Error(
-      "無法建立 zip（請安裝 zip，或在 Windows 使用內建 Compress-Archive）",
-    );
-  }
-}
-
-async function runCloudDbh(baseUrl, apiKey) {
-  const url = baseUrl.replace(/\/+$/, "");
-  log(`使用雲端 DBH：${url}`);
-  const zipPath = path.join(jobDir, `_cloud_upload_${scanId}.zip`);
-  await zipDirectory(jobDir, zipPath);
-  const bytes = await fs.readFile(zipPath);
-  const form = new FormData();
-  form.append("scan_id", scanId);
-  if (pathId) form.append("path_id", pathId);
-  form.append(
-    "archive",
-    new Blob([bytes], { type: "application/zip" }),
-    path.basename(zipPath),
-  );
-  const headers = {};
-  if (apiKey) headers["X-API-Key"] = apiKey;
-
-  const createRes = await fetch(`${url}/v1/jobs`, {
-    method: "POST",
-    headers,
-    body: form,
-  });
-  if (!createRes.ok) {
-    const text = await createRes.text();
-    throw new Error(`雲端建立工作失敗 ${createRes.status}: ${text}`);
-  }
-  const created = await createRes.json();
-  const jobId = created.job_id;
-  if (!jobId) throw new Error("雲端未回傳 job_id");
-  log(`雲端 job ${jobId}，輪詢中…`);
-
-  const deadline = Date.now() + 60 * 60 * 1000;
-  while (Date.now() < deadline) {
-    await sleep(3000);
-    const poll = await fetch(`${url}/v1/jobs/${jobId}`, { headers });
-    if (!poll.ok) {
-      throw new Error(`雲端查詢失敗 ${poll.status}`);
-    }
-    const status = await poll.json();
-    log(`狀態 ${status.status}: ${status.message || ""}`);
-    if (status.status === "succeeded") {
-      await fs.writeFile(
-        path.join(jobDir, "pipeline-status.json"),
-        JSON.stringify(
-          {
-            status: "cloud_succeeded",
-            message: status.message,
-            cloud_job_id: jobId,
-            inventory_path: status.inventory_path || null,
-          },
-          null,
-          2,
-        ),
-        "utf8",
-      );
-      try {
-        await fs.unlink(zipPath);
-      } catch {
-        /* ignore */
-      }
-      return;
-    }
-    if (status.status === "failed") {
-      throw new Error(status.message || "雲端 DBH 失敗");
-    }
-  }
-  throw new Error("雲端 DBH 逾時（60 分鐘）");
-}
-
 async function main() {
   for (const name of ["raw", "denoised", "gaussian"]) {
     const ok = await dirHasFiles(path.join(jobDir, name));
@@ -166,7 +66,7 @@ async function main() {
   const cloudUrl = process.env.ARBOR3D_CLOUD_DBH_URL?.trim();
   const cloudKey = process.env.ARBOR3D_CLOUD_DBH_API_KEY?.trim() || "";
   if (cloudUrl) {
-    await runCloudDbh(cloudUrl, cloudKey);
+    await runCloudDbh({ baseUrl: cloudUrl, apiKey: cloudKey, jobDir, scanId, pathId, appRoot: root, log });
     log("雲端 DBH 完成");
     return;
   }

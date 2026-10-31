@@ -3,6 +3,8 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
 import type { Plugin } from "vite";
 import { createFieldMeasureStore, type FieldMeasureRecord } from "./fieldMeasureStore.js";
+import { validMeasureId, validMeasurePatch } from "./fieldMeasurePatch.js";
+import { cloudComputeStatus } from "./cloudComputeStatus.js";
 
 const COOKIE = "arbor3d_session";
 const SESSION_MS = 8 * 60 * 60 * 1000;
@@ -62,7 +64,7 @@ function validMeasures(value: unknown): value is FieldMeasureRecord {
   const rows = Object.entries(value);
   if (rows.length > 500) return false;
   return rows.every(([treeId, raw]) => {
-    if (!/^[\w.-]{1,100}$/.test(treeId) || !raw || typeof raw !== "object") return false;
+    if (!validMeasureId(treeId) || !raw || typeof raw !== "object") return false;
     const item = raw as Partial<FieldMeasureRecord[string]>;
     return [item.dbhCm, item.heightM, item.coeff, item.measuredAt]
       .every((field) => typeof field === "string" && field.length <= 40) &&
@@ -142,6 +144,22 @@ export function accountApiPlugin(
           return next();
         }
         try {
+          if (url === "/api/auth/services" && req.method === "GET") {
+            if (!getSession(req)) { sendJson(res, 401, { error: "請先登入" }); return; }
+            let storageState = "unavailable";
+            try { await measureStore.check(); storageState = "reachable"; } catch { /* No credential details in response. */ }
+            const report = env.POWERBI_REPORT_URL?.trim();
+            let reportUrl: string | null = null;
+            try {
+              const parsed = new URL(report || "");
+              if (parsed.protocol === "https:" && parsed.hostname === "app.powerbi.com" && parsed.pathname.startsWith("/groups/")) reportUrl = parsed.href;
+            } catch { /* Unconfigured. */ }
+            sendJson(res, 200, { checkedAt: new Date().toISOString(), storage: { provider: measureStore.provider, state: storageState },
+              compute: await cloudComputeStatus(env),
+              identity: { configured: entraConfigured, sessionMode: entraConfigured ? "entra" : "local" },
+              powerBi: { reportUrl, state: reportUrl ? "configured" : "unconfigured" } });
+            return;
+          }
           if (url === "/api/auth/accounts" && req.method === "GET") {
             sendJson(res, 200, {
               accounts: entraConfigured ? [] : DEMO_ACCOUNTS.map(publicAccount),
@@ -204,7 +222,7 @@ export function accountApiPlugin(
             return;
           }
           const scanId = requestUrl.searchParams.get("scanId")?.trim() ?? "";
-          if (!/^[\w.-]{1,100}$/.test(scanId)) {
+          if (!validMeasureId(scanId)) {
             sendJson(res, 400, { error: "scanId 格式不正確" });
             return;
           }
@@ -214,6 +232,16 @@ export function accountApiPlugin(
               storage: measureStore.provider,
             });
             return;
+          }
+          if (req.method === "PATCH") {
+            const body = await readJson(req);
+            if (!validMeasureId(body.treeId) || !validMeasurePatch(body.changes)) {
+              sendJson(res, 400, { error: "人工量測修改格式不正確" }); return;
+            }
+            const measures = await measureStore.patch(scanId, body.treeId, body.changes, {
+              updatedAt: new Date().toISOString(), updatedBy: session.account.workId,
+            });
+            sendJson(res, 200, { ok: true, measures, storage: measureStore.provider }); return;
           }
           if (req.method === "PUT") {
             const body = await readJson(req);

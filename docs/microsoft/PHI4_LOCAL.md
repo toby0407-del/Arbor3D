@@ -1,5 +1,11 @@
 # Phi-4 本機模型＋1,000 題 RAG
 
+## 2026-10-27 本機已驗證的 SDK 啟動方式
+
+此電腦使用官方 `foundry-local-sdk-winml==1.2.4` 獨立環境，以根目錄「啟動Microsoft模型.cmd」啟動，App 使用「啟動Arbor3D.cmd」。環境與實際連線驗證見 [連線紀錄](LIVE_CONNECTIONS.md)。下方 CLI 安裝方式仍保留作為另一種啟動途徑，不能把兩套環境混裝在同一 venv。
+
+`ARBOR_AI_REQUIRE_PROVIDER=YES` 時，模型失敗會回傳錯誤，不退回規則回答。`/api/assistant/status` 的模型連通檢查與實際成功回覆時間分開呈現。
+
 ## 目前架構
 
 Arbor3D 支援 `ARBOR_AI_PROVIDER=phi4`。伺服器先從 1,000 題知識庫取回最多三段，再將盤點 JSON、規範片段與問題送到 Foundry Local 的 `Phi-4-mini`。若模型未啟動或呼叫失敗，會退回不生成內容的本機證據規則。

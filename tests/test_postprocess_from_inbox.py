@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -53,6 +54,8 @@ class PostprocessFromInboxTests(unittest.TestCase):
             ],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            env={**os.environ, "PYTHONIOENCODING": "cp1252"},
             check=False,
         )
 
@@ -63,6 +66,7 @@ class PostprocessFromInboxTests(unittest.TestCase):
             data = root / "data"
             result = self.run_adapter(job, data)
             self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("正式管線輸入已備妥", result.stdout)
             self.assertTrue((data / "3D_treedata_Denoised_Trees/test-scan.ply").is_file())
             self.assertTrue((data / "3DGS_Park_Model/完整場景/test-scan.ply").is_file())
             scan = data / "3D_treedata/test-scan"
@@ -96,6 +100,7 @@ class PostprocessFromInboxTests(unittest.TestCase):
                     """
                     import argparse, json
                     from pathlib import Path
+                    print("中文子程序輸出")
                     p = argparse.ArgumentParser()
                     p.add_argument("--scan_id")
                     p.add_argument("--output_dir", type=Path)
@@ -134,9 +139,12 @@ class PostprocessFromInboxTests(unittest.TestCase):
                 ],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                env={**os.environ, "PYTHONIOENCODING": "cp1252"},
                 check=False,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("中文子程序輸出", result.stdout)
             public = fake_repo / "app/public/scans/test-scan"
             report = json.loads((public / "inventory.json").read_text(encoding="utf-8"))
             relative_photo = report["trees"][0]["Best_Photo"]

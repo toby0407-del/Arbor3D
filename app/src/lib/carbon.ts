@@ -78,11 +78,15 @@ export function carbonForTree(
   field: FieldMeasure | undefined,
   scanCreatedAt: string,
 ): CarbonRow {
+  // Match analyticsInput: an untouched scenario uses its latest stored reference.
+  const reference = tree.dataset_kind === "simulated" && !field ? tree.quarterly_observations?.at(-1) : undefined;
   const dbh =
     parsePositive(field?.dbhCm) ??
+    reference?.simulated_manual_dbh_cm ??
     (tree.DBH_cm != null && tree.DBH_cm > 0 ? tree.DBH_cm : null);
   const measuredHeight =
     parsePositive(field?.heightM) ??
+    reference?.simulated_height_m ??
     (tree.Height_m != null && tree.Height_m > 0 ? tree.Height_m : null);
   const heightEstimated = measuredHeight == null;
   const height =

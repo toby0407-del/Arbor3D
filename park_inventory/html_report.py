@@ -88,7 +88,7 @@ a {{ color: #1a5276; }}
 <body>
 <h1>公園樹木盤點</h1>
 <p class="meta">掃描 {html.escape(str(report.get("scan_id") or ""))} · {report.get("num_trees", 0)} 棵 · {html.escape(str(report.get("created_at") or ""))}<br>
-圓擬合用於弧度 ≥ 120°；不足則用虛擬卡尺。紅色邊框 = 寬卡尺，建議之後現場核對。</p>
+新量測依方法可識別條件與經獨立驗證的校準機率分流；未校準或未達標者保留候選並轉人工複核。歷史結果不代表已通過新品質門檻。</p>
 <div class="map">{map_block}</div>
 <div class="grid">
 {body}

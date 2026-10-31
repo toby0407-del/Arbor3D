@@ -1,5 +1,19 @@
 # Arbor3D
 
+## 2026-10-28 最新版本
+
+本次進度保存在 `competition-quality-workflow` 分支，包含品質感知量測、人工複核同步、真實 Phi-4 本機問答，以及沿用既有 Azure F1 的截面幾何／品質計算。大型點雲與 YOLO 仍在本機，已以真實單木驗證混合流程；沒有新增付費 Azure 資源。完整雲端 YOLO、Copilot Studio、校準精度及整園新匯入驗收仍未完成。
+
+App 50 項、Python 50 項測試及正式建置通過。Azure DBH API 已更新，Azure 前端網站仍是原版本；推送這個工作分支不會觸發 `main` 的正式網站部署。進度與限制見 [最新專案狀態](docs/PROJECT_STATUS.md) 與 [免費混合運算紀錄](docs/microsoft/CLOUD_DBH.md)。
+
+## 2026-10-27 Microsoft 實際串接
+
+已移除比賽展示導覽，恢復自行操作。根目錄雙擊 **啟動Arbor3D.cmd**（先在 app 執行 npm ci、npm run build），開啟 http://127.0.0.1:5324/。Microsoft 模型請先雙擊 **啟動Microsoft模型.cmd**；本機 .env.local 保存實際設定且不進 Git。
+
+本機已驗證 Foundry Local Phi-4 真實推論、App 問答及 Azure Cosmos DB 讀寫。服務連線面板會實際檢查連通性。Power BI 線上服務因學校關閉自行註冊而暫緩，等待校方授權；Entra 組織登入仍需管理員核准的應用程式。Azure DBH API 已更新；前端部署仍維持原版本。
+
+保留品質／補掃分頁、人工真值匯出及方法專屬品質判斷。真值與校準資料尚未取得，不能宣稱已驗證量測精度。詳見 [Microsoft 連線與待辦](docs/microsoft/LIVE_CONNECTIONS.md) 及 [品質校準工具](measurement_quality/README.md)。以下保留既有架構與歷史實作紀錄。
+
 把真實世界的公園樹木做成可持續被 AI 分析的數位表徵（Digital Representation）。現場掃描是 **Physical**；去噪點雲、單木 ID、胸徑、碳匯與 3D 高斯是 **Digital**；YOLO 分割與時序成長判定是 **AI**。量測求精準，高斯求好看，兩條線分開，最後接到同一份長期監測報告與網頁介面。
 
 不是只做「替環保局量一次樹」，而是把每一棵樹從實體資產變成可跨期比對的數位分身：前期盤點 → 本期盤點 → 成長趨勢。

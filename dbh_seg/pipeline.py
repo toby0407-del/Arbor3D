@@ -1,5 +1,6 @@
 """整合流程：讀檔 -> 剝離樹幹 -> 清潔 -> 地面校正+切片 -> 圓形擬合 -> 視覺化。"""
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -58,6 +59,8 @@ def calculate_dbh_for_segmented_tree(
     export: bool = True,
     source_photo_path=None,
     results_json=None,
+    quality_context=None,
+    quality_model=None,
 ):
     ply, calib, mask, out_dir = _resolve_paths(
         ply_path, calib_path, mask_path, output_dir
@@ -110,8 +113,19 @@ def calculate_dbh_for_segmented_tree(
         cam_aligned = utils.apply_ground_transform(cam_world, rotation_matrix, z_offset)[0]
         camera_xy = cam_aligned[:2]
 
-    print("\n🎯 步驟 4/4：評估涵蓋角度，用圓形擬合或可見寬度法計算 DBH...")
-    result = estimate_dbh(slice_pts, camera_xy=camera_xy)
+    print("\n🎯 步驟 4/4：評估方法可識別性與校準機率，保留候選供複核...")
+    if quality_context is None and os.environ.get("ARBOR3D_QUALITY_CONTEXT"):
+        contexts = json.loads(Path(os.environ["ARBOR3D_QUALITY_CONTEXT"]).read_text(encoding="utf-8-sig"))
+        quality_context = contexts.get(str(tree_id), {})
+    if quality_model is None and os.environ.get("ARBOR3D_QUALITY_MODEL"):
+        quality_model = json.loads(Path(os.environ["ARBOR3D_QUALITY_MODEL"]).read_text(encoding="utf-8-sig"))
+    if os.environ.get("ARBOR3D_SECTION_CLOUD_URL"):
+        from .section_cloud import estimate_section_cloud
+        result = estimate_section_cloud(slice_pts, scan_id=config.SCAN_ID, tree_id=str(tree_id or "single-tree"),
+            camera_xy=camera_xy, context=quality_context, model=quality_model)
+        print("Azure 已完成截面幾何與品質計算：", result.execution["id"])
+    else:
+        result = estimate_dbh(slice_pts, camera_xy=camera_xy, quality_context=quality_context, quality_model=quality_model)
 
     report_dbh(result)
 

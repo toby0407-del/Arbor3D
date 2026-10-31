@@ -1,4 +1,5 @@
 import { powerBiChartTables } from "../lib/powerBiCharts";
+import { LocalPowerBiAnalysis } from './LocalPowerBiAnalysis';
 import type { FieldMeasure } from "../hooks/useFieldMeasures";
 import type { ParkInventoryReport } from "../types";
 
@@ -20,15 +21,16 @@ export function InventoryCharts({ report, measures }: Props) {
 
   return (
     <section className="inv-charts" aria-label="盤點圖表預覽">
+      <LocalPowerBiAnalysis report={report} measures={measures} />
       <header className="inv-charts-head">
         <h3>圖表預覽（可匯出至 Power BI）</h3>
         <p>
           KPI：{kpi.observations} 棵 · 配對 {kpi.paired_count} · MAE{" "}
-          {kpi.mae_cm == null ? "—" : `${kpi.mae_cm.toFixed(2)} cm`} · CO₂{" "}
+          {kpi.mae_cm == null ? "—" : `${kpi.mae_cm.toFixed(2)} cm`} · 候選 CO₂ 試算{" "}
           {kpi.co2_ton_total.toFixed(2)} t
-          {kpi.dataset_kind === "simulated" ? " · DEMO 模擬" : ""}
         </p>
       </header>
+
       <div className="inv-charts-grid">
         <figure className="inv-chart-card">
           <figcaption>燈號分布</figcaption>

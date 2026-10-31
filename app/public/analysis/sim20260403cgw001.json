@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "scan_id": "sim20260403cgw001",
+  "dataset_kind": "simulated",
+  "input_fingerprint": "e858943e62de2369ac72b62844f0ddb490b47314151c63f9bda7885a0e7ca371",
+  "engine": "Power BI Desktop / Analysis Services",
+  "calculated_at": "2026-10-28T10:10:14.7489057Z",
+  "published_at": "2026-10-28T10:10:20.522019+00:00",
+  "metrics": {
+    "scan_id": "sim20260403cgw001",
+    "observations": 14,
+    "paired_count": 0,
+    "mae_cm": null,
+    "rmse_cm": null,
+    "bias_cm": null,
+    "mape_pct": null,
+    "review_count": 2,
+    "average_dbh_cm": 53.195,
+    "co2_ton": 60.130862179405064,
+    "demo_pairs": 14,
+    "demo_mae_cm": 0.32142857142857323
+  },
+  "evidence_sha256": "788789060349a34fd93a6fc00ff33bf601ad68df8e90da1a15f2400b973d6a24"
+}
