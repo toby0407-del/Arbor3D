@@ -19,6 +19,7 @@ ASSET_FIELDS = {
     "Best_Photo": "photos",
     "Mask_Path": "masks",
     "Cross_Section_Image": "dbh",
+    "Rescan_Overlay_Image": "dbh",
     "3D_Model_Path": "models",
     "Single_Tree_Ply": "models",
 }

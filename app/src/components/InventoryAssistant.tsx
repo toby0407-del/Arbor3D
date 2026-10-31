@@ -103,14 +103,6 @@ export function InventoryAssistant({
           </button>
         </header>
 
-        {status?.hints?.length ? (
-          <details className="assistant-hints"><summary>服務設定資訊</summary><ul aria-label="服務設定提示">
-            {status.hints.map((hint) => (
-              <li key={hint}>{hint}</li>
-            ))}
-          </ul></details>
-        ) : null}
-
         <div className="assistant-context" aria-label="本次盤點摘要">
           <span>{context.summary.total} 棵</span>
           <span>較可信 {context.summary.reliable}</span>

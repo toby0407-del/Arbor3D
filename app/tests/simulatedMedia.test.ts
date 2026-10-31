@@ -44,6 +44,7 @@ test("every currently published tree has a loadable cross-section image", () => 
   let treeCount = 0;
   for (const file of files) {
     const report = JSON.parse(fs.readFileSync(path.join(inventoryRoot, file), "utf8"));
+    assert.equal(report.num_trees, report.trees.length, `${file}: reported tree count`);
     for (const tree of report.trees ?? []) {
       treeCount += 1;
       assert.ok(tree.Cross_Section_Image, `${file}:${tree.Tree_ID}:Cross_Section_Image`);
@@ -53,7 +54,7 @@ test("every currently published tree has a loadable cross-section image", () => 
       );
     }
   }
-  assert.equal(treeCount, 466);
+  assert.ok(treeCount >= 466, "all existing inventories and newly imported measurements remain covered");
 });
 
 test("every simulated inventory uses labelled, varied and loadable synthetic media", () => {

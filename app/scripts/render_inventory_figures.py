@@ -16,6 +16,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
+from section_geometry import fit_section
 
 plt.rcParams["font.sans-serif"] = [
     "Microsoft JhengHei",
@@ -39,17 +40,6 @@ def light_color(note: str, dbh: float) -> str:
     if dbh >= 55:
         return "#d62728"
     return "#2ca02c"
-
-
-def circle_points(cx: float, cy: float, radius: float, arc_deg: float, n: int = 36):
-    start = -math.radians(arc_deg) / 2
-    pts = []
-    for i in range(max(8, n)):
-        a = start + (i / max(1, n - 1)) * math.radians(max(40, arc_deg))
-        jitter = 0.012 * radius * math.sin(i * 1.7)
-        r = max(0.01, radius + jitter)
-        pts.append((cx + math.cos(a) * r, cy + math.sin(a) * r))
-    return pts
 
 
 def draw_path_map(trees: list[dict], scan_id: str, dest: Path) -> None:
@@ -162,36 +152,38 @@ def draw_mask(tree: dict, dest: Path) -> None:
     plt.imsave(dest, grid, cmap="gray", vmin=0, vmax=255)
 
 
-def draw_slice(tree: dict, dest: Path) -> None:
+def draw_slice(tree: dict, dest: Path, raw=False) -> None:
     pts = tree.get("pts") or []
     cx, cy = tree["x"], tree["y"]
-    radius = max(0.04, float(tree.get("dbh", 12)) / 200.0)
-    if len(pts) < 6:
-        pts = circle_points(cx, cy, radius, float(tree.get("arc", 180)))
+    fit = tree.get("section_diagnostic") or fit_section(pts)
+    tree["section_diagnostic"] = fit
     xs = [p[0] for p in pts]
     ys = [p[1] for p in pts]
     fig, ax = plt.subplots(figsize=(7.1, 6.1), dpi=130)
-    circle = Circle(
-        (cx, cy),
-        radius,
-        facecolor="#9fd48a",
-        edgecolor="#3d8c40",
-        linewidth=1.6,
-        alpha=0.45,
-        zorder=1,
-    )
-    ax.add_patch(circle)
-    ax.scatter(xs, ys, s=22, c="#d62728", label="胸高切片實際點雲", zorder=3)
-    ax.plot(cx, cy, "+", color="#2e7d32", markersize=13, markeredgewidth=2, zorder=4)
+    if fit["supported"] and not raw:
+        cx, cy = fit["center"]
+        ax.add_patch(Circle((cx,cy),fit["radius"],facecolor="#9fd48a",edgecolor="#3d8c40",linewidth=1.6,alpha=.45,zorder=1))
+        mask = fit["inliers"]
+        excluded = len(mask)-sum(mask)
+        if excluded:
+            ax.scatter([],[],s=16,c="#a3a3a3",label=f"已排除 {excluded} 點（原始圖可查看）")
+        ax.scatter([x for x,m in zip(xs,mask) if m],[y for y,m in zip(ys,mask) if m],s=22,c="#d62728",label="截面支持點",zorder=3)
+        ax.plot(cx, cy, "+", color="#2e7d32", markersize=13, markeredgewidth=2, zorder=4)
+        # Frame the supported trunk surface; distant rejected points cannot shrink it.
+        pad = fit["radius"]*1.18
+        ax.set_xlim(cx-pad,cx+pad)
+        ax.set_ylim(cy-pad,cy+pad)
+    else:
+        ax.scatter(xs,ys,s=22,c="#d62728",label="截面點雲",zorder=3)
     ax.set_aspect("equal", adjustable="box")
     ax.set_xlabel("X(m)")
     ax.set_ylabel("Y(m)")
-    dbh = float(tree.get("dbh", 0))
-    arc = float(tree.get("arc", 0))
-    ax.set_title(
-        "胸高切片俯視圖 (由上往下看) - RANSAC 圓形擬合\n"
-        f"DBH = {dbh:.1f} 公分，涵蓋角度 = {arc:.0f}°"
-    )
+    ax.set_title("胸高切片俯視圖（由上往下看）\n" + ("原始截面點雲" if raw else (
+        f"圓擬合候選 = {fit['candidate_dbh_cm']:.1f} 公分 · 涵蓋 {fit['arc_deg']:.0f}°"
+        if fit["supported"] else "截面支持不足 · 待補測")))
+    if not pts:
+        ax.set_xlim(cx-.3,cx+.3)
+        ax.set_ylim(cy-.3,cy+.3)
     ax.legend(loc="upper right", fontsize=8, framealpha=0.92)
     ax.grid(True, linestyle=":", linewidth=0.7)
     fig.tight_layout()
@@ -243,6 +235,9 @@ def main() -> None:
             draw_mask(tree, out / "masks" / f"real_tree_mask_{tid}.png")
         if only not in ("masks",):
             draw_slice(tree, out / "dbh" / f"dbh_slice_top_down_{tid}.png")
+            draw_slice(tree, out / "dbh" / f"dbh_slice_top_down_{tid}_raw.png", raw=True)
+    if only != "masks":
+        (out / "_section_diagnostics.json").write_text(json.dumps({t["id"]:t.get("section_diagnostic") for t in trees}),encoding="utf-8")
     print(f"wrote figures for {len(trees)} trees")
 
 

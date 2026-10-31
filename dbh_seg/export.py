@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import config
+from measurement_quality.rescan import build_rescan_plan, write_overlay, save_task
 
 
 def export_result(
@@ -31,10 +32,15 @@ def export_result(
         and slice_z_max <= config.SLICE_Z_MAX + 0.05
     )
 
+    plan = build_rescan_plan(slice_pts, (result.xc, result.yc), result.r,
+                             result.quality, strict_breast)
+    overlay = write_overlay(cross_section_image, plan) if cross_section_image else None
     record = {
         "timestamp": datetime.now().isoformat(timespec="seconds"),
         "scan_id": config.SCAN_ID,
         "tree_id": tree_id,
+        "rescan_plan": plan,
+        "Rescan_Overlay_Image": overlay,
         "source_photo_path": str(source_photo_path) if source_photo_path else None,
         "mask_path": str(mask_path or config.MASK_PATH),
         "method": result.method,
@@ -63,6 +69,8 @@ def export_result(
 
     history.append(record)
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    save_task(out_path.parent / "rescan_tasks.sqlite", config.SCAN_ID, tree_id,
+              plan, record["timestamp"])
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(history, f, ensure_ascii=False, indent=2)
 

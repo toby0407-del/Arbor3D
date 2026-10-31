@@ -402,7 +402,7 @@ export function SitePickerPage({ session, onLogout }: Props) {
                           >
                             {item.routeReliability === "osm-aligned"
                               ? "OSM 步道"
-                              : "待錄製"}
+                              : item.routeReliability === "user-drawn" ? "指定路徑" : "待錄製"}
                           </span>
                         </strong>
                       </button>
@@ -606,6 +606,7 @@ export function SitePickerPage({ session, onLogout }: Props) {
 
         {showPathDb && park && path && pathReport ? (
           <PathInventoryDialog
+            polyline={path.polyline}
             parkName={park.name}
             pathName={path.name}
             report={pathReport}

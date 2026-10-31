@@ -18,7 +18,9 @@ export function quarterlyGrowth(rows: QuarterlyObservation[]): TemporalGrowth {
   const previous = toSnap('previous', '前季模擬', points.at(-2) ?? points[0]);
   const trend = toSnap('trend', '起始模擬', points[0]);
   const delta = current.dbhCm - previous.dbhCm;
-  const status: GrowthStatus = delta < -0.5 ? 'abnormal' : Math.abs(delta) < 0.1 ? 'stalled' : 'normal';
+  // Operational trend alert tolerance, not a validated measurement accuracy bound.
+  const declineTolerance = Math.max(1, previous.dbhCm * .02);
+  const status: GrowthStatus = delta < -declineTolerance ? 'abnormal' : delta < -.1 ? 'watch' : Math.abs(delta) < 0.1 ? 'stalled' : 'normal';
   return { previous, current, trend, points, status, fit: growthFitFromStatus(status),
     warning: status === 'abnormal', expectedIncrementCm: 0,
     periodIncrementCm: delta, carbonDeltaTon: current.co2Ton - previous.co2Ton,
@@ -192,13 +194,12 @@ export function classifyGrowth(opts: {
   if (dbh == null || !(dbh > 0)) return "abnormal";
   const note = opts.note ?? "";
   if (
-    note === "no_measurement" ||
-    note.includes("wide_caliper") ||
-    note.includes("gap")
+    note === "no_measurement"
   ) {
     return "abnormal";
   }
-  if (dbh >= 110) return "abnormal";
+  // A large trunk or partial section alone is a review cue, not growth abnormality.
+  if (dbh >= 110 || note.includes("wide_caliper") || note.includes("gap")) return "watch";
   if (dbh >= 90 || annualDbhIncrementCm(dbh) <= 0.38) return "stalled";
   if (dbh < 14 || (opts.yoloConfidence != null && opts.yoloConfidence < 0.42)) {
     return "watch";

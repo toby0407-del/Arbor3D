@@ -44,10 +44,11 @@ export function selectPipeline(
   scanId: string,
   pathId: string,
   env: Record<string, string | undefined> = process.env,
+  cameraMetadataReady = true,
 ) {
   const isSimulated = /^sim(?:-|\d)/i.test(scanId);
   const configured =
-    !isSimulated &&
+    !isSimulated && cameraMetadataReady &&
     Boolean(
       env.ARBOR3D_CLOUD_DBH_URL?.trim() ||
         env.ARBOR3D_CMD?.trim() ||
@@ -64,6 +65,13 @@ export function selectPipeline(
         script: path.join(projectRoot, "scripts", "compute-inventory.mjs"),
         args: [dir, scanId, pathId].filter(Boolean),
       };
+}
+
+export async function hasCameraMetadata(dir: string): Promise<boolean> {
+  const entries = (await Promise.all(["metadata", "raw"].map(folder =>
+    fsp.readdir(path.join(dir, folder), { recursive: true }).catch(() => [] as string[])))).flat();
+  const names = new Set(entries.map(file => path.basename(String(file)).toLowerCase()));
+  return names.has("calib.json") && names.has("cameras.json");
 }
 
 const SLOT_LABELS = {
@@ -186,11 +194,14 @@ export function importApiPlugin(projectRoot: string): Plugin {
 
   async function runPipeline(job: ImportJob) {
     const dir = jobDir(job);
+    const cameraMetadataReady = await hasCameraMetadata(dir);
     const pipeline = selectPipeline(
       projectRoot,
       dir,
       job.scanId,
       job.pathId,
+      process.env,
+      cameraMetadataReady,
     );
     job.pipelineMode = pipeline.mode;
     job.status = "running";
@@ -205,7 +216,7 @@ export function importApiPlugin(projectRoot: string): Plugin {
       job,
       pipeline.mode === "arbor3d"
         ? "使用 ARBOR3D_CLOUD_DBH_URL／ARBOR3D_CMD／ARBOR3D_ROOT 執行正式量測管線"
-        : "未設定正式管線；使用內建點雲快速預覽，不可當作正式 YOLO／DBH 結果",
+        : cameraMetadataReady ? "未設定正式管線；使用內建點雲快速預覽，不可當作正式 YOLO／DBH 結果" : "相機姿態資料尚未齊全；已改用點雲快速預覽，正式量測待補齊後執行",
     );
     await persistJob(job);
 
@@ -415,8 +426,8 @@ export function importApiPlugin(projectRoot: string): Plugin {
     pushLog(
       job,
       metadataOk
-        ? `相機校正／姿態 ${job.fileCounts.metadata} 檔；正式管線將檢查 calib.json 與 cameras.json`
-        : "未上傳校正／姿態；快速預覽可執行，正式管線需要 calib.json 與 cameras.json",
+        ? `已收到相機資料 ${job.fileCounts.metadata} 檔；資料未齊全時先建立點雲預覽`
+        : "未上傳相機資料；可先建立點雲預覽",
     );
 
     const missingLabels: string[] = [];

@@ -6,6 +6,7 @@ import { PathTreeMap } from "../components/PathTreeMap";
 import { QuarterlySimulation } from "../components/QuarterlySimulation";
 import { InventoryAssistant } from "../components/InventoryAssistant";
 import { MeasurementQualityPanel } from "../components/MeasurementQualityPanel";
+import { RescanPanel } from "../components/RescanPanel";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import { useModalTouchScrollLock } from "../hooks/useModalTouchScrollLock";
 import { useFieldMeasures } from "../hooks/useFieldMeasures";
@@ -50,6 +51,7 @@ import {
   trafficLight,
 } from "../lib/status";
 import type { ParkInventoryReport, TrafficLight, TreeRecord } from "../types";
+import type { LatLng } from "../data/sites";
 
 const PlyViewer = lazy(() =>
   import("../components/PlyViewer").then((module) => ({
@@ -58,7 +60,7 @@ const PlyViewer = lazy(() =>
 );
 
 type PreviewTab = "images" | "measure" | "model" | "quality";
-type Filter = "all" | TrafficLight | "review";
+type Filter = "all" | TrafficLight | "review" | "rescan" | "available" | "missing";
 
 function TreeGlyph() {
   return (
@@ -471,6 +473,7 @@ function FormulaPopup({ onClose }: { onClose: () => void }) {
 }
 
 type Props = {
+  polyline?: LatLng[];
   parkName: string;
   pathName: string;
   report: ParkInventoryReport;
@@ -508,6 +511,7 @@ function ZoomImage({
 }
 
 export function PathInventoryDialog({
+  polyline,
   parkName,
   pathName,
   report,
@@ -528,6 +532,7 @@ export function PathInventoryDialog({
   const [growthTreeId, setGrowthTreeId] = useState<string | null>(null);
   const [tab, setTab] = useState<PreviewTab>(initialTab);
   const [filter, setFilter] = useState<Filter>("all");
+  const [rawSlice, setRawSlice] = useState(false);
   const { measures, update, storage, syncState, error: syncError, retrySync } = useFieldMeasures(report.scan_id);
   const stats = useMemo(() => inventoryStats(report.trees), [report.trees]);
   const co2Total = useMemo(
@@ -537,6 +542,9 @@ export function PathInventoryDialog({
   const visible = useMemo(() => {
     return report.trees.filter((tree) => {
       if (filter === "all") return true;
+      if (filter === "available") return tree.DBH_cm != null && Number.isFinite(tree.DBH_cm) && tree.DBH_cm > 0;
+      if (filter === "missing") return tree.DBH_cm == null || !Number.isFinite(tree.DBH_cm) || tree.DBH_cm <= 0;
+      if (filter === "rescan") return tree.rescan_plan?.required === true;
       if (filter === "review") return isReviewTree(tree);
       return trafficLight(tree) === filter;
     });
@@ -629,7 +637,9 @@ export function PathInventoryDialog({
     ? scanAssetUrl(report.scan_id, preview.Mask_Path, cacheBust)
     : null;
   const sliceUrl = preview
-    ? technicalPreviewUrl(report, preview, 'section', cacheBust)
+    ? rawSlice && preview.Raw_Cross_Section_Image
+      ? scanAssetUrl(report.scan_id, preview.Raw_Cross_Section_Image, cacheBust)
+      : technicalPreviewUrl(report, preview, 'section', cacheBust)
     : null;
   const photoUrl = preview
     ? scanAssetUrl(report.scan_id, preview.Best_Photo, cacheBust)
@@ -771,6 +781,7 @@ export function PathInventoryDialog({
           <aside className="path-db-map">
             <h3>路徑圖</h3>
             <PathTreeMap
+              polyline={polyline}
               trees={report.trees}
               selectedId={preview?.Tree_ID ?? null}
               onPick={onPreviewTree}
@@ -781,15 +792,19 @@ export function PathInventoryDialog({
             className="path-db-table-wrap"
           >
             <QuarterlySimulation key={report.scan_id} report={report} />
+            {report.trees.some(t=>t.measurement_state === "pending_evidence") ? <p className="quality-summary-note" role="status">已匯入 {report.trees.length} 筆候選樹木；{report.trees.filter(t=>t.DBH_cm != null).length} 筆有胸徑候選值，{report.trees.filter(t=>t.DBH_cm == null).length} 筆截面資料不足、待補測。待補測資料尚不能計算碳量。</p> : null}
             <InventoryCharts report={report} measures={measures} />
             <div className="inv-filters" role="tablist" aria-label="篩選">
               {(
                 [
+                  ["available", `有量測值 ${report.trees.filter(t=>t.DBH_cm != null && Number.isFinite(t.DBH_cm) && t.DBH_cm > 0).length}`, 1],
+                  ["missing", `待補資料 ${report.trees.filter(t=>t.DBH_cm == null || !Number.isFinite(t.DBH_cm) || t.DBH_cm <= 0).length}`, report.trees.filter(t=>t.DBH_cm == null || !Number.isFinite(t.DBH_cm) || t.DBH_cm <= 0).length],
                   ["all", `全部 ${stats.total}`, stats.total],
                   ["green", `較可信 ${stats.green}`, stats.green],
                   ["yellow", `待確認 ${stats.yellow}`, stats.yellow],
                   ["red", `需複核 ${stats.red}`, stats.red],
                   ["review", `待複核 ${stats.review}`, stats.review],
+                  ["rescan", `補測任務 ${report.trees.filter(t => t.rescan_plan?.required).length}`, report.trees.filter(t => t.rescan_plan?.required).length],
                 ] as const
               )
                 .filter(([id, , count]) => id === "all" || count > 0)
@@ -807,7 +822,7 @@ export function PathInventoryDialog({
               ))}
             </div>
             {visible.length === 0 ? (
-              <div className="path-db-empty">這個篩選沒有樹</div>
+              <div className="path-db-empty">{filter === "available" ? "這批尚無可顯示的胸徑值，請切換「待補資料」查看原因。" : "這個篩選沒有樹"}</div>
             ) : (
               <table className="compact-tree-table">
                 <thead>
@@ -843,16 +858,16 @@ export function PathInventoryDialog({
                           }
                         }}
                       >
-                        <td className="mono">{tree.Tree_ID.replace("Tree_", "#")}</td>
-                        <td>{formatDbh(tree.DBH_cm)}</td>
+                        <td className="mono">{tree.Tree_ID.replace("Tree_", "#")}{tree.rescan_plan?.required ? <small style={{display:"block",color:"#b45309"}}>待補測{tree.rescan_plan.sectors.length ? ` · ${tree.rescan_plan.sectors.length} 區` : " · 人工確認"}</small> : null}</td>
+                        <td>{tree.DBH_cm == null && tree.measurement_state === "pending_evidence" ? "待補測" : formatDbh(tree.DBH_cm)}</td>
                         <td>
                           {row.heightM != null
                             ? row.heightEstimated
                               ? `${row.heightM.toFixed(1)} m（估）`
                               : `${row.heightM.toFixed(1)} m`
-                            : "—"}
+                            : tree.measurement_state === "pending_evidence" ? "待量測" : "—"}
                         </td>
-                        <td>{row.co2Ton != null ? `${row.co2Ton.toFixed(3)} t` : "—"}</td>
+                        <td>{row.co2Ton != null ? `${row.co2Ton.toFixed(3)} t` : tree.measurement_state === "pending_evidence" ? "待資料" : "—"}</td>
                         <td className="growth-col">
                           {temporal ? (
                             <GrowthIconButton
@@ -942,7 +957,9 @@ export function PathInventoryDialog({
                 ) : (
                   <div className="path-db-empty">尚無 Segmentation 圖</div>
                 )}
+                <RescanPanel key={`${report.scan_id}:${preview.Tree_ID}`} tree={preview} report={report}/>
                 <h3>{isSimulated ? "橫切面（合成展示）" : "橫切面"}</h3>
+                {preview.Raw_Cross_Section_Image ? <label className="quality-check"><input type="checkbox" checked={rawSlice} onChange={e=>setRawSlice(e.target.checked)}/>查看原始截面全部散點</label> : null}
                 {sliceUrl ? (
                   <ZoomImage
                     src={sliceUrl}

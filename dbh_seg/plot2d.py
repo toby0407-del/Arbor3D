@@ -85,6 +85,16 @@ def save_slice_plot(slice_pts, result, out_path=None):
 
     fig.tight_layout()
     fig.savefig(out_path, dpi=150)
+    # Register the axes in actual exported pixels so overlays never guess placement.
+    import json
+    from pathlib import Path
+    box = ax.get_position()
+    width, height = fig.get_size_inches() * 150
+    Path(out_path).with_suffix(".plot.json").write_text(json.dumps({
+        "size_px": [float(width), float(height)],
+        "axes_px": [box.x0*width, (1-box.y1)*height, box.width*width, box.height*height],
+        "xlim": list(ax.get_xlim()), "ylim": list(ax.get_ylim()),
+    }), encoding="utf-8")
     plt.close(fig)
 
     print(f"\n🖼️  已產生俯視圖：{out_path}")

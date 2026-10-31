@@ -14,6 +14,9 @@ export function trafficLight(input: TreeRecord | string | null | undefined): Tra
   const tree = typeof input === "object" && input !== null ? input : null;
   const value = tree ? tree.DBH_note ?? "" : typeof input === "string" ? input : "";
   if (tree?.measurement_quality && !qualityAccepted(tree.measurement_quality)) return "red";
+  if (tree?.measurement_state === "pending_evidence" && !tree.measurement_quality &&
+      tree.dbh_is_strict_breast_height !== true &&
+      (tree.DBH_cm == null || (Number.isFinite(tree.DBH_cm) && tree.DBH_cm > 0))) return "yellow";
   if (tree && (tree.DBH_cm == null || !Number.isFinite(tree.DBH_cm) || tree.DBH_cm <= 0 ||
     (tree.DBH_method === "caliper" && tree.DBH_cm >= 45))) return "red";
   if (
@@ -32,7 +35,7 @@ export function trafficLight(input: TreeRecord | string | null | undefined): Tra
 
 export function lightLabel(light: TrafficLight): string {
   if (light === "green") return "演算法較可信";
-  if (light === "yellow") return "有數字，建議現場核對";
+  if (light === "yellow") return "待確認或待補測";
   return "卡尺偏寬或量不到，現場再量";
 }
 

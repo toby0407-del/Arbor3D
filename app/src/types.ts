@@ -28,6 +28,9 @@ export type QuarterlyObservation = {
 };
 
 export type TreeRecord = {
+  measurement_state?: "pending_evidence";
+  rescan_plan?: RescanPlan | null;
+  Rescan_Overlay_Image?: string | null;
   scenario_review_required?: boolean;
   Tree_ID: string;
   persistent_tree_id?: string;
@@ -51,6 +54,7 @@ export type TreeRecord = {
   PointCloud_Preview?: string | null;
   Mask_Path: string | null;
   Cross_Section_Image: string | null;
+  Raw_Cross_Section_Image?: string | null;
   "3D_Model_Path": string | null;
   Single_Tree_Ply: string | null;
   YOLO_confidence: number | null;
@@ -69,3 +73,17 @@ export type ParkInventoryReport = {
 };
 
 export type TrafficLight = "green" | "yellow" | "red";
+
+export type RescanPlan = {
+  schema_version: "arbor3d-rescan-2";
+  required: boolean;
+  status: "complete" | "manual_review" | "pending_safety_check";
+  reasons: string[];
+  coordinate_frame: "local_xy_ccw_from_positive_x";
+  bin_deg: number;
+  minimum_scope_deg: number | null;
+  next_view_local_deg: number | null;
+  precision_guaranteed: false;
+  safety_status: "unverified";
+  sectors: { start_deg: number; end_deg: number; span_deg: number; view_local_deg: number }[];
+};

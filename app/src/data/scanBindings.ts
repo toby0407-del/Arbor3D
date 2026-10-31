@@ -1,10 +1,14 @@
 import extraParks from "./extraParkBindings.json";
+import userRoutes from "./userScanRoutes.json";
 import parkScenarios from "../../scripts/park-simulation-sites.json";
 import { hasReport } from "./inventory";
 
 type LatLng = [number, number];
 
 export type ScanBinding = {
+  siteId?: string;
+  routeReliability?: "osm-aligned" | "unverified" | "user-drawn";
+  routeNote?: string;
   parkName: string;
   pathId: string;
   pathName: string;
@@ -19,6 +23,7 @@ export type ScanBinding = {
  * polyline 一律走陸域步道／校道，避開湖面與水域中心。
  */
 export const SCAN_BINDINGS: ScanBinding[] = [
+  ...userRoutes as ScanBinding[],
   ...extraParks as ScanBinding[],
   {
     parkName: "逢甲大學",
@@ -218,7 +223,7 @@ export const SCAN_BINDINGS: ScanBinding[] = [
 export function bindingsForPark(parkName: string, siteId?: string): ScanBinding[] {
   return SCAN_BINDINGS.filter((item) => {
     const scenario = parkScenarios.find(site => site.scanId === item.scanId);
-    return item.parkName === parkName && (!siteId || !scenario || scenario.siteId === siteId);
+    return item.parkName === parkName && (!siteId || !item.siteId || item.siteId === siteId) && (!siteId || !scenario || scenario.siteId === siteId);
   });
 }
 

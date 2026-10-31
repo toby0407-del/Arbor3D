@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { RescanPanel } from "./RescanPanel";
 import type { FieldMeasure } from "../hooks/useFieldMeasures";
 import type { ParkInventoryReport, TreeRecord } from "../types";
 import { downloadJson, qualityAccepted, qualityEvidence, qualityReasons, qualityState, rankViews, type ViewCandidate } from "../lib/measurementQuality";
@@ -43,6 +44,7 @@ export function MeasurementQualityPanel({tree,report,measures,update,onImport}: 
     <p className="quality-summary-note">{tree.execution?.platform === "azure-app-service"
       ? `截面幾何與品質由 Azure 計算${tree.execution.completed_at ? `，完成於 ${new Date(tree.execution.completed_at).toLocaleString("zh-TW")}` : ""}。影像辨識與大型點雲前處理在本機執行。`
       : "本筆未記錄 Azure 截面計算證據；歷史資料不會自動改標為雲端成果。"}</p>
+    <RescanPanel tree={tree} report={report}/>
     <div className="quality-metrics">
       <div><span>截面有效點</span><strong>{q?.features?.effective_points ?? tree.num_slice_points ?? "未記錄"}</strong></div>
       <div><span>胸高像素寬</span><strong>{q?.features?.trunk_width_px != null ? `${q.features.trunk_width_px} px` : "未記錄"}</strong></div>

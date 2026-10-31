@@ -707,7 +707,7 @@ export function OsmSiteMap({
         icon: treePin(tree.light, selected),
         zIndexOffset: selected ? 900 : 700,
       });
-      marker.bindTooltip(tree.id, {
+      marker.bindTooltip(`${tree.id}${tree.placement === "route-reference" ? " · 沿線索引位置" : ""}`, {
         direction: "top",
         offset: [0, selected ? -14 : -8],
         className: selected ? "osm-tree-tip" : undefined,

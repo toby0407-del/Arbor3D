@@ -7,6 +7,7 @@ export type MapTreeMarker = {
   id: string;
   latlng: LatLng;
   light: TrafficLight;
+  placement: "gps" | "route-reference";
 };
 
 function interpolate(
@@ -28,36 +29,18 @@ function interpolate(
   return polyline[polyline.length - 1];
 }
 
-function offsetFromPath(
-  polyline: LatLng[],
-  cum: number[],
-  total: number,
-  t: number,
-  lateralM: number,
-): LatLng {
-  const onPath = interpolate(polyline, cum, total, t);
-  if (!Number.isFinite(lateralM) || Math.abs(lateralM) < 0.05) return onPath;
-  const dist = Math.min(1, Math.max(0, t)) * total;
-  let i = 1;
-  for (; i < polyline.length; i += 1) {
-    if (cum[i] >= dist || i === polyline.length - 1) break;
-  }
-  const a = polyline[i - 1];
-  const b = polyline[i];
-  const midLat = (a[0] + b[0]) / 2;
-  const dNorth = (b[0] - a[0]) * 111_320;
-  const dEast = (b[1] - a[1]) * 111_320 * Math.cos((midLat * Math.PI) / 180);
-  const len = Math.hypot(dEast, dNorth) || 1;
-  const nEast = -dNorth / len;
-  const nNorth = dEast / len;
-  return [
-    onPath[0] + (nNorth * lateralM) / 111_320,
-    onPath[1] +
-      (nEast * lateralM) / (111_320 * Math.cos((onPath[0] * Math.PI) / 180)),
-  ];
+function layoutFraction(id: string, salt: string) {
+  let hash = 2166136261;
+  for (const char of `${salt}:${id}`) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  hash ^= hash >>> 16;
+  hash = Math.imul(hash, 0x7feb352d);
+  hash ^= hash >>> 15;
+  hash = Math.imul(hash, 0x846ca68b);
+  hash ^= hash >>> 16;
+  return (hash >>> 0) / 4294967295;
 }
 
-/** 沒有樹上 GPS 時，依 Local_XYZ 沿著路徑折線放點，X 為路旁偏移。 */
+/** Stable, irregular route-index layout only; source measurements are unchanged. */
 export function treesAlongPolyline(
   polyline: LatLng[],
   trees: TreeRecord[],
@@ -68,13 +51,14 @@ export function treesAlongPolyline(
     (tree) =>
       tree.GPS_Location != null &&
       Number.isFinite(tree.GPS_Location[0]) &&
-      Number.isFinite(tree.GPS_Location[1]),
+      Number.isFinite(tree.GPS_Location[1]) && Math.abs(tree.GPS_Location[0]) <= 90 && Math.abs(tree.GPS_Location[1]) <= 180,
   );
   if (withGps.length === trees.length) {
     return withGps.map((tree) => ({
       id: tree.Tree_ID,
       latlng: tree.GPS_Location as LatLng,
       light: trafficLight(tree),
+      placement: "gps",
     }));
   }
 
@@ -96,20 +80,32 @@ export function treesAlongPolyline(
       id: tree.Tree_ID,
       latlng: polyline[0],
       light: trafficLight(tree),
+      placement: "route-reference",
     }));
   }
 
-  const ys = trees.map((tree) => tree.Local_XYZ_m[1]);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-  const span = maxY - minY || 1;
-
-  return trees.map((tree) => {
-    const t = (tree.Local_XYZ_m[1] - minY) / span;
+  const gaps = trees.slice(1).map(tree => .4 + layoutFraction(tree.Tree_ID, "spacing") * 1.6);
+  const length = gaps.reduce((sum,gap)=>sum+gap,0) || 1;
+  let progress = 0;
+  return trees.map((tree, index) => {
+    const gps = tree.GPS_Location;
+    const validGps = gps != null && Number.isFinite(gps[0]) && Number.isFinite(gps[1]) && Math.abs(gps[0]) <= 90 && Math.abs(gps[1]) <= 180;
+    if (index > 0) progress += gaps[index-1];
+    const t = trees.length === 1 ? .5 : progress / length;
+    const onPath = interpolate(polyline, cum, total, t);
+    const before = interpolate(polyline, cum, total, Math.max(0,t-.002));
+    const after = interpolate(polyline, cum, total, Math.min(1,t+.002));
+    const latitudeScale = Math.cos(onPath[0]*Math.PI/180);
+    const north = (after[0]-before[0])*111320;
+    const east = (after[1]-before[1])*111320*latitudeScale;
+    const norm = Math.hypot(north,east) || 1;
+    const offset = index === 0 || index === trees.length-1 ? 0 : (layoutFraction(tree.Tree_ID,"side")-.5)*14;
+    const placed: LatLng = [onPath[0]+east/norm*offset/111320,onPath[1]-north/norm*offset/(111320*latitudeScale)];
     return {
       id: tree.Tree_ID,
-      latlng: offsetFromPath(polyline, cum, total, t, tree.Local_XYZ_m[0]),
+      latlng: validGps ? gps : placed,
       light: trafficLight(tree),
+      placement: validGps ? "gps" as const : "route-reference" as const,
     };
   });
 }
