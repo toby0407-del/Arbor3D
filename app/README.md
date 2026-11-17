@@ -1,7 +1,7 @@
 # Arbor3D 盤點介面
 
-> **倉庫**：https://github.com/toby0407-del/arbor3d-interface  
-> **量測管線（Python）**：https://github.com/toby0407-del/Arbor3D
+> **倉庫與量測管線**：<https://github.com/toby0407-del/Arbor3D>
+> **更新日期**：2026-11-17
 
 ---
 
@@ -45,7 +45,7 @@ Production build 會註冊 PWA Service Worker。使用者曾開啟的頁面、�
 | **5. 匯入** | 去噪 PLY、高斯濺射 PLY、原始照片；正式模式另加 `calib.json`、`cameras.json` | 編號自動跟資料夾名；可選年度 |
 | **6. 盤點視窗** | 樹表（燈號篩選）、影像分頁、量測分頁、3D 分頁、碳匯工作表 | 手測離線暫存並同步 Cosmos DB、匯出 CSV |
 
-沒有掃描素材時，可在匯入視窗按「一鍵載入完整模擬素材（DEMO）」測試上傳與快速盤點。既有模擬盤點使用 4 種 Segmentation、4 種橫切面與 4 種點雲側視合成素材，依掃描與樹號固定分派；不顯示逢甲實拍原圖。3D 使用 900 點示意 PLY，畫面仍保留合成展示標記。
+沒有掃描素材時，匯入視窗仍可產生一次性的合成檔來測試上傳流程；它只存在於當次操作，具有 `SIMULATED DEMO` 標記，不會成為正式發布盤點。Git 目前只發布逢甲與惠來兩筆實地資料，不含 `sim*` 盤點、合成證據、模擬 GPX 或模擬分析結果。
 
 ### 匯入素材
 
@@ -63,7 +63,7 @@ Production build 會註冊 PWA Service Worker。使用者曾開啟的頁面、�
 ## 三、專案架構
 
 ```
-arbor3d-interface/
+Arbor3D/app/
 ├── index.html                      # Vite 入口
 ├── vite.config.ts                  # Vite 設定（含 importApiPlugin）
 ├── package.json
@@ -83,12 +83,8 @@ arbor3d-interface/
 │   ├── favicon.svg
 │   ├── icons.svg
 │   └── scans/
-│       └── 20260818092855/         # 8/18 逢甲 7-11 實測
-│           ├── dbh/                # 胸高橫切面
-│           ├── masks/              # Segmentation
-│           ├── maps/               # 俯視圖
-│           ├── previews/           # 點雲側視
-│           └── inventory.json
+│       ├── 20260818092855/         # 8/18 逢甲實地盤點
+│       └── 20261020165350/         # 惠來公園實際匯入批次
 │
 └── src/
     ├── main.tsx                    # React 進入點
@@ -136,7 +132,8 @@ arbor3d-interface/
         ├── scanBindings.ts         # 掃描 ↔ 公園／路徑綁定
         ├── inventory.ts            # 自動載入 inventories/*.json
         ├── inventories/
-        │   └── 20260818092855.json # 8/18 逢甲 7-11 實測盤點
+        │   ├── 20260818092855.json # 8/18 逢甲實地盤點
+        │   └── 20261020165350.json # 惠來公園實際匯入批次
         └── park_inventory_report.sample.json
 ```
 
@@ -216,19 +213,16 @@ calib.json + cameras.json ───────┘        │
 
 ---
 
-## 八、已接上的實測掃描
+## 八、已發布的實地盤點
 
-| 項目 | 內容 |
-|------|------|
-| 地點 | 逢甲大學 · 學思樓／7-11 南側走廊 |
-| 路徑 | 校園掃描路徑（8/18 · 7-11） |
-| scan_id | `20260818092855` |
-| JSON | `src/data/inventories/20260818092855.json` |
-| 媒體 | `public/scans/20260818092855/`（橫切面、Segmentation、點雲側視） |
-| 棵數 | 16 棵 |
-| GPS | 無（用相對座標沿路徑放置） |
+| 地點 | scan_id | 路徑 | 棵數 | 狀態 |
+|------|---------|------|------|------|
+| 逢甲大學 | `20260818092855` | 校園掃描路徑（8/18 · 7-11） | 16 | 實地掃描盤點；相對座標沿路徑放置 |
+| 惠來公園 | `20261020165350` | 東側弧形掃描路徑 | 18 | 實際匯入；目前為 `preview_point_cloud` 快速預覽，非正式 YOLO／標準 1.3 m DBH 結果 |
 
-本機驗證：登入 → 搜尋「逢甲」→ 點 8/18 路徑 → 樹表、橫切面、點雲側視。高斯濺射整場 PLY 超過 GitHub 100 MB，3D 需本機另放 `public/scans/20260818092855/models/scene_gaussian.ply`。
+惠來批次偵測 52 個候選、納入 18 棵、排除 34 個；路徑是使用者繪製的近似位置，仍待現場 GPX 更新。兩筆資料皆不可在缺少同樹同日人工真值時宣稱已驗證量測精度。
+
+本機驗證：登入 → 搜尋「逢甲」或「惠來公園」→ 選擇對應路徑。高斯濺射整場 PLY 超過 GitHub 100 MB 時，需在本機另放對應模型檔。
 
 ---
 
@@ -237,11 +231,12 @@ calib.json + cameras.json ───────┘        │
 ```bash
 git clone https://github.com/toby0407-del/Arbor3D.git
 cd Arbor3D/app
-npm install
-npm run dev
+npm ci
+npm run build
+PORT=5174 HOST=127.0.0.1 npm start
 ```
 
-瀏覽器開 http://127.0.0.1:5173/，登入後搜尋「逢甲」即可驗證。
+瀏覽器開 http://127.0.0.1:5174/。開發模式可改用 `npm run dev -- --host 127.0.0.1 --port 5174`。
 
 ### 帳號、Session 與人工量測同步
 
@@ -286,6 +281,7 @@ $env:ARBOR3D_CMD='python3 ...'
 |------|------|
 | `npm run dev` | 啟動 Vite 開發伺服器 |
 | `npm run build` | TypeScript 檢查 + 打包 |
+| `npm start` | 啟動 production server；可用 `PORT`／`HOST` 指定監聽位址 |
 | `npm run lint` | oxlint 檢查 |
 | `npm run preview` | 預覽 build 產物 |
 | `npm run postprocess` | 手動跑後續量測 `node scripts/run-postprocess.mjs <jobDir> <scanId> [pathId]` |
@@ -321,5 +317,5 @@ $env:ARBOR3D_CMD='python3 ...'
 | `server/fieldMeasureStore.ts` | Cosmos DB／本機 fallback repository |
 | `../infra/azure/main.bicep` | Azure Cosmos DB 基礎設施 |
 | `scripts/run-postprocess.mjs` | 管線呼叫腳本 |
-| `scripts/generate-simulated-media.mjs` | 重建 24 組明確標示的 DEMO 媒體與 PLY |
+| `scripts/generate-simulated-media.mjs` | 歷史／開發用合成媒體產生器；產物不屬於目前正式發布盤點 |
 | `../scripts/postprocess_from_inbox.py` | 正式輸入整理、前置檢查、Python 管線與 App 發佈 adapter |

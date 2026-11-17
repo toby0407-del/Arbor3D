@@ -2,19 +2,25 @@
 
 Docker 封裝與 D 槽啟動方式見 [docker/README.md](docker/README.md)。Windows 可執行 `Start-Arbor3D.cmd`，預設包含正式 CPU 量測管線，網站位址 `http://localhost:8080`。
 
-## 2026-10-28 最新版本
+## 2026-11-17 最新版本
 
-本次整合包含品質感知量測、人工複核同步、真實 Phi-4 本機問答，以及沿用既有 Azure F1 的截面幾何／品質計算。大型點雲與 YOLO 仍在本機，已以真實單木驗證混合流程；沒有新增付費 Azure 資源。完整雲端 YOLO、Copilot Studio、校準精度及整園新匯入驗收仍未完成。
+目前 `main` 已完成所有既有功能分支整合，並將正式發布盤點收斂為兩筆實地資料：逢甲大學 `20260818092855`（16 棵）與惠來公園 `20261020165350`（18 棵）。原先 29 組 `sim*` 盤點 JSON、掃描媒體、17 份模擬分析輸出、合成證據與模擬 GPX／季度資料均已從發布目錄移除；地圖不再顯示模擬盤點路徑。
 
-App 50 項、Python 50 項測試及正式建置已在原品質分支通過。Azure DBH API 已更新，Azure 前端網站是否更新以 `main` 的部署工作流程結果為準。進度與限制見 [最新專案狀態](docs/PROJECT_STATUS.md) 與 [免費混合運算紀錄](docs/microsoft/CLOUD_DBH.md)。
+惠來資料是實際匯入批次，但目前採 `preview_point_cloud` 快速預覽：共偵測 52 個候選、納入 18 棵、排除 34 個；尚未等同正式 YOLO／標準 1.3 m DBH 管線。逢甲與惠來目前都沒有足以宣稱量測精度的同樹同日人工真值，MAE、RMSE 與準確率不得推估。
 
-## 2026-10-27 Microsoft 實際串接
+最新驗證為 App **63 項測試全數通過**、`oxlint` 通過（1 個既有非阻斷警告）、production build 成功，且 GitHub Actions 已成功部署提交 `455591c` 至 Azure App Service。進度、限制與下一步見 [最新專案狀態](docs/PROJECT_STATUS.md)。
 
-已移除比賽展示導覽，恢復自行操作。根目錄雙擊 **啟動Arbor3D.cmd**（先在 app 執行 npm ci、npm run build），開啟 http://127.0.0.1:5324/。Microsoft 模型請先雙擊 **啟動Microsoft模型.cmd**；本機 .env.local 保存實際設定且不進 Git。
+本機可在 `app/` 執行：
 
-本機已驗證 Foundry Local Phi-4 真實推論、App 問答及 Azure Cosmos DB 讀寫。服務連線面板會實際檢查連通性。Power BI 線上服務因學校關閉自行註冊而暫緩，等待校方授權；Entra 組織登入仍需管理員核准的應用程式。Azure DBH API 已更新；前端部署仍維持原版本。
+```bash
+npm ci
+npm run build
+PORT=5174 HOST=127.0.0.1 npm start
+```
 
-保留品質／補掃分頁、人工真值匯出及方法專屬品質判斷。真值與校準資料尚未取得，不能宣稱已驗證量測精度。詳見 [Microsoft 連線與待辦](docs/microsoft/LIVE_CONNECTIONS.md) 及 [品質校準工具](measurement_quality/README.md)。以下保留既有架構與歷史實作紀錄。
+開啟 `http://127.0.0.1:5174/`。開發模式則使用 `npm run dev -- --host 127.0.0.1 --port 5174`。
+
+品質／補掃分頁、人工真值匯出、Cosmos 手測同步、Phi-4／RAG 助理與 Power BI 匯出能力仍保留。完整雲端 YOLO、Copilot Studio 正式發布、人工校準精度及第二期同樹實測尚未完成。
 
 把真實世界的公園樹木做成可持續被 AI 分析的數位表徵（Digital Representation）。現場掃描是 **Physical**；去噪點雲、單木 ID、胸徑、碳匯與 3D 高斯是 **Digital**；YOLO 分割與時序成長判定是 **AI**。量測求精準，高斯求好看，兩條線分開，最後接到同一份長期監測報告與網頁介面。
 
@@ -25,10 +31,10 @@ App 50 項、Python 50 項測試及正式建置已在原品質分支通過。Azu
 | 開發 | Toby |
 | 倉庫 | https://github.com/toby0407-del/Arbor3D |
 | Azure 網站 | https://arbor3d-platform-1ec69a14.azurewebsites.net |
-| 前端獨立鏡像 | https://github.com/toby0407-del/arbor3d-interface |
-| 本機資料夾 | `treee_VScode`（遠端名稱 Arbor3D） |
-| 主掃描（介面示範） | `20260818092855`（逢甲 8/18，16 棵） |
-| 文件日期 | 2026-09-24 |
+| 發布盤點 | 逢甲 `20260818092855`（16 棵）、惠來 `20261020165350`（18 棵） |
+| GitHub 分支 | `main` |
+| 最新資料提交 | `455591c` |
+| 文件日期 | 2026-11-17 |
 
 ---
 
@@ -79,7 +85,7 @@ App 50 項、Python 50 項測試及正式建置已在原品質分支通過。Azu
     GPUCache/                       3D 檢視器快取，可刪
 ```
 
-Git 只收程式、YOLO 權重（`yolo_seg/runs/v1`、`v2`、`v3` 的 `weights/best.pt`；推論優先用最新的 v3）、前端程式，以及 `app/public/scans/` 示範媒體（不含超大 scene PLY）。訓練用照片在本機 `treedata/`，不進 Git。
+Git 只收程式、YOLO 權重（`yolo_seg/runs/v1`、`v2`、`v3` 的 `weights/best.pt`；推論優先用最新的 v3）、前端程式，以及兩筆實地盤點在 `app/public/scans/` 的發布媒體（不含超大 scene PLY）。訓練用照片在本機 `treedata/`，不進 Git。
 
 ---
 
@@ -108,20 +114,16 @@ python run_full_park_pipeline.py --scan_id 20260818092855
 
 ---
 
-## 4. 介面已接掃描（20260818092855，逢甲 8/18）
+## 4. 介面已發布的實地盤點
 
-| 項目 | 內容 |
-|------|------|
-| 地點 | 逢甲大學 · 學思樓／7-11 南側走廊 |
-| 路徑 | 校園掃描路徑（8/18 · 7-11） |
-| 棵數 | 16 |
-| 前端 JSON | `app/src/data/inventories/20260818092855.json` |
-| 媒體 | `app/public/scans/20260818092855/`（橫切面、Segmentation、點雲側視） |
-| GPS | 無（相對 XYZ，介面沿路徑插值放點） |
+| 地點 | scan_id | 路徑 | 棵數 | 目前資料狀態 |
+|------|---------|------|------|--------------|
+| 逢甲大學 | `20260818092855` | 校園掃描路徑（8/18 · 7-11） | 16 | 實地掃描盤點；無 GPS，以相對 XYZ 沿路徑放點 |
+| 惠來公園 | `20261020165350` | 東側弧形掃描路徑 | 18 | 實際匯入的快速點雲預覽；路線為使用者繪製，待現場 GPX 更新 |
 
-驗證：`cd app && npm install && npm run dev` → 登入 → 搜尋「逢甲」→ 點 8/18 路徑。
+JSON 位於 `app/src/data/inventories/{scan_id}.json`，媒體位於 `app/public/scans/{scan_id}/`。發布目錄目前只有以上兩個 scan_id；模擬盤點、合成證據與其分析輸出已移除。
 
-較早一趟 `20260812070325`（5 棵）仍可用管線重跑；介面示範已改以 8/18 為主。
+驗證：`cd app && npm run dev` → 示範登入 → 搜尋「逢甲」或「惠來公園」→ 選擇對應路徑。
 
 ---
 
@@ -138,7 +140,7 @@ python run_full_park_pipeline.py --scan_id 20260818092855
 | 待觀察 | 黃 | 幼木或 YOLO 信心偏低 | 僅供參考，下期實測再定案 |
 | 異常 Warning | 紅 | 量測不可信或胸徑極端（疑併株） | **不得逕列正式統計**，請現場手測 |
 
-尚無前期實測時，前期／趨勢依本趟胸徑與拍攝期（3／7／9 月）推估；下一趟 JSON 進來後改掛實測比對。App 左側列出 Warning 樹；樹表最後一欄「健康度」用圖示標正常／停長／待觀察／Warning，不再整列上紅底。
+尚無前期實測時，介面可以顯示明確標示為推估的趨勢輔助，但不得稱為真實跨期觀測；下一趟 JSON 進來後才可改掛同樹實測比對。App 左側列出 Warning 樹；樹表最後一欄「健康度」用圖示標正常／停長／待觀察／Warning，不再整列上紅底。
 
 ---
 
@@ -217,7 +219,7 @@ RANSAC 找地面，把樹擺正，切離地 **1.2–1.4 m**。若這段沒點（
 
 ---
 
-## 10. 展示系統（`app/`）— 2026-09-22 進度
+## 10. 展示系統（`app/`）— 2026-11-17 進度
 
 前端已可實測，不是預留草圖。啟動見 [`app/README.md`](app/README.md)；接新掃描見 [`app/NEXT_STEPS.md`](app/NEXT_STEPS.md)。
 整體已完成項目、尚待修改與 P0／P1／P2 驗收條件統一整理在 [專案現況與後續路線圖](docs/PROJECT_STATUS.md)。
@@ -237,7 +239,7 @@ RANSAC 找地面，把樹擺正，切離地 **1.2–1.4 m**。若這段沒點（
 | P9 | 碳匯工作表 | ✅ |
 | P10 | Microsoft AI/Data 分析層：DBH 誤差、Analytics CSV/Excel、Power BI/Fabric/Agent 樣板 | ✅ |
 | P11 | App 內盤點 AI 助理：Phi-4 本機／Azure 雲端 provider＋1,000 題 RAG；雲端 GPU deployment 待配額與成本確認 | ✅／待部署 |
-| P12 | DEMO 盤點使用多變體合成分割圖、橫切面與點雲側視，不顯示逢甲實拍原圖；另附可旋轉 PLY，並標示來源與模擬界線 | ✅ |
+| P12 | 發布盤點資料治理：只保留逢甲與惠來兩筆實地資料，並以測試阻止模擬盤點再次混入 | ✅ |
 
 新 Windows 裝置 clone 後，可在 `app` 執行 `npm run phi4:setup:windows`，自動安裝 Foundry Local、下載 `phi-4-mini`、啟動模型服務並建立本機設定。模型權重不提交一般 Git；完整說明見 `docs/microsoft/PHI4_LOCAL.md`。
 
@@ -308,9 +310,4 @@ macOS 競賽開發環境與 Azure CLI／Foundry SDK 安裝狀態見 [macOS 建�
 
 App 的盤點視窗新增「詢問 AI 助理」。它會把當次樹木盤點整理成受限證據，回答待複核、精度、碳匯與下一步；沒有 Azure 設定時使用本機規則，Azure 暫時失敗也會安全退回。金鑰只由 Vite 伺服器讀取，不送進瀏覽器 bundle。設定方式見 `app/.env.example`。
 
-2026-09-21 已合併既有競賽分支至 main，Windows 接續版新增：
-- 四年季度模擬（2022 Q3–2026 Q2，16 季×16 棵=256 筆），來源及身份明確標為模擬，禁止混入真實 snapshot。
-- 五頁 Power BI PBIP/PBIR 產生器，真實／模擬專案分開，真實精度 measures 排除合成資料。
-- Windows Python 路徑／UTF-8 測試修正，以及季度 CSV 範例。
-
-重建指令、Power BI 開啟方法與仍待 Desktop 驗收的項目見 [Windows 與季度模擬指南](docs/microsoft/WINDOWS.md)。
+既有競賽與 Microsoft 分支已整合進 `main`。Power BI、分析與模擬產生器程式仍作為開發工具保留，但過去生成的模擬盤點、季度 CSV、GPX、媒體與 App 快照已於 2026-11-17 從正式發布資料移除。歷史驗收文件只供追溯，不代表目前 App 仍發布那些資料。

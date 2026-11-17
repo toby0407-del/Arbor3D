@@ -1,9 +1,11 @@
 # Arbor3D Microsoft AI/Data 競賽強化版
 
+> **2026-11-17 現況提示：** 正式發布盤點只保留逢甲 `20260818092855` 與惠來 `20261020165350`。本文件中的季度模擬、舊基準提交與 Power BI 模擬專案是分析工具或歷史驗收紀錄；相應的 `sim*` 盤點、媒體、GPX、季度 CSV 與分析快照已不在目前 App 發布資料中。最新狀態以 [專案現況](../PROJECT_STATUS.md) 為準。
+
 本版本在既有 YOLO → DBH → 3DGS → App 之後加入離線分析層，不修改核心量測演算法。
 所有指令預設只讀寫本機。沒有建立雲端資源、開啟試用、升級訂閱或呼叫付費模型。
 
-**Windows 接續更新：** 既有功能分支已合併 main；新增四年季度模擬及五頁 PBIP/PBIR 產生器，詳見 [Windows 指南](WINDOWS.md)。
+**Windows 接續更新：** 既有功能分支已合併 `main`；五頁 PBIP/PBIR 產生器與歷史季度模擬工具仍供開發驗證，產物不屬於目前正式發布盤點。詳見 [Windows 指南](WINDOWS.md)。
 **雲端胸徑：** 既有 DBH 管線已可接到 Azure，見 [CLOUD_DBH.md](CLOUD_DBH.md)。
 **Copilot：** 設定步驟見 [COPILOT_SETUP.md](COPILOT_SETUP.md)。
 **資料庫邊界：** 手測 → Cosmos `FieldMeasures`；盤點 → App JSON；圖表 → 匯出 CSV／PBIP。
@@ -15,10 +17,8 @@ Azure for Students 的實際 Foundry 資源、模型與安全設定見 [Azure �
 
 ## 已有資料與限制
 
-檢查基準：Git `d398b69`。正式示範資料在 `app/src/data/inventories/20260818092855.json`，16 棵樹，掃描日期 2026-08-18。
-現有資料無人工 DBH，且 16 筆 `dbh_is_strict_breast_height=false`。
-因此有效配對數 0、MAE/RMSE/Bias/MAPE 為 null，16 筆待複核；不可將空值解讀為零誤差。
-示範資料只有一期，也沒有已確認固定樹號，跨期表保持空白。測試中的合成資料只驗證程式，不當作競賽實測成果。
+目前發布資料為逢甲 `20260818092855`（16 棵）與惠來 `20261020165350`（18 棵）。惠來是實際匯入批次，但目前僅為 `preview_point_cloud` 快速預覽，不等同正式 YOLO／標準 1.3 m DBH 結果。
+目前沒有足量同樹同日的標準 1.3 m 人工 DBH 配對，因此有效配對數、MAE、RMSE、Bias、MAPE 與準確率均不得臆測。沒有第二期固定樹號實測時，真實跨期表應保持空白；測試中的合成資料只驗證程式，不當作實測成果。
 
 ## 一次完成本機資料輸出
 
