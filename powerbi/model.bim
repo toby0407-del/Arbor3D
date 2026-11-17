@@ -297,92 +297,110 @@
           {
             "name": "Observations",
             "expression": "COUNTROWS(FactObservation)",
-            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
-            "formatString": "0.000"
+            "description": "Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.",
+            "formatString": "#,0"
           },
           {
             "name": "Observed Trees",
             "expression": "DISTINCTCOUNT(FactObservation[tree_key])",
-            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
-            "formatString": "0.000"
+            "description": "Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.",
+            "formatString": "#,0"
           },
           {
             "name": "Valid Pairs",
             "expression": "CALCULATE((COALESCE(CALCULATE(COUNTROWS(FactObservation), FactObservation[comparison_status] = \"paired\"), 0)), KEEPFILTERS(FactObservation[dataset_kind] = \"observed\"))",
-            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
-            "formatString": "0.000"
+            "description": "Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.",
+            "formatString": "#,0"
           },
           {
             "name": "MAE cm",
             "expression": "CALCULATE((AVERAGE(FactObservation[absolute_error_cm])), KEEPFILTERS(FactObservation[dataset_kind] = \"observed\"))",
-            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
-            "formatString": "0.000"
+            "description": "Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.",
+            "formatString": "0.00"
           },
           {
             "name": "RMSE cm",
             "expression": "CALCULATE((VAR M = AVERAGE(FactObservation[squared_error_cm2]) RETURN IF(ISBLANK(M), BLANK(), SQRT(M))), KEEPFILTERS(FactObservation[dataset_kind] = \"observed\"))",
-            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
-            "formatString": "0.000"
+            "description": "Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.",
+            "formatString": "0.00"
           },
           {
             "name": "Bias cm",
             "expression": "CALCULATE((AVERAGE(FactObservation[error_cm])), KEEPFILTERS(FactObservation[dataset_kind] = \"observed\"))",
-            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
-            "formatString": "0.000"
+            "description": "Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.",
+            "formatString": "0.00"
           },
           {
             "name": "MAPE percent",
             "expression": "CALCULATE((AVERAGE(FactObservation[ape_pct])), KEEPFILTERS(FactObservation[dataset_kind] = \"observed\"))",
-            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
-            "formatString": "0.000"
+            "description": "Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.",
+            "formatString": "0.00"
           },
           {
             "name": "Review Observations",
             "expression": "COALESCE(CALCULATE(COUNTROWS(FactObservation), FactObservation[review_required] = TRUE()), 0)",
-            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
-            "formatString": "0.000"
+            "description": "Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.",
+            "formatString": "#,0"
           },
           {
             "name": "Review Rate",
             "expression": "DIVIDE([Review Observations], [Observations])",
-            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
-            "formatString": "0.00%;-0.00%;0.00%"
+            "description": "Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.",
+            "formatString": "0.00%"
           },
           {
             "name": "Estimated CO2 Snapshot ton",
             "expression": "IF(HASONEVALUE(DimScan[scan_key]), SUM(FactEstimate[co2_equivalent_ton]), BLANK())",
-            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
-            "formatString": "0.000"
+            "description": "Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.",
+            "formatString": "0.00"
           },
           {
             "name": "Mean Observed Delta cm",
             "expression": "IF(HASONEVALUE(FactGrowth[source]) && HASONEVALUE(FactGrowth[method]), AVERAGE(FactGrowth[delta_dbh_cm]), BLANK())",
-            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
-            "formatString": "0.000"
+            "description": "Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.",
+            "formatString": "0.00"
           },
           {
             "name": "Demo Pairs",
             "expression": "CALCULATE(COUNTROWS(FactObservation), FactObservation[dataset_kind] = \"simulated\", FactObservation[comparison_status] = \"paired\")",
-            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
-            "formatString": "0.000"
+            "description": "Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.",
+            "formatString": "#,0"
           },
           {
             "name": "Demo MAE cm",
             "expression": "CALCULATE(AVERAGE(FactObservation[absolute_error_cm]), FactObservation[dataset_kind] = \"simulated\")",
-            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
-            "formatString": "0.000"
+            "description": "Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.",
+            "formatString": "0.00"
           },
           {
             "name": "Growth Records",
             "expression": "COALESCE(COUNTROWS(FactGrowth), 0)",
-            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
-            "formatString": "0.000"
+            "description": "Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.",
+            "formatString": "#,0"
           },
           {
             "name": "Average DBH cm",
             "expression": "AVERAGE(FactObservation[auto_dbh_cm])",
-            "description": "Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.",
-            "formatString": "0.000"
+            "description": "Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.",
+            "formatString": "0.00"
+          },
+          {
+            "name": "Latest Review Trees",
+            "expression": "SUMX(VALUES(DimTree[tree_key]), VAR SnapshotDate = CALCULATE(MAX(FactObservation[observed_at])) RETURN IF(CALCULATE(COUNTROWS(FactObservation), FactObservation[observed_at] = SnapshotDate, FactObservation[review_required] = TRUE()) > 0, 1, 0))",
+            "description": "Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Latest Review Rate",
+            "expression": "DIVIDE([Latest Review Trees], [Observed Trees])",
+            "description": "Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.",
+            "formatString": "0.00%"
+          },
+          {
+            "name": "Latest CO2 Snapshot ton",
+            "expression": "SUMX(VALUES(DimTree[tree_key]), VAR SnapshotDate = CALCULATE(MAX(FactObservation[observed_at])) VAR LastScans = CALCULATETABLE(VALUES(FactObservation[scan_key]), FactObservation[observed_at] = SnapshotDate) RETURN CALCULATE(SUM(FactEstimate[co2_equivalent_ton]), TREATAS(LastScans, FactEstimate[scan_key])))",
+            "description": "Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.",
+            "formatString": "0.00"
           }
         ]
       },

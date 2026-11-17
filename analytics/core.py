@@ -131,6 +131,14 @@ def build(reports, manual_rows=(), identity_rows=(), max_pair_days=0, *, allow_s
                 status = "paired"
             err = auto - md if status == "paired" else None
             reason = [r for r in (tree.get("DBH_note") or "").split(",") if r and r != "ok"]
+            if dataset_kind == 'simulated':
+                neutral = {'模擬資料','steady','slow','stalled','simulated_steady','simulated_slow','simulated_stalled'}
+                reason = [r for r in reason if r not in neutral]
+                if tree.get('scenario_review_required') is True:
+                    reason.append('scenario_review')
+            quality = tree.get('measurement_quality')
+            if quality and quality.get('decision') != 'accepted':
+                reason.extend(quality.get('reasons') or ['quality_review'])
             if not strict:
                 reason.append("not_1.3m")
             if auto is None:

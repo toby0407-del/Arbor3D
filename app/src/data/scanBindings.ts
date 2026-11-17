@@ -1,10 +1,14 @@
 import extraParks from "./extraParkBindings.json";
+import userRoutes from "./userScanRoutes.json";
 import parkScenarios from "../../scripts/park-simulation-sites.json";
 import { hasReport } from "./inventory";
 
 type LatLng = [number, number];
 
 export type ScanBinding = {
+  siteId?: string;
+  routeReliability?: "osm-aligned" | "unverified" | "user-drawn";
+  routeNote?: string;
   parkName: string;
   pathId: string;
   pathName: string;
@@ -19,6 +23,7 @@ export type ScanBinding = {
  * polyline 一律走陸域步道／校道，避開湖面與水域中心。
  */
 export const SCAN_BINDINGS: ScanBinding[] = [
+  ...userRoutes as ScanBinding[],
   ...extraParks as ScanBinding[],
   {
     parkName: "逢甲大學",
@@ -101,19 +106,6 @@ export const SCAN_BINDINGS: ScanBinding[] = [
       [24.1461211, 120.6449238],
       [24.1461137, 120.6446961],
       [24.1461341, 120.6445762],
-    ],
-  },
-  {
-    parkName: "惠來公園",
-    pathId: "huilai-demo-20260331",
-    pathName: "惠來路側綠帶",
-    scanId: "sim20260331hlp001",
-    // OSM footway 272604159
-    polyline: [
-      [24.1549221, 120.6389911],
-      [24.154924, 120.639422],
-      [24.1549244, 120.6395033],
-      [24.1551117, 120.6403102],
     ],
   },
   {
@@ -231,7 +223,7 @@ export const SCAN_BINDINGS: ScanBinding[] = [
 export function bindingsForPark(parkName: string, siteId?: string): ScanBinding[] {
   return SCAN_BINDINGS.filter((item) => {
     const scenario = parkScenarios.find(site => site.scanId === item.scanId);
-    return item.parkName === parkName && (!siteId || !scenario || scenario.siteId === siteId);
+    return item.parkName === parkName && (!siteId || !item.siteId || item.siteId === siteId) && (!siteId || !scenario || scenario.siteId === siteId);
   });
 }
 

@@ -9,6 +9,7 @@ function isPortraitViewport() {
 function shouldBlockPortrait() {
   return (
     isPortraitViewport() &&
+    window.matchMedia("(pointer: coarse) and (hover: none)").matches &&
     window.matchMedia("(max-width: 1180px), (max-height: 520px)").matches
   );
 }
@@ -24,14 +25,17 @@ export function LandscapeGate({ children }: Props) {
   useEffect(() => {
     const portraitMq = window.matchMedia("(orientation: portrait)");
     const sizeMq = window.matchMedia("(max-width: 1180px), (max-height: 520px)");
+    const touchMq = window.matchMedia("(pointer: coarse) and (hover: none)");
 
     const update = () => setBlocked(shouldBlockPortrait());
     portraitMq.addEventListener("change", update);
     sizeMq.addEventListener("change", update);
+    touchMq.addEventListener("change", update);
     window.addEventListener("resize", update);
     return () => {
       portraitMq.removeEventListener("change", update);
       sizeMq.removeEventListener("change", update);
+      touchMq.removeEventListener("change", update);
       window.removeEventListener("resize", update);
     };
   }, []);

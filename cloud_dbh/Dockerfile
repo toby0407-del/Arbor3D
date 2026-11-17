@@ -21,8 +21,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY cloud_dbh/requirements.txt /tmp/cloud_dbh-requirements.txt
 RUN pip install -r /tmp/cloud_dbh-requirements.txt
 
-# Full measurement stack (PyTorch / Open3D / YOLO). Large; expect multi-GB image.
-COPY requirements.txt /tmp/arbor3d-requirements.txt
+# CPU deployment: avoid installing multi-GB CUDA libraries on CPU cloud instances.
+RUN pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cpu
+COPY cloud_dbh/requirements-full.txt /tmp/arbor3d-requirements.txt
 RUN pip install -r /tmp/arbor3d-requirements.txt
 
 COPY . /opt/arbor3d

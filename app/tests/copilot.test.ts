@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { askCopilotStudio, askPhi4Cloud, askPhi4Local } from "../server/assistantApiPlugin.ts";
+import { askCopilotStudio, askPhi4Cloud, askPhi4Local, probePhi4 } from "../server/assistantApiPlugin.ts";
 import type { AssistantContext } from "../server/assistantCore.ts";
 
 const context: AssistantContext = {
@@ -20,6 +20,14 @@ const context: AssistantContext = {
     manualDbhCm: null,
   }],
 };
+
+test("Phi health requires a reachable catalog and the selected model, including SDK revision IDs", async () => {
+  const env = { FOUNDRY_LOCAL_ENDPOINT: "http://127.0.0.1:5273", FOUNDRY_LOCAL_MODEL: "Phi-4-mini-instruct-generic-gpu:5" };
+  assert.equal((await probePhi4(env, async()=>Response.json({data:[{id:"Phi-4-mini-instruct-generic-gpu"}]}))).state, "reachable");
+  assert.equal((await probePhi4(env, async()=>Response.json({data:[{id:"some-other-model"}]}))).state, "model_unavailable");
+  assert.equal((await probePhi4(env, async()=>{throw new Error("offline");})).state, "unavailable");
+  assert.equal((await probePhi4({}, async()=>{throw new Error("must not call");})).state, "unconfigured");
+});
 
 test("Copilot Studio adapter uses server-side Direct Line and returns the agent answer", { concurrency: false }, async () => {
   const originalFetch = globalThis.fetch;

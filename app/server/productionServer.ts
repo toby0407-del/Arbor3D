@@ -15,9 +15,18 @@ type Middleware = (
 
 const serverFolder = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(serverFolder, "..");
+try {
+  process.loadEnvFile(path.join(appRoot, ".env.local"));
+} catch (error) {
+  if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+}
+if (process.env.ARBOR_AZURE_CLI_DIR?.trim()) {
+  process.env.PATH = `${process.env.ARBOR_AZURE_CLI_DIR}${path.delimiter}${process.env.PATH ?? ""}`;
+}
 const staticRoot = path.join(appRoot, "dist");
 const knowledgeFolder = process.env.ARBOR_RAG_KNOWLEDGE?.trim()
-  || path.join(appRoot, "knowledge");
+  || (await fs.stat(path.join(appRoot, "knowledge")).catch(()=>null)
+    ? path.join(appRoot, "knowledge") : path.resolve(appRoot, "../agents/knowledge"));
 const middleware: Middleware[] = [];
 const middlewareHost = {
   middlewares: {

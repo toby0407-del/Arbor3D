@@ -60,7 +60,7 @@ function azureUrl(endpoint: string) {
 
 function foundryLocalUrl(endpoint: string) {
   const url = new URL(endpoint);
-  if (!["localhost", "127.0.0.1", "::1"].includes(url.hostname)) {
+  if (!["localhost", "127.0.0.1", "::1", "[::1]"].includes(url.hostname)) {
     throw new Error("Foundry Local endpoint 只允許本機 loopback 位址");
   }
   if (url.protocol !== "http:" && url.protocol !== "https:") {
@@ -109,17 +109,23 @@ export async function askPhi4Local(
   const endpoint = env.FOUNDRY_LOCAL_ENDPOINT?.trim();
   if (!endpoint) return null;
   const model = env.FOUNDRY_LOCAL_MODEL?.trim() || "phi-4-mini";
+  const workflow=/power\s*bi|fabric/i.test(question)&&/更新|怎麼|如何|流程/.test(question);
+  const priorityIds=/優先.*複核|哪些.*複核/.test(question)?[...context.trees.filter(t=>t.status==='red'),...context.trees.filter(t=>t.status==='yellow')].slice(0,5).map(t=>t.id):[];
+  const priorityInstruction=priorityIds.length?`本題只用一句話回答：建議優先現場複核 ${priorityIds.join("、")}。不要提胸徑、胸高、尺寸或原因。`:'';
+  const requestMessages = [
+    { role: "system", content: assistantSystemPrompt(context, ragPrompt(ragHits), question) },
+    { role: "user", content: `${question}\n請只用繁體中文，使用中文詞，不要英譯答案。${priorityInstruction}${workflow?'確切步驟由系統另外顯示；請只用一句話說明可以在本機分析並更新到 Arbor3D App，不需 Fabric，不要列出按鈕或檔名。':''}` },
+  ];
+  let answer = '';
+  for (let attempt=0;attempt<2;attempt++) {
   const response = await fetch(foundryLocalUrl(endpoint), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model,
-      temperature: 0.2,
-      max_tokens: 500,
-      messages: [
-        { role: "system", content: assistantSystemPrompt(context, ragPrompt(ragHits)) },
-        { role: "user", content: question },
-      ],
+      temperature: 0.0,
+      max_tokens: 240,
+      messages: requestMessages,
     }),
     signal: AbortSignal.timeout(60_000),
   });
@@ -130,8 +136,15 @@ export async function askPhi4Local(
   const data = (await response.json()) as {
     choices?: Array<{ message?: { content?: string } }>;
   };
-  const answer = data.choices?.[0]?.message?.content?.trim();
+  answer = data.choices?.[0]?.message?.content?.trim() || '';
   if (!answer) throw new Error("Phi-4 本機模型沒有回傳文字");
+  const issue=!/[\u3400-\u9fff]/.test(answer) || /"(?:dbhCm|manualDbhCm|status)"\s*:/.test(answer) ||
+    (workflow&&/Power BI Desktop App|Update in place/i.test(answer)) || (priorityIds.length>0 && (priorityIds.some(id=>!answer.includes(id)) || /胸徑|胸高|公尺|1[.]3/.test(answer)));
+  if(!issue)break;
+  if(attempt===1)throw new Error('模型回覆尚未符合資料與語言規範，請重試');
+  requestMessages.push({role:'assistant',content:answer},{role:'user',content:'請重新回答，必須全部使用繁體中文，不要 JSON。'+
+    (priorityInstruction?priorityInstruction:workflow?'只回覆這個事實的繁體中文摘要：可以在本機 Power BI Desktop 分析後更新 Arbor3D App，不需 Fabric。不要列操作步驟、檔名或按鈕。':'請直接使用本次已核對事實，使用中文「樹號」「胸徑」，最多四句。'+(priorityIds.length?`本題必須逐一列出這些優先核對樹號：${priorityIds.join('、')}。不可只說紅燈或低信心。`:''))});
+  }
   return {
     provider: "phi4",
     model,
@@ -168,10 +181,10 @@ export async function askPhi4Cloud(
     headers,
     body: JSON.stringify({
       model,
-      temperature: 0.2,
-      max_tokens: 500,
+      temperature: 0.0,
+      max_tokens: 240,
       messages: [
-        { role: "system", content: assistantSystemPrompt(context, ragPrompt(ragHits)) },
+        { role: "system", content: assistantSystemPrompt(context, ragPrompt(ragHits), question) },
         { role: "user", content: question },
       ],
     }),
@@ -238,7 +251,7 @@ export async function askCopilotStudio(
   const appUserId = `arbor3d-${context.scanId.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
   const activityUrl = `${DIRECT_LINE_BASE}/conversations/${encodeURIComponent(conversationId)}/activities`;
   const prompt = [
-    assistantSystemPrompt(context, ragPrompt(ragHits)),
+    assistantSystemPrompt(context, ragPrompt(ragHits), question),
     `使用者問題：${question}`,
   ].join("\n\n");
   const activityResponse = await fetch(activityUrl, {
@@ -326,10 +339,10 @@ async function askAzure(
     headers,
     body: JSON.stringify({
       model,
-      temperature: 0.2,
-      max_tokens: 500,
+      temperature: 0.0,
+      max_tokens: 240,
       messages: [
-        { role: "system", content: assistantSystemPrompt(context, ragPrompt(ragHits)) },
+        { role: "system", content: assistantSystemPrompt(context, ragPrompt(ragHits), question) },
         { role: "user", content: question },
       ],
     }),
@@ -366,6 +379,7 @@ export function assistantProviderStatus(env: Record<string, string | undefined> 
   return {
     provider,
     billableAllowed: billable,
+    requireProvider: env.ARBOR_AI_REQUIRE_PROVIDER === "YES",
     phi4Configured: phi4Ready,
     phi4CloudConfigured: phi4CloudReady,
     copilotConfigured: copilotEndpoint,
@@ -408,17 +422,38 @@ export function assistantProviderStatus(env: Record<string, string | undefined> 
   };
 }
 
+export async function probePhi4(env: Record<string,string|undefined>, request: typeof fetch = fetch) {
+  const endpoint=env.FOUNDRY_LOCAL_ENDPOINT?.trim();
+  if(!endpoint)return {state:"unconfigured",models:[] as string[]};
+  try {
+    const url=foundryLocalUrl(endpoint).replace(/chat\/completions$/, "models");
+    const response=await request(url,{signal:AbortSignal.timeout(8000)});
+    if(!response.ok)return {state:"unavailable",models:[] as string[]};
+    const body=await response.json() as {data?:Array<{id?:string}>};
+    const models=(body.data??[]).flatMap(m=>typeof m.id==="string"?[m.id]:[]);
+    const target=env.FOUNDRY_LOCAL_MODEL?.trim()||"phi-4-mini";
+    // The SDK's HTTP catalog omits its numeric artifact revision suffix.
+    const modelName = (name: string) => name.replace(/:\d+$/, "");
+    return {state:models.some(name=>modelName(name)===modelName(target))?"reachable":"model_unavailable",models};
+  }catch{return {state:"unavailable",models:[] as string[]};}
+}
+
 export function assistantApiPlugin(
   env: Record<string, string | undefined> = process.env,
   knowledgeFolder = "",
 ): Plugin {
+  let lastInference: { provider: string; model?: string; verifiedAt: string } | null = null;
   return {
     name: "arbor3d-assistant-api",
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const url = req.url?.split("?")[0] ?? "";
         if (url === "/api/assistant/status" && req.method === "GET") {
-          sendJson(res, 200, assistantProviderStatus(env));
+          const status = assistantProviderStatus(env);
+          const connection = status.activeMode === "phi4" ? await probePhi4(env) : null;
+          sendJson(res, 200, { ...status, connection, lastInference,
+            activeMode: connection && connection.state !== "reachable"
+              ? env.ARBOR_AI_REQUIRE_PROVIDER === "YES" ? "unavailable" : "local" : status.activeMode });
           return;
         }
         if (url !== "/api/assistant") return next();
@@ -436,7 +471,9 @@ export function assistantApiPlugin(
           }
           const context = body.context;
           const folder = env.ARBOR_RAG_KNOWLEDGE?.trim() || knowledgeFolder;
-          const ragHits = folder ? retrieveKnowledge(question, folder) : [];
+          const retrieved = folder ? retrieveKnowledge(question, folder) : [];
+          const latestWorkflow=retrieved.filter(hit=>hit.source==='local-operations.md');
+          const ragHits = /power\s*bi|fabric/i.test(question)&&latestWorkflow.length?latestWorkflow:retrieved;
           const ragQuestionCount = folder ? countKnowledgeQuestions(folder) : 0;
           const configuredProvider = env.ARBOR_AI_PROVIDER?.trim().toLowerCase();
           const provider = ["auto", "phi4", "phi4-cloud", "copilot", "azure", "local"].includes(configuredProvider ?? "")
@@ -459,7 +496,7 @@ export function assistantApiPlugin(
               cloudFailed = true;
             }
           }
-          if (provider === "auto" || provider === "copilot") {
+          if (!reply && (provider === "auto" || provider === "copilot")) {
             try {
               reply = await askCopilotStudio(question, context, env, ragHits);
             } catch {
@@ -474,6 +511,10 @@ export function assistantApiPlugin(
             }
           }
           if (!reply) {
+            if (env.ARBOR_AI_REQUIRE_PROVIDER === "YES" && provider !== "local") {
+              sendJson(res, 503, { error: "Microsoft 模型未完成回覆，請確認模型服務已啟動後重試。" });
+              return;
+            }
             reply = localAssistantReply(question, context);
             if (localModelFailed) {
               reply.answer += "\n\n（Phi-4 本機模型暫時無法使用，已切換成本機證據回答。）";
@@ -488,6 +529,12 @@ export function assistantApiPlugin(
             reply.evidence.push(...reply.ragSources.map((source) => `本機 RAG：${source}`));
           }
           if (ragQuestionCount) reply.ragQuestionCount = ragQuestionCount;
+          if (/power\s*bi|fabric/i.test(question)&&/更新|怎麼|如何|流程/.test(question)) {
+            reply.verifiedSteps=['執行「準備PowerBI分析.cmd」準備目前資料。','在 Power BI Desktop 重新整理三份專案，等待完成。','執行「更新PowerBI結果.cmd」核對並匯入分析結果。','回到 Arbor3D App，按「讀取更新結果」。'];
+          }
+          if (reply.provider !== "local") {
+            lastInference = { provider: reply.provider, model: reply.model, verifiedAt: new Date().toISOString() };
+          }
           sendJson(res, 200, reply);
         } catch (error) {
           sendJson(res, 400, {

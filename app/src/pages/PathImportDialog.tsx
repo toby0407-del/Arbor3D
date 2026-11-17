@@ -52,8 +52,8 @@ const SLOTS: {
   {
     key: "metadata",
     kind: "metadata",
-    title: "相機校正／姿態（正式盤點）",
-    hint: "選擇包含 calib.json 與 cameras.json 的資料夾；快速預覽可不選",
+    title: "相機校正資料（選填）",
+    hint: "可先選含 calib.json 的資料夾，也可暫時略過",
   },
 ];
 
@@ -205,7 +205,7 @@ function summarizeMetadata(files: FileList | null): SlotState {
   const folder = summarizeFolder(files);
   if (!folder.files.length) return folder;
   const names = new Set(folder.files.map((file) => file.name.toLowerCase()));
-  const missing = ["calib.json", "cameras.json"].filter((name) => !names.has(name));
+  const missing = ["calib.json"].filter((name) => !names.has(name));
   if (missing.length) {
     return {
       ...folder,
@@ -215,8 +215,9 @@ function summarizeMetadata(files: FileList | null): SlotState {
   }
   return {
     ...folder,
+    files: folder.files.filter(file => ["calib.json", "cameras.json"].includes(file.name.toLowerCase())),
     formatOk: true,
-    formatMsg: `已找到 calib.json、cameras.json · ${folder.files.length} 個檔`,
+    formatMsg: names.has("cameras.json") ? "已找到校正與姿態資料" : "已接受 calib.json，可先建立點雲預覽",
   };
 }
 
@@ -303,7 +304,7 @@ function validateAll(slots: Record<FolderSlot, SlotState>): string | null {
     return slots.rawGo.formatMsg || "請選擇原始照片資料夾";
   }
   if (slots.metadata.files.length > 0 && !slots.metadata.formatOk) {
-    return slots.metadata.formatMsg || "校正資料需同時包含 calib.json 與 cameras.json";
+    return slots.metadata.formatMsg || "請選含 calib.json 的資料夾，或先略過此欄";
   }
   return null;
 }
@@ -497,7 +498,7 @@ export function PathImportDialog({
             <p className="path-db-kicker">{parkName}</p>
             <h2 id="path-import-title">匯入 · {pathName}</h2>
             <p>
-              快速預覽需三項：去噪 .ply、高斯濺射 .ply、照片資料夾；正式 Arbor3D 盤點另需 calib.json 與 cameras.json。上傳後按「開始計算」。標記：
+              請上傳去噪 .ply、高斯濺射 .ply、照片資料夾；相機校正資料可先略過。資料齊全時執行正式量測，否則先建立點雲快速預覽。上傳後按「開始計算」。標記：
               <strong> {segmentLabel || "—"}</strong>
             </p>
           </div>

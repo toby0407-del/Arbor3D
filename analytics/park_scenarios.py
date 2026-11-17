@@ -25,6 +25,7 @@ def generate(output):
                 report['trees'].append(dict(Tree_ID=row['local_tree_id'], DBH_cm=row['simulated_ai_dbh_cm'],
                     Height_m=row['simulated_height_m'], DBH_method='simulated_circle',
                     DBH_note='simulated_' + row['scenario'], dbh_is_strict_breast_height=True))
+                report['trees'][-1]['scenario_review_required'] = row.get('scenario_review_required', row['scenario']=='negative_review')
                 manuals.append(dict(natural, manual_dbh_cm=row['simulated_manual_dbh_cm'],
                     manual_height_m=row['simulated_height_m'], measured_at=row['date'], strict_13m=True))
                 identities.append(dict(natural, persistent_tree_id=row['persistent_tree_id'], confirmed=True))

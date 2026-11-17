@@ -27,6 +27,9 @@ MEASURES.update({
     'Demo MAE cm': 'CALCULATE(AVERAGE(FactObservation[absolute_error_cm]), FactObservation[dataset_kind] = "simulated")',
     'Growth Records': 'COALESCE(COUNTROWS(FactGrowth), 0)',
     'Average DBH cm': 'AVERAGE(FactObservation[auto_dbh_cm])',
+    'Latest Review Trees': 'SUMX(VALUES(DimTree[tree_key]), VAR SnapshotDate = CALCULATE(MAX(FactObservation[observed_at])) RETURN IF(CALCULATE(COUNTROWS(FactObservation), FactObservation[observed_at] = SnapshotDate, FactObservation[review_required] = TRUE()) > 0, 1, 0))',
+    'Latest Review Rate': 'DIVIDE([Latest Review Trees], [Observed Trees])',
+    'Latest CO2 Snapshot ton': 'SUMX(VALUES(DimTree[tree_key]), VAR SnapshotDate = CALCULATE(MAX(FactObservation[observed_at])) VAR LastScans = CALCULATETABLE(VALUES(FactObservation[scan_key]), FactObservation[observed_at] = SnapshotDate) RETURN CALCULATE(SUM(FactEstimate[co2_equivalent_ton]), TREATAS(LastScans, FactEstimate[scan_key])))',
 })
 
 def main():
@@ -40,7 +43,8 @@ def main():
         queries.append('// Query: '+name+'\n'+m+'\n')
         table={'name':name,'columns':[{'name':f,'dataType':'boolean' if f in BOOL else 'double' if f in NUM else 'dateTime' if f in DATES else 'string','sourceColumn':f,'summarizeBy':'none'} for f in fields], 'partitions':[{'name':name,'mode':'import','source':{'type':'m','expression':m.splitlines()}}]}
         if name=='FactObservation':
-            table['measures']=[{'name':k,'expression':v,'description':'Offline draft; respects report filter context. Valid pairs require same-day strict-height manual measurements.','formatString':'0.00%;-0.00%;0.00%' if k=='Review Rate' else '0.000'} for k,v in MEASURES.items()]
+            counts={'Observations','Observed Trees','Review Observations','Valid Pairs','Demo Pairs','Growth Records','Latest Review Trees'}
+            table['measures']=[{'name':k,'expression':v,'description':'Respects filter context. Production accuracy excludes synthetic data; latest totals count each tree once.','formatString':'0.00%' if k in {'Review Rate','Latest Review Rate'} else '#,0' if k in counts else '0.00'} for k,v in MEASURES.items()]
         tables.append(table)
     relationships=[]
     for fact in ('FactObservation','FactEstimate','FactGrowth'):

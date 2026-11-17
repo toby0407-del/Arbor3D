@@ -36,7 +36,7 @@ def visual(name, kind, title, x, y, w, h, roles):
                 "show": {"expr": {"Literal": {"Value": "true"}}}, "text": literal(title)}}]}}}
 
 
-def generate(analytics, output):
+def generate(analytics, output, *, clean_titles=True):
     source, output = Path(analytics).resolve(), Path(output).resolve()
     snapshot = json.loads((source / "analytics.json").read_text(encoding="utf-8"))
     manifest = json.loads((source / "manifest.json").read_text(encoding="utf-8"))
@@ -64,6 +64,21 @@ def generate(analytics, output):
         raise ValueError("Use a new empty project directory; do not overwrite Desktop edits")
     parameter = source.as_posix().replace('"', '""')
     model["model"]["expressions"][0]["expression"] = f'"{parameter}" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]'
+    if clean_titles:
+        by_name={table['name']:table for table in model['model']['tables']}
+        sites=json.loads((Path(__file__).resolve().parents[1]/'app/scenarios/parks/manifest.json').read_text(encoding='utf-8'))['sites']
+        aliases={'fengchia':'逢甲大學'}
+        for site in sites:
+            aliases[site['siteId']]=site['parkName'];aliases[site['scanId']]=site['parkName']
+        quote=lambda value:'"'+value.replace('"','""')+'"'
+        cases=', '.join(quote(k)+', '+quote(v) for k,v in aliases.items())
+        def column(table,name,expression):
+            by_name[table]['columns'].append(dict(name=name,type='calculated',dataType='string',summarizeBy='none',expression=expression))
+        column('DimScan','場址',f'SWITCH(DimScan[site_id], {cases}, DimScan[site_id])')
+        column('DimScan','季度','FORMAT(DimScan[observed_at], "yyyy") & " Q" & FORMAT(ROUNDUP(MONTH(DimScan[observed_at])/3,0),"0")')
+        column('FactGrowth','來源','SWITCH(FactGrowth[source], "ai", "演算法", "simulated_ai", "演算法", "measured", "參考數值", "simulated_measured", "參考數值", "未分類")')
+        column('FactGrowth','方法','IF(CONTAINSSTRING(FactGrowth[method], "circle"), "圓擬合", IF(CONTAINSSTRING(FactGrowth[method], "caliper"), "虛擬卡尺", "參考量測"))')
+        column('FactObservation','核對狀態','IF(FactObservation[review_required], "需核對", "正常")')
     write(output / "Arbor3D.pbip", {"$schema": BASE + "pbip/pbipProperties/1.0.0/schema.json", "version": "1.0",
         "artifacts": [{"report": {"path": "Arbor3D.Report"}}], "settings": {"enableAutoRecovery": True}})
     model_dir, report_dir = output / "Arbor3D.SemanticModel", output / "Arbor3D.Report"
@@ -74,34 +89,52 @@ def generate(analytics, output):
     definition = report_dir / "definition"
     write(definition / "version.json", {"$schema": schema("versionMetadata", "1.0.0"), "version": "2.0.0"})
     write(definition / "report.json", {"$schema": schema("report"), "themeCollection": {}})
-    prefix = "模擬 DEMO｜" if simulated else "本機快照｜"
+    prefix = "" if clean_titles else "模擬 DEMO｜" if simulated else "本機快照｜"
+    labels = {'Observations':'觀測紀錄', 'Observed Trees':'樹木數', 'Review Observations':'建議人工核對',
+              'Review Rate':'人工核對比例', 'Valid Pairs':'有效實測配對', 'MAE cm':'實測 MAE（cm）',
+              'RMSE cm':'實測 RMSE（cm）', 'Bias cm':'實測 Bias（cm）', 'Demo Pairs':'情境配對數',
+              'Demo MAE cm':'情境差異（cm）', 'Growth Records':'成長比較紀錄',
+              'Mean Observed Delta cm':'平均胸徑變化（cm）', 'Estimated CO2 Snapshot ton':'候選 CO₂ 存量（t）',
+              'Latest Review Trees':'最新一期需核對樹木', 'Latest Review Rate':'最新一期核對比例', 'Latest CO2 Snapshot ton':'最新一期候選 CO₂ 存量（t）'}
     measure = lambda name: field("FactObservation", name, True)
     specifications = [
-        ("overview", "盤點總覽", ["Observations", "Observed Trees", "Review Observations", "Review Rate"],
+        ("overview", "盤點總覽", ["Observed Trees", "Observations", "Latest Review Trees", "Latest Review Rate"],
          "FactObservation", ["local_tree_id", "auto_dbh_cm", "manual_dbh_cm", "review_reason", "dataset_kind"]),
         ("accuracy", "DBH 驗證（模擬不代表精度）", ["Valid Pairs", "MAE cm", "Demo Pairs", "Demo MAE cm"] if simulated else ["Valid Pairs", "MAE cm", "RMSE cm", "Bias cm"],
          "FactObservation", ["local_tree_id", "comparison_status", "error_cm", "ape_pct", "dataset_kind"]),
-        ("growth", "季度比較", ["Growth Records", "Mean Observed Delta cm"],
+        ("growth", "季度比較", ["Growth Records", "Observed Trees"],
          "FactGrowth", ["tree_key", "from_date", "to_date", "source", "method", "delta_dbh_cm", "negative_change", "dataset_kind"]),
-        ("quality", "資料品質與來源", ["Observations", "Review Observations"],
+        ("quality", "資料品質與來源", ["Observed Trees", "Latest Review Trees", "Latest Review Rate"],
          "DimScan", ["scan_id", "observed_at", "source_file", "source_sha256", "dataset_kind"]),
-        ("carbon", "推估碳存量（非碳權）", ["Estimated CO2 Snapshot ton"],
+        ("carbon", "碳存量分析", ["Latest CO2 Snapshot ton"],
          "FactEstimate", ["tree_key", "dbh_input_source", "height_source", "co2_equivalent_ton", "formula_version", "dataset_kind"]),
     ]
     pages = []
     for page_name, title, cards, table, columns in specifications:
+        if clean_titles:
+            title = {'accuracy':'胸徑比較','quality':'資料說明與來源'}.get(page_name,title)
+            if page_name != 'quality':
+                columns = [column for column in columns if column not in {'dataset_kind','review_reason','source','method','formula_version'}]
+                if page_name=='overview':columns.append('核對狀態')
+                if page_name=='growth':columns.extend(['來源','方法'])
+                if page_name=='carbon':columns=[c for c in columns if c not in {'dbh_input_source','height_source'}]
+            else:
+                columns=['場址','季度','observed_at']
         pages.append(page_name)
         folder = definition / "pages" / page_name
         write(folder / "page.json", {"$schema": schema("page"), "name": page_name,
             "displayName": prefix + title, "displayOption": "FitToPage", "width": 1280, "height": 900})
         visuals = []
-        for i, (name, column) in enumerate((("場址", "site_id"), ("掃描季度", "scan_id"), ("日期", "observed_at"))):
+        for i, (name, column) in enumerate((("場址", "場址" if clean_titles else "site_id"), ("季度", "季度" if clean_titles else "scan_id"), ("日期", "observed_at"))):
             visuals.append(visual(f"filter{i}", "slicer", prefix + name, 20 + i * 415, 15, 400, 100,
                 {"Values": [field("DimScan", column)]}))
         for i, name in enumerate(cards):
-            visuals.append(visual(f"card{i}", "card", prefix + name, 20 + i * 310, 135, 295, 130, {"Values": [measure(name)]}))
+            card=visual(f"card{i}", "card", prefix + (labels.get(name,name) if clean_titles else name), 20 + i * 310, 135, 295, 130, {"Values": [measure(name)]})
+            card['visual']['objects']={'categoryLabels':[{'properties':{'show':{'expr':{'Literal':{'Value':'false'}}}}}],
+                'labels':[{'properties':{'labelDisplayUnits':{'expr':{'Literal':{'Value':'1D'}}}}}]}
+            visuals.append(card)
         if page_name == "growth":
-            for i, name in enumerate(("source", "method")):
+            for i, name in enumerate(("來源", "方法") if clean_titles else ("source", "method")):
                 visuals.append(visual(f"growthfilter{i}", "slicer", prefix + name, 650 + i * 310, 135, 290, 130,
                     {"Values": [field("FactGrowth", name)]}))
         visuals.append(visual("details", "tableEx", prefix + title + "；資料不足時留白", 20, 290, 1240, 330,

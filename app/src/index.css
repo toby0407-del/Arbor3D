@@ -1241,16 +1241,9 @@ h1 { margin: 0; font-size: 32px; font-weight: 650; letter-spacing: -0.03em; }
   font-size: 13px;
   color: var(--ink-soft);
 }
-.path-db-head .simulation-notice {
-  display: inline-block;
-  margin-top: 8px;
-  padding: 6px 10px;
-  border: 1px solid #c66d16;
-  border-radius: 8px;
-  background: #fff2d8;
-  color: #7a3f08;
-  font-weight: 700;
-}
+.path-db-head .source-details { margin-top: 6px; font-size: 12px; color: var(--ink-soft); }
+.path-db-head .source-details summary { cursor: pointer; width: fit-content; }
+.path-db-head .source-details p { margin: 5px 0; max-width: 420px; }
 .path-db-table-wrap {
   overflow-x: hidden;
   overflow-y: auto;
@@ -2940,3 +2933,45 @@ h1 { margin: 0; font-size: 32px; font-weight: 650; letter-spacing: -0.03em; }
 .quarterly-table-scroll { overflow-x: auto; max-height: 360px; }
 .quarterly-table-scroll table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .quarterly-table-scroll th, .quarterly-table-scroll td { padding: 8px; border-bottom: 1px solid #d8e2db; white-space: nowrap; text-align: right; }
+.quality-panel { display:grid; gap:16px; color:#243c35; padding-bottom:20px; }
+.quality-heading p, .quality-card p { color:#586a64; font-size:13px; line-height:1.65; }
+.quality-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.quality-metrics>div { background:#edf5f0; padding:14px; border-radius:12px; display:grid; gap:6px; }
+.quality-metrics span { font-size:12px; color:#5b7067; }
+.quality-metrics strong { font-size:20px; }
+.quality-card { border:1px solid #dce6df; border-radius:14px; background:#fff; padding:16px; }
+.quality-card h4 { margin:0 0 10px; font-size:16px; }
+.quality-method { margin:12px 0; padding:12px; background:#f7f9f7; border-radius:10px; }
+.quality-method ul { padding-left:20px; font-size:13px; color:#675c40; }
+.quality-inputs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.quality-inputs label { font-size:12px; display:grid; gap:6px; }
+.quality-inputs input { width:100%; min-width:0; box-sizing:border-box; padding:9px; border:1px solid #c8d7cf; border-radius:8px; }
+.quality-check { display:flex; gap:8px; align-items:flex-start; margin:14px 0; font-size:13px; line-height:1.6; }
+.quality-check input { margin-top:4px; flex-shrink:0; }
+.quality-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.quality-card li { line-height:1.8; font-size:13px; }
+.quality-card li button { margin-left:8px; }
+@media(max-width:600px) { .quality-inputs { grid-template-columns:1fr; } }
+.quality-summary-note { color:#6b6651; background:#fff9e9; padding:10px 14px; border-radius:10px; font-size:12px; line-height:1.7; }
+.path-db-panel.is-quality .path-db-body { grid-template-columns:minmax(160px,240px) minmax(0,1fr); }
+.path-db-panel.is-quality .path-db-table-wrap { display:none; }
+.path-db-panel.is-quality .quality-metrics { grid-template-columns:repeat(4,minmax(0,1fr)); }
+@media(max-width:760px) { .path-db-panel.is-quality .path-db-body {grid-template-columns:140px minmax(0,1fr);} .path-db-panel.is-quality .quality-metrics {grid-template-columns:repeat(2,minmax(0,1fr));} }
+
+.service-actions { display: flex; gap: 8px; }
+.services-panel { width: min(620px, 95vw); }
+.services-list { margin: 20px 0; }
+.services-list > div { padding: 14px 0; border-bottom: 1px solid #dce5df; }
+.services-list dt { font-weight: 700; margin-bottom: 6px; }
+.services-list dd { margin: 3px 0; color: #496052; }
+/* Published Desktop results remain readable without an online Power BI session. */
+.local-pbi { margin-bottom: 22px; padding: 20px; border: 1px solid #c6dfd4; border-radius: 16px; background: #f2f8f5; color: #183c30; }
+.local-pbi > header { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.local-pbi h3 { margin:0 0 6px; }
+.local-pbi header p { margin:0; font-size:13px; }
+.local-pbi-status { font-size:13px; padding:10px 12px; background:#fff; border-radius:8px; }
+.local-pbi-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:10px; margin:14px 0; }
+.local-pbi-cards > div { padding:14px; background:#fff; border-radius:10px; }
+.local-pbi-cards span { display:block; font-size:12px; color:#4a685b; margin-bottom:8px; }
+.local-pbi-cards strong { font-size:22px; font-variant-numeric:tabular-nums; }
+.local-pbi small { display:block; color:#4a685b; line-height:1.6; }

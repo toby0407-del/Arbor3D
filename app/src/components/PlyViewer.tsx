@@ -13,6 +13,7 @@ import {
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { loadPlyCloud } from "../lib/loadPly";
+import { cloudFrame } from "../lib/cloudFrame";
 
 type Props = {
   url: string | null;
@@ -37,8 +38,10 @@ function placeSideView(
   controls: OrbitControls,
   center: Vector3,
   radius: number,
+  size: number[],
 ) {
-  const dist = Math.max(radius * 2.1, 1.2);
+  const tanV = Math.tan(camera.fov * Math.PI / 360);
+  const dist = Math.max(size[2]/(2*tanV), size[1]/(2*tanV*camera.aspect)) * 1.12 + size[0]*.5;
   camera.up.set(0, 0, 1);
   camera.position.set(center.x + dist, center.y, center.z + radius * 0.35);
   camera.lookAt(center);
@@ -56,6 +59,7 @@ function placeSideView(
 export function PlyViewer({ url, label }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const resetRef = useRef<(() => void) | null>(null);
+  const fullRef = useRef<(() => void) | null>(null);
   const [status, setStatus] = useState<"empty" | "loading" | "ready" | "error">(
     url ? "loading" : "empty",
   );
@@ -106,13 +110,21 @@ export function PlyViewer({ url, label }: Props) {
         );
         scene.add(points);
 
-        const center = geo.boundingSphere?.center?.clone() ?? new Vector3();
-        const radius = geo.boundingSphere?.radius || 4;
+        const positions = geo.getAttribute("position").array;
+        const focused = cloudFrame(positions);
+        const full = cloudFrame(positions, true);
+        const center = new Vector3(...focused.center as [number, number, number]);
+        const radius = Math.max(...focused.size)/2;
+        camera.aspect = (host.clientWidth || 1)/(host.clientHeight || 1);
+        camera.updateProjectionMatrix();
 
         controls = new OrbitControls(camera, renderer.domElement);
-        placeSideView(camera, controls, center, radius);
+        placeSideView(camera, controls, center, radius, focused.size);
         resetRef.current = () => {
-          if (controls) placeSideView(camera, controls, center, radius);
+          if (controls) placeSideView(camera, controls, center, radius, focused.size);
+        };
+        fullRef.current = () => {
+          if (controls) placeSideView(camera, controls, new Vector3(...full.center as [number,number,number]), Math.max(...full.size)/2, full.size);
         };
 
         const resize = () => {
@@ -161,6 +173,7 @@ export function PlyViewer({ url, label }: Props) {
       renderer?.dispose();
       scene.clear();
       resetRef.current = null;
+      fullRef.current = null;
     };
   }, [url]);
 
@@ -192,8 +205,9 @@ export function PlyViewer({ url, label }: Props) {
             className="ghost-btn is-light"
             onClick={() => resetRef.current?.()}
           >
-            重置視角
+            集中顯示
           </button>
+          <button type="button" className="ghost-btn is-light" onClick={()=>fullRef.current?.()}>完整範圍</button>
         </div>
       )}
     </div>

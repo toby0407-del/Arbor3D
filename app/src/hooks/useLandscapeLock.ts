@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 async function tryLockLandscape() {
+  if (!window.matchMedia("(pointer: coarse) and (hover: none)").matches) return;
   const orientation = screen.orientation as ScreenOrientation & {
     lock?: (orientation: OrientationLockType) => Promise<void>;
   };

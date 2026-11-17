@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
 
 
 def scan_input_paths(scan_id: str) -> dict[str, Path]:
@@ -42,6 +43,7 @@ def check_scan_ready(scan_id: str, need_gaussian: bool = True) -> list[str]:
 
 def apply_scan_id(scan_id: str) -> None:
     """執行期覆寫 dbh_seg / gaussian_prune / park_inventory 的路徑設定。"""
+    os.environ["ARBOR3D_SCAN_ID"] = scan_id
     from dbh_seg import config as dbh_config
     from gaussian_prune import config as gs_config
     from gaussian_prune.layout import resolve_full_scene_ply, single_tree_ply, supersplat_ply

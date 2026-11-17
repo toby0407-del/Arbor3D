@@ -573,6 +573,11 @@ export function OsmSiteMap({
       map.off("dragstart", onDragStart);
       map.off("zoomstart", onDragStart);
       stopWatch();
+      // Remove vector paths while their canvas renderer still exists. Otherwise
+      // StrictMode teardown can queue a redraw after Leaflet destroys its context.
+      map.stop();
+      for (const layer of [layerRef.current, liveLayerRef.current, overlayLayerRef.current,
+        treeLayerRef.current, userLayerRef.current]) layer?.clearLayers();
       map.remove();
       mapRef.current = null;
       layerRef.current = null;
@@ -702,7 +707,7 @@ export function OsmSiteMap({
         icon: treePin(tree.light, selected),
         zIndexOffset: selected ? 900 : 700,
       });
-      marker.bindTooltip(tree.id, {
+      marker.bindTooltip(`${tree.id}${tree.placement === "route-reference" ? " · 沿線索引位置" : ""}`, {
         direction: "top",
         offset: [0, selected ? -14 : -8],
         className: selected ? "osm-tree-tip" : undefined,

@@ -6,11 +6,11 @@ import os
 import shutil
 import subprocess
 import sys
-import zipfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from cloud_dbh.archives import build_result, safe_id, sha256, unpack_zip
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -27,6 +27,7 @@ class JobPaths:
 
     @classmethod
     def create(cls, job_id: str, work_root: Path | None = None) -> "JobPaths":
+        safe_id(job_id)
         root = (work_root or DEFAULT_WORK) / job_id
         inbox = root / "inbox"
         inbox.mkdir(parents=True, exist_ok=True)
@@ -45,9 +46,11 @@ def write_status(paths: JobPaths, status: str, message: str, **extra: Any) -> di
         "updated_at": utc_now(),
         **extra,
     }
-    paths.status_file.write_text(
+    temporary = paths.status_file.with_suffix(".json.tmp")
+    temporary.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
     )
+    temporary.replace(paths.status_file)
     return payload
 
 
@@ -55,12 +58,6 @@ def read_status(paths: JobPaths) -> dict[str, Any] | None:
     if not paths.status_file.exists():
         return None
     return json.loads(paths.status_file.read_text(encoding="utf-8"))
-
-
-def unpack_zip(zip_path: Path, dest: Path) -> None:
-    dest.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(zip_path, "r") as zf:
-        zf.extractall(dest)
 
 
 def ensure_inbox_layout(inbox: Path) -> None:
@@ -107,6 +104,8 @@ def run_postprocess(
         scan_id,
         "--repo-root",
         str(REPO_ROOT),
+        "--data-root", str(job_dir.parent / "data"),
+        "--publish-root", str(job_dir.parent / "published"),
     ]
     if path_id:
         cmd.extend(["--path-id", path_id])
@@ -121,6 +120,7 @@ def run_postprocess(
         capture_output=True,
         text=True,
         check=False,
+        timeout=int(os.environ.get("ARBOR3D_CLOUD_JOB_TIMEOUT", "3600")),
     )
     log_path = job_dir.parent / "worker.log"
     log_path.write_text(
@@ -161,16 +161,24 @@ def execute_job(
             path_id=path_id,
             prepare_only=prepare_only,
         )
-        inventory = REPO_ROOT / "app" / "src" / "data" / "inventories" / f"{scan_id}.json"
+        inventory = paths.root / "published" / "app" / "public" / "scans" / scan_id / "inventory.json"
+        artifact = None
+        if not prepare_only:
+            pipeline = json.loads((paths.inbox / "pipeline-status.json").read_text(encoding="utf-8"))
+            if pipeline.get("status") != "done" or not inventory.is_file():
+                raise RuntimeError("Full pipeline did not produce a completed inventory")
+            result = paths.root / "result.zip"
+            build_result(inventory.parent, scan_id, result)
+            artifact = {"url": f"/v1/jobs/{job_id}/result", "sha256": sha256(result), "bytes": result.stat().st_size}
         return write_status(
             paths,
-            "succeeded",
+            "prepared" if prepare_only else "succeeded",
             "雲端 DBH 管線完成" if not prepare_only else "已整理 inbox（prepare-only）",
             scan_id=scan_id,
             path_id=path_id,
             prepare_only=prepare_only,
-            inventory_path=str(inventory) if inventory.exists() else None,
-            pipeline_status=str(paths.inbox / "pipeline-status.json"),
+            result=artifact,
+            execution={"platform": "azure" if os.getenv("WEBSITE_SITE_NAME") or os.getenv("CONTAINER_APP_NAME") else "local", "pipeline": "arbor3d", "mode": "prepare" if prepare_only else "full"},
         )
     except Exception as exc:  # noqa: BLE001 — surface to status JSON for API clients
         return write_status(

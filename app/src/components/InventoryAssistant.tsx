@@ -45,7 +45,7 @@ export function InventoryAssistant({
     let active = true;
     void fetchAssistantStatus().then((next) => {
       if (active) setStatus(next);
-    });
+    }).catch(() => undefined);
     return () => {
       active = false;
     };
@@ -59,6 +59,7 @@ export function InventoryAssistant({
     setError("");
     try {
       setReply(await askInventoryAssistant(value, context));
+      void fetchAssistantStatus().then(setStatus).catch(() => undefined);
     } catch (err) {
       setReply(null);
       setError(err instanceof Error ? err.message : "AI 助理暫時無法回答");
@@ -67,16 +68,18 @@ export function InventoryAssistant({
     }
   };
 
-  const modeLabel =
-    status?.activeMode === "phi4-cloud"
-      ? "Microsoft Phi-4 Azure 雲端模型（已就緒）"
+  const verified = status?.lastInference?.provider === (status?.activeMode === "phi4-cloud" ? "phi4" : status?.activeMode);
+  const connectionLabel = verified ? "已實際回覆" : status?.connection?.state === "reachable" ? "服務已連通" : "已設定，待驗證";
+  const modeLabel = !status ? "正在確認模型連線…" :
+    status.activeMode === "phi4-cloud"
+      ? `Microsoft Phi-4 Azure 雲端模型（${connectionLabel}）`
       : status?.activeMode === "phi4"
-      ? "Microsoft Phi-4 本機模型（已就緒）"
+      ? `Microsoft Phi-4 本機模型（${connectionLabel}）`
       : status?.activeMode === "copilot"
-      ? "Microsoft Copilot Studio（已就緒）"
+      ? `Microsoft Copilot Studio（${connectionLabel}）`
       : status?.activeMode === "azure"
-        ? "Azure AI（已就緒）"
-        : "本機證據模式";
+        ? `Azure AI（${connectionLabel}）`
+        : status?.activeMode === "unavailable" ? "Microsoft 模型服務無法連線" : "本機證據模式";
 
   return (
     <div className="assistant-backdrop" role="presentation" onClick={onClose}>
@@ -89,7 +92,7 @@ export function InventoryAssistant({
       >
         <header className="assistant-head">
           <div>
-            <p>{status?.activeMode === "phi4" || status?.activeMode === "phi4-cloud" ? "Microsoft Phi-4 × Arbor3D" : "Microsoft Copilot × Arbor3D"}</p>
+            <p>{status?.activeMode === "phi4" || status?.activeMode === "phi4-cloud" ? "Microsoft Phi-4 × Arbor3D" : status?.activeMode === "copilot" ? "Microsoft Copilot × Arbor3D" : "Arbor3D · 盤點資料與證據"}</p>
             <h2 id="assistant-title">盤點 AI 助理</h2>
             <p className="assistant-mode" role="status">
               目前：{modeLabel}
@@ -100,19 +103,11 @@ export function InventoryAssistant({
           </button>
         </header>
 
-        {status?.hints?.length ? (
-          <ul className="assistant-hints" aria-label="Copilot 設定提示">
-            {status.hints.map((hint) => (
-              <li key={hint}>{hint}</li>
-            ))}
-          </ul>
-        ) : null}
-
         <div className="assistant-context" aria-label="本次盤點摘要">
           <span>{context.summary.total} 棵</span>
           <span>較可信 {context.summary.reliable}</span>
-          <span>待複核 {context.summary.review}</span>
-          <span>CO₂ 約 {context.summary.co2Ton.toFixed(2)} t</span>
+          <span>需複核 {context.summary.review}</span>
+          <span>候選 CO₂ 試算 {context.summary.co2Ton.toFixed(2)} t</span>
         </div>
 
         <div className="assistant-suggestions">
@@ -173,6 +168,7 @@ export function InventoryAssistant({
             {reply.answer.split("\n").map((line, index) => (
               <p key={`${index}-${line}`}>{line || " "}</p>
             ))}
+            {reply.verifiedSteps?.length ? <><h3>系統操作步驟</h3><ol>{reply.verifiedSteps.map(step=><li key={step}>{step}</li>)}</ol></>:null}
             <h3>資料依據</h3>
             <ul>
               {reply.evidence.map((item) => (
@@ -182,8 +178,8 @@ export function InventoryAssistant({
           </article>
         ) : (
           <p className="assistant-empty">
-            回答只使用目前盤點資料與 RAG；資料不足時會明確說明。Phi-4／Copilot
-            未設定或無法使用時，自動切換成本機證據模式。
+            回答依據目前盤點與檢索資料整理，請搭配原始紀錄查核。
+            {status?.requireProvider ? "模型無法回覆時會顯示錯誤，請確認服務後重試。" : "模型無法使用時，會標示並改用本機證據模式。"}
           </p>
         )}
       </section>

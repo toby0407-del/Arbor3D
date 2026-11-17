@@ -10,6 +10,13 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(({ mode }) => {
   const env = { ...process.env, ...loadEnv(mode, root, "") };
+  if (env.ARBOR_AZURE_CLI_DIR?.trim()) {
+    process.env.PATH = `${env.ARBOR_AZURE_CLI_DIR}${path.delimiter}${process.env.PATH ?? ""}`;
+  }
+  // The subprocess pipeline reads server-only settings from process.env.
+  for (const [key, value] of Object.entries(env)) {
+    if ((key.startsWith("ARBOR3D_") || key === "PYTHON") && value != null) process.env[key] = value;
+  }
   return {
     plugins: [
       react(),

@@ -1,0 +1,5 @@
+# Existing F1 service: no Torch, CUDA, Open3D, model downloads or new Azure resources.
+fastapi==0.141.1
+uvicorn==0.53.0
+python-multipart>=0.0.9
+numpy==2.4.4

@@ -12,7 +12,7 @@ export type ScanPath = {
   hasInventory: boolean;
   note: string;
   polyline: LatLng[];
-  routeReliability: "osm-aligned" | "unverified";
+  routeReliability: "osm-aligned" | "unverified" | "user-drawn";
 };
 
 export type ParkSite = {
@@ -197,14 +197,14 @@ function toSite(item: CatalogItem): ParkSite {
             scanId: ready ? entry.scanId : null,
             scanIds: ready ? [entry.scanId] : [],
             hasInventory: ready,
-            note: ready
+            note: entry.routeNote ? `${entry.routeNote}${ready ? ` 已載入掃描 ${entry.scanId}。` : " 可由此路徑匯入最新資料。"}` : ready
               ? entry.polyline.length >= 2
-                ? `已載入掃描 ${entry.scanId}。路線貼合 OSM pedestrian／footway；樹位由相對座標沿路徑放置，仍待現場 GPX 取代。`
+                ? `已載入掃描 ${entry.scanId}。沒有 GPS 的樹木依清單順序沿路徑顯示索引位置，可用現場定位更新。`
                 : `已載入掃描 ${entry.scanId}，但沒有可驗證的公開步道；請先現場錄製，系統不顯示推測路線。`
               : "尚無盤點 JSON。遠端放入 inventories/{scan_id}.json 並綁定後即可進入。",
             polyline: entry.polyline,
             routeReliability:
-              entry.polyline.length >= 2 ? "osm-aligned" : "unverified",
+              entry.routeReliability ?? (entry.polyline.length >= 2 ? "osm-aligned" : "unverified"),
           };
         })
       : [emptyPath(item.id)];

@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_ROOT = Path(os.environ.get("ARBOR3D_DATA_ROOT") or BASE_DIR.parent).resolve()
 
 # 目前這趟掃描的 ID（照片、calib、去噪點雲、高斯模型都要同一趟）
-SCAN_ID = "20260812070325"
+SCAN_ID = os.environ.get("ARBOR3D_SCAN_ID", "20260812070325")
 
 PLY_PATH = PROJECT_ROOT / "3D_treedata_Denoised_Trees" / f"{SCAN_ID}.ply"
 CALIB_PATH = PROJECT_ROOT / "3D_treedata" / SCAN_ID / "calibration" / "calib.json"

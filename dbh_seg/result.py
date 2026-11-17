@@ -20,3 +20,6 @@ class DBHResult:
     gap_detected: bool = False
     gap_m: float = 0.0
     caliper_kept_mask: Optional[np.ndarray] = None  # 相對 slice_pts 的布林遮罩
+    quality: Optional[dict] = None
+    quality_candidates: Optional[list] = None
+    execution: Optional[dict] = None

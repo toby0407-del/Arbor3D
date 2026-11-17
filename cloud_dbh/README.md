@@ -1,5 +1,10 @@
 # Arbor3D Cloud DBH
 
+目前啟用既有免費 F1 混合模式：`POST /v1/sections` 真正執行 NumPy 胸徑候選與品質計算，本機保留 YOLO／大型點雲處理。已有真實單木驗證；不等同整套雲端量測。最新紀錄見 `docs/microsoft/CLOUD_DBH.md`。
+
+
+API v2 已新增認證、獨立任務資料、完整成果下載與校驗。`prepared` 只表示輸入準備好，必須是 `succeeded` 且有 result 才是正式計算完成。最新狀態見 docs/microsoft/CLOUD_DBH.md；Azure 完整部署及實測仍未完成。
+
 把既有 `scripts/postprocess_from_inbox.py` 胸徑／盤點管線包成 HTTP 服務，部署到 **Azure Container Apps**，讓 App 用 `ARBOR3D_CLOUD_DBH_URL` 做雲端計算，而不是只在 Mac／本機 GPU 跑。
 
 ## 端點

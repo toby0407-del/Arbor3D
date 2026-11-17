@@ -1,7 +1,8 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { CosmosClient, type Container } from "@azure/cosmos";
-import { DefaultAzureCredential, ManagedIdentityCredential } from "@azure/identity";
+import { AzureCliCredential, DefaultAzureCredential, ManagedIdentityCredential } from "@azure/identity";
+import { applyMeasurePatch, type MeasurePatch } from "./fieldMeasurePatch.js";
 
 export type FieldMeasureRecord = Record<string, {
   strict13m?: boolean;
@@ -18,6 +19,8 @@ export interface FieldMeasureStore {
   readonly provider: "cosmos" | "file";
   read(scanId: string): Promise<FieldMeasureRecord>;
   write(scanId: string, measures: FieldMeasureRecord, audit: MeasureAudit): Promise<void>;
+  check(): Promise<void>;
+  patch(scanId: string, treeId: string, patch: MeasurePatch, audit: MeasureAudit): Promise<FieldMeasureRecord>;
 }
 
 type CosmosDocument = {
@@ -48,7 +51,7 @@ async function cosmosContainer(env: Record<string, string | undefined>) {
         ? managedClientId
           ? new ManagedIdentityCredential({ clientId: managedClientId })
           : new ManagedIdentityCredential()
-        : new DefaultAzureCredential();
+        : env.ARBOR_AZURE_AUTH === "cli" ? new AzureCliCredential() : new DefaultAzureCredential();
       const client = new CosmosClient({ endpoint, aadCredentials: credential });
       if (env.ARBOR_COSMOS_AUTO_CREATE === "YES_I_ACCEPT_AZURE_CHANGES") {
         const { database } = await client.databases.createIfNotExists({ id: databaseId });
@@ -71,6 +74,7 @@ async function cosmosContainer(env: Record<string, string | undefined>) {
       return client.database(databaseId).container(containerId);
     })();
     containers.set(key, pending);
+    void pending.catch(()=>containers.delete(key));
   }
   return pending;
 }
@@ -81,6 +85,11 @@ class CosmosFieldMeasureStore implements FieldMeasureStore {
 
   constructor(env: Record<string, string | undefined>) {
     this.env = env;
+  }
+
+  async check() {
+    const container = await cosmosContainer(this.env);
+    await container.read();
   }
 
   async read(scanId: string) {
@@ -105,6 +114,28 @@ class CosmosFieldMeasureStore implements FieldMeasureStore {
       ...audit,
     };
     await container.items.upsert(document);
+  }
+
+  async patch(scanId: string, treeId: string, patch: MeasurePatch, audit: MeasureAudit) {
+    const container = await cosmosContainer(this.env);
+    const item = container.item(`field-measures:${scanId}`, scanId);
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      let current: (CosmosDocument & { _etag?: string }) | undefined;
+      try { current = (await item.read<CosmosDocument & { _etag?: string }>()).resource; }
+      catch (error) { if ((error as { code?: number }).code !== 404) throw error; }
+      const document: CosmosDocument = { id: `field-measures:${scanId}`, type: "field-measures", schemaVersion: 1,
+        scanId, measures: applyMeasurePatch(current?.measures ?? {}, treeId, patch), ...audit };
+      try {
+        if (current) {
+          if (!current._etag) throw new Error("資料庫未回傳版本資訊，無法安全更新");
+          await item.replace(document, { accessCondition: { type: "IfMatch", condition: current._etag } });
+        } else { await container.items.create(document); }
+        return document.measures;
+      } catch (error) {
+        if (![409, 412].includes(Number((error as { code?: number }).code))) throw error;
+      }
+    }
+    throw new Error("其他使用者正在更新此盤點，請稍後重試");
   }
 }
 
@@ -132,8 +163,10 @@ class FileFieldMeasureStore implements FieldMeasureStore {
     return (await this.all())[scanId]?.measures ?? {};
   }
 
+  async check() { await this.all(); }
+
   async write(scanId: string, measures: FieldMeasureRecord, audit: MeasureAudit) {
-    this.writeQueue = this.writeQueue.then(async () => {
+    const operation = this.writeQueue.then(async () => {
       const store = await this.all();
       store[scanId] = { measures, ...audit };
       await fs.mkdir(path.dirname(this.filename), { recursive: true });
@@ -141,7 +174,23 @@ class FileFieldMeasureStore implements FieldMeasureStore {
       await fs.writeFile(temporary, `${JSON.stringify(store, null, 2)}\n`, { mode: 0o600 });
       await fs.rename(temporary, this.filename);
     });
-    await this.writeQueue;
+    this.writeQueue = operation.catch(() => undefined);
+    await operation;
+  }
+
+  async patch(scanId: string, treeId: string, patch: MeasurePatch, audit: MeasureAudit) {
+    const operation = this.writeQueue.then(async () => {
+      const store = await this.all();
+      const measures = applyMeasurePatch(store[scanId]?.measures ?? {}, treeId, patch);
+      store[scanId] = { measures, ...audit };
+      await fs.mkdir(path.dirname(this.filename), { recursive: true });
+      const temporary = `${this.filename}.${process.pid}.tmp`;
+      await fs.writeFile(temporary, `${JSON.stringify(store, null, 2)}\n`, { mode: 0o600 });
+      await fs.rename(temporary, this.filename);
+      return measures;
+    });
+    this.writeQueue = operation.then(() => undefined, () => undefined);
+    return operation;
   }
 }
 

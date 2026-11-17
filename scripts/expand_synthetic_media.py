@@ -93,6 +93,9 @@ def variant(src: Image.Image, index: int, kind: str) -> Image.Image:
 def build(count: int = 12) -> dict[str, int]:
     summary: dict[str, int] = {}
     for kind, (prefix, dest, real_dir) in KINDS.items():
+        # Sections/clouds use the fixed technical renderer, never transformed PNGs.
+        if kind != 'masks':
+            continue
         dest.mkdir(parents=True, exist_ok=True)
         sources = load_sources(kind, dest, real_dir)
         written = 0
