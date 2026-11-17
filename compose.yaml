@@ -1,0 +1,50 @@
+name: arbor3d
+services:
+  arbor3d:
+    image: arbor3d:${ARBOR3D_IMAGE_TAG:-local}
+    build:
+      context: .
+      target: ${ARBOR3D_BUILD_TARGET:-full}
+      args:
+        VITE_AZURE_ENTRA_TENANT_ID: ${VITE_AZURE_ENTRA_TENANT_ID:-}
+        VITE_AZURE_ENTRA_CLIENT_ID: ${VITE_AZURE_ENTRA_CLIENT_ID:-}
+        VITE_AZURE_ENTRA_API_SCOPE: ${VITE_AZURE_ENTRA_API_SCOPE:-}
+    ports:
+      - "${ARBOR3D_BIND_ADDRESS:-127.0.0.1}:${ARBOR3D_PORT:-8080}:8080"
+    env_file:
+      - path: .env.docker
+        required: false
+    environment:
+      PORT: "8080"
+      HOST: 0.0.0.0
+      ARBOR3D_DATA_ROOT: /data
+      ARBOR_RAG_KNOWLEDGE: /opt/arbor3d/agents/knowledge
+    volumes:
+      - type: bind
+        source: ${ARBOR3D_STORAGE_ROOT:-./docker-data}/runtime
+        target: /opt/arbor3d/app/.runtime
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${ARBOR3D_STORAGE_ROOT:-./docker-data}/inbox
+        target: /opt/arbor3d/app/inbox
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${ARBOR3D_STORAGE_ROOT:-./docker-data}/scans
+        target: /opt/arbor3d/app/public/scans
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${ARBOR3D_STORAGE_ROOT:-./docker-data}/data
+        target: /data
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${ARBOR3D_STORAGE_ROOT:-./docker-data}/cache
+        target: /home/node/.cache
+        bind:
+          create_host_path: false
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 30s

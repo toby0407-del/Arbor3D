@@ -136,8 +136,8 @@ def bind_best_views(
     output_dir: Path | None = None,
     yolo_conf: float | None = None,
 ) -> dict:
-    registry_path = Path(registry_path or (config.DEFAULT_OUTPUT_DIR / "tree_registry.json"))
     output_dir = Path(output_dir or config.DEFAULT_OUTPUT_DIR)
+    registry_path = Path(registry_path or (output_dir / "tree_registry.json"))
     yolo_conf = yolo_conf if yolo_conf is not None else config.YOLO_CONF
     mask_dir = output_dir / "masks"
     mask_dir.mkdir(parents=True, exist_ok=True)

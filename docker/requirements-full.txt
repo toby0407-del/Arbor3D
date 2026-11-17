@@ -1,0 +1,5 @@
+-r requirements-web.txt
+open3d==0.19.0
+opencv-python==4.11.0.86
+ultralytics==8.3.78
+transformers==4.48.3

@@ -1,5 +1,6 @@
 """dbh_seg 套件的檔案路徑與可調參數，全部集中在這裡方便微調。"""
 from pathlib import Path
+import os
 
 from yolo_seg.config import YOLO_WEIGHTS
 
@@ -8,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # --- 三大素材檔案路徑（專題根目錄 = treee_VScode 的上一層）
 # 用 BASE_DIR.parent (treee_VScode 的上一層) 組出路徑，不寫死絕對路徑字串，
 # 這樣專題資料夾整包搬到別的位置或別台電腦，也不用逐個檔案改路徑。
-PROJECT_ROOT = BASE_DIR.parent
+PROJECT_ROOT = Path(os.environ.get("ARBOR3D_DATA_ROOT") or BASE_DIR.parent).resolve()
 
 # 目前這趟掃描的 ID（照片、calib、去噪點雲、高斯模型都要同一趟）
 SCAN_ID = "20260812070325"

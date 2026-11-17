@@ -1,5 +1,7 @@
 # Arbor3D
 
+Docker 封裝與 D 槽啟動方式見 [docker/README.md](docker/README.md)。Windows 可執行 `Start-Arbor3D.cmd`，預設包含正式 CPU 量測管線，網站位址 `http://localhost:8080`。
+
 把真實世界的公園樹木做成可持續被 AI 分析的數位表徵（Digital Representation）。現場掃描是 **Physical**；去噪點雲、單木 ID、胸徑、碳匯與 3D 高斯是 **Digital**；YOLO 分割與時序成長判定是 **AI**。量測求精準，高斯求好看，兩條線分開，最後接到同一份長期監測報告與網頁介面。
 
 不是只做「替環保局量一次樹」，而是把每一棵樹從實體資產變成可跨期比對的數位分身：前期盤點 → 本期盤點 → 成長趨勢。
