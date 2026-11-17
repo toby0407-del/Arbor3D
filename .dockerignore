@@ -28,7 +28,6 @@ agents/fine-tuning/checkpoints
 *.log
 .env
 .env.*
-app/public/scans
 app/dist
 app/dist-server
 agents/fine-tuning
